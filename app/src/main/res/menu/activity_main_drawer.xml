@@ -16,5 +16,10 @@
             android:id="@+id/nav_slideshow"
             android:icon="@drawable/ic_menu_slideshow"
             android:title="@string/menu_slideshow" />
+        <item
+            android:id="@+id/settings"
+            android:actionLayout="@android:layout/activity_list_item"
+            android:icon="@drawable/ic_baseline_settings_24"
+            android:title="@string/menu_settings" />
     </group>
 </menu>

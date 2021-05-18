@@ -25,6 +25,7 @@
     <string name="start_note">start</string>
     <string name="list_button">list_button</string>
     <string name="new_note_button">newNoteButton</string>
+    <string name="menu_settings">Settings</string>
 
 
     <string-array name="time_types">
