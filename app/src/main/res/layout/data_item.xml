@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="dataItem"
+            type="com.example.protosuite.data.db.entities.DataItem" />
+        <variable
+            name="clickListener"
+            type="com.example.protosuite.adapters.DataListener" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:padding="4dp"
+        android:background="@color/secondaryUltraLightColor"
+        android:transitionName="@{@string/note_transition_name(dataItem.parent_id)}">
+
+        <EditText
+            android:id="@+id/data_item_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="8dp"
+            android:padding="4dp"
+            android:ems="10"
+            android:hint="Activity"
+            android:importantForAutofill="no"
+            android:inputType="textAutoComplete"
+            android:singleLine="true"
+            android:textSize="14sp"
+            android:text="@{dataItem.activity}"
+            android:background="@color/newprimary"
+            app:layout_constraintBottom_toBottomOf="@id/drag_drop_image"
+            app:layout_constraintEnd_toStartOf="@+id/data_item_time"
+            app:layout_constraintStart_toEndOf="@+id/drag_drop_image"
+            app:layout_constraintTop_toTopOf="@+id/drag_drop_image" />
+
+        <EditText
+            android:id="@+id/data_item_time"
+            android:layout_width="60dp"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:hint="Time"
+            android:ems="4"
+            android:padding="4dp"
+            android:background="@color/newprimary"
+            android:text="@{dataItem.time != 0 ? String.valueOf(dataItem.time) : null}"
+            app:layout_constraintEnd_toStartOf="@+id/time_increment_picker"
+            app:layout_constraintStart_toEndOf="@+id/data_item_title"
+            app:layout_constraintTop_toTopOf="@+id/drag_drop_image"
+            app:layout_constraintBottom_toBottomOf="@id/drag_drop_image"
+            android:singleLine="true"
+            android:inputType="number"
+            android:importantForAutofill="no" />
+
+        <ImageView
+            android:id="@+id/drag_drop_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="TODO"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:srcCompat="@drawable/ic_baseline_drag_indicator_24" />
+
+        <ImageView
+            android:id="@+id/play_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="@{() -> clickListener}"
+            android:contentDescription="TODO"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:srcCompat="@drawable/ic_baseline_play_arrow_24" />
+
+
+        <androidx.appcompat.widget.AppCompatSpinner
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:id="@+id/time_increment_picker"
+            android:dropDownWidth="wrap_content"
+            android:entries="@array/time_types"
+            android:spinnerMode="dropdown"
+
+            app:layout_constraintEnd_toStartOf="@+id/play_image"
+            app:layout_constraintTop_toTopOf="@+id/drag_drop_image"
+            app:layout_constraintBottom_toBottomOf="@id/drag_drop_image">
+        </androidx.appcompat.widget.AppCompatSpinner>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/navigation"
+    app:startDestination="@id/mainContent">
+
+    <fragment
+        android:id="@+id/mainContent"
+        android:name="com.example.protosuite.ui.MainContent"
+        android:label="@string/app_name">
+        <action
+            android:id="@+id/action_mainContent_to_noteData"
+            app:destination="@id/noteData" />
+        <argument
+            android:name="noteId"
+            android:defaultValue="0"
+            app:argType="integer" />
+    </fragment>
+    <fragment
+        android:id="@+id/noteData"
+        android:name="com.example.protosuite.ui.notes.NoteData"
+        android:label="@string/empty">
+        <action
+            android:id="@+id/action_noteData_to_mainContent"
+            app:destination="@id/mainContent" />
+        <argument
+            android:name="noteId"
+            android:defaultValue="0"
+            app:argType="integer" />
+    </fragment>
+</navigation>

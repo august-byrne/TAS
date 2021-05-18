@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <solid
+        android:color="@color/primaryColor" />
+
+    <!--The desired corner radius. reduce it to keep it less rounded-->
+    <corners android:radius="12dp" />
+
+
+</shape>

@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">ProtoSuite</string>
+    <string name="nav_header_title">Planning Suite</string>
+    <string name="nav_header_subtitle">august.byrne@gmail.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+
+    <!-- test ad unit id is: ca-app-pub-3940256099942544/6300978111-->
+    <!-- Real ad unit id is: ca-app-pub-1844692913207088/2411771346 -->
+    <string name="banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_gallery">Gallery</string>
+    <string name="menu_slideshow">Slideshow</string>
+    <string name="settings">settings</string>
+    <string name="contact_us">contact us</string>
+    <string name="rate_us">rate us</string>
+    <string name="empty"></string>
+    <string name="note_title">Note Title</string>
+
+    <string name="note_transition_name">note_card_%1$s</string>
+    <string name="note_detail_transition_name">note_card_detail</string>
+    <string name="note_description_TN">note_description_TN_%1$s</string>
+    <string name="share">share</string>
+    <string name="delete_note">delete</string>
+    <string name="start_note">start</string>
+    <string name="list_button">list_button</string>
+    <string name="new_note_button">newNoteButton</string>
+
+
+    <string-array name="time_types">
+        <item>sec</item>
+        <item>min</item>
+        <item>hr</item>
+    </string-array>
+
+
+</resources>
