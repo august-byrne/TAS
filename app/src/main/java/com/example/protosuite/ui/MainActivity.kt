@@ -1,9 +1,7 @@
 package com.example.protosuite.ui
 
 import android.os.Bundle
-import android.util.DisplayMetrics
 import android.view.MenuItem
-import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.NavController
@@ -13,6 +11,7 @@ import androidx.navigation.ui.NavigationUI.navigateUp
 import androidx.navigation.ui.NavigationUI.setupWithNavController
 import androidx.navigation.ui.onNavDestinationSelected
 import androidx.navigation.ui.setupActionBarWithNavController
+import androidx.window.WindowManager
 import com.example.protosuite.R
 import com.example.protosuite.databinding.ActivityMainBinding
 import com.example.protosuite.ui.notes.notesModule
@@ -37,22 +36,11 @@ class MainActivity : AppCompatActivity() {
 
     private val adaptiveAdSize: AdSize
         get() {
-            val outMetrics = DisplayMetrics()
-
-            val display = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-                display
-            } else {
-                windowManager.defaultDisplay
-            }
-            display?.getRealMetrics(outMetrics)
-            val density = outMetrics.density
-
-            //var adWidthPixels = findViewById(ad_view_container).width.toFloat()
-            var adWidthPixels = findViewById<FrameLayout>(R.id.ad_view_container).width.toFloat()
+            var adWidthPixels = binding.adViewContainer.width.toFloat()
             if (adWidthPixels == 0f) {
-                adWidthPixels = outMetrics.widthPixels.toFloat()
+                adWidthPixels = WindowManager(this).getCurrentWindowMetrics().bounds.width().toFloat()
             }
-
+            val density = this.resources.displayMetrics.density
             val adWidth = (adWidthPixels.div(density)).toInt()
             //return the optimal size depends on your orientation (landscape or portrait)
             return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, adWidth)
