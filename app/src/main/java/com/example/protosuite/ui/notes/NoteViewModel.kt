@@ -1,8 +1,6 @@
 package com.example.protosuite.ui.notes
 
-import android.view.View
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.protosuite.data.db.entities.DataItem
 import com.example.protosuite.data.db.entities.NoteItem
@@ -120,21 +118,4 @@ open class NoteViewModel (private val repo: NoteRepository): ViewModel() {
         _noteListSize = input
     }
 
-    private val _navigateToNoteEditor = MutableLiveData<Int>()
-    val navigateToNoteEditor
-        get() = _navigateToNoteEditor
-
-    private val _noteView = MutableLiveData<View>()
-    val noteView
-        get() = _noteView
-
-    fun onNoteClicked(id: Int, view: View) {
-        _navigateToNoteEditor.value = id
-        _noteView.value = view
-    }
-
-    fun onNoteNavigated() {
-        _navigateToNoteEditor.value = null
-        _noteView.value = null
-    }
 }

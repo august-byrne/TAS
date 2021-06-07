@@ -14,7 +14,7 @@ import com.example.protosuite.databinding.TimerBinding
 import java.util.*
 
 
-class Timer : Fragment() {
+class TimerFragment : Fragment() {
 
         companion object {
             fun setAlarm(context: Context, nowSeconds: Long, secondsRemaining: Long){

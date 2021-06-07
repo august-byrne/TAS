@@ -4,26 +4,28 @@
 
     <!-- Data to make available to the XML via data binding. In this case,
      the whole ViewModel, so that we can access the LiveData,
-     click handlers, and state variables. -->
+     click handlers, and state variables.
     <data>
         <variable
             name="NoteViewModel"
             type="com.example.protosuite.ui.notes.NoteViewModel" />
     </data>
+    -->
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:transitionGroup="false"
         android:theme="@style/NotesTheme"
-        android:background="@color/secondaryBackgroundColorTwo">
+        android:background="@color/secondaryBackgroundColorTwo" >
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:transitionGroup="true"
+            android:overScrollMode="never"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -37,7 +39,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
             android:src="@drawable/ic_baseline_add_24"
-            android:transitionName="uniqueNameBro"
+            android:transitionName="note_fab"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:contentDescription="TODO" />

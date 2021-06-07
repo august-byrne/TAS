@@ -3,27 +3,27 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/navigation"
-    app:startDestination="@id/mainContent">
+    app:startDestination="@id/mainContentFragment">
 
     <fragment
-        android:id="@+id/mainContent"
-        android:name="com.example.protosuite.ui.MainContent"
+        android:id="@+id/mainContentFragment"
+        android:name="com.example.protosuite.ui.MainContentFragment"
         android:label="@string/app_name">
         <action
             android:id="@+id/action_mainContent_to_noteData"
-            app:destination="@id/noteData" />
+            app:destination="@id/noteExpandedFragment" />
         <argument
             android:name="noteId"
             android:defaultValue="0"
             app:argType="integer" />
     </fragment>
     <fragment
-        android:id="@+id/noteData"
-        android:name="com.example.protosuite.ui.notes.NoteData"
+        android:id="@+id/noteExpandedFragment"
+        android:name="com.example.protosuite.ui.notes.NoteExpandedFragment"
         android:label="@string/empty">
         <action
             android:id="@+id/action_noteData_to_mainContent"
-            app:destination="@id/mainContent" />
+            app:destination="@id/mainContentFragment" />
         <argument
             android:name="noteId"
             android:defaultValue="0"

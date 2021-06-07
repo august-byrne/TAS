@@ -5,7 +5,6 @@
 
     <androidx.drawerlayout.widget.DrawerLayout
         android:id="@+id/drawer_layout"
-        android:transitionGroup="false"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -16,7 +15,7 @@
 
             <com.google.android.material.appbar.AppBarLayout
                 android:id="@+id/toolbarSpace"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="?attr/actionBarSize"
                 android:theme="@style/AppTheme.AppBarOverlay"
                 app:liftOnScroll="true"
@@ -89,7 +88,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_gravity="start"
-            android:background="@drawable/button_gradient"
+            android:background="@drawable/nav_drawer_gradient"
             app:headerLayout="@layout/nav_header_main"
             app:menu="@menu/activity_main_drawer" />
 

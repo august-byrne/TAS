@@ -5,20 +5,20 @@
 
     <!-- Data to make available to the XML via data binding. In this case,
  the whole ViewModel, so that we can access the LiveData,
- click handlers, and state variables. -->
+ click handlers, and state variables.
     <data>
         <variable
             name="NoteViewModel"
             type="com.example.protosuite.ui.notes.NoteViewModel" />
     </data>
+    -->
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/transition_main"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:transitionGroup="false"
         android:background="@color/secondaryUltraLightColor"
-        android:transitionName="@string/note_detail_transition_name">
+        android:transitionName="@string/note_detail_transition_name" >
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/note_data_recycler_view"
@@ -33,10 +33,9 @@
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/note_data_list_fab"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/fab_margin"
-            android:transitionName="@string/list_button"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

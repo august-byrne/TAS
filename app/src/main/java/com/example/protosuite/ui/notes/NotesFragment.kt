@@ -5,7 +5,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.doOnPreDraw
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
@@ -18,23 +17,24 @@ import com.example.protosuite.adapters.NoteListener
 import com.example.protosuite.adapters.RecyclerViewFooterAdapter
 import com.example.protosuite.data.db.entities.NoteItem
 import com.example.protosuite.databinding.NotesListBinding
-import com.example.protosuite.ui.MainContentDirections
+import com.example.protosuite.ui.MainContentFragmentDirections
 import com.google.android.material.transition.MaterialElevationScale
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import java.util.*
 
 
-class Notes : Fragment() {
+class NotesFragment : Fragment() {
 
     private var _binding: NotesListBinding? = null
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
 
-    private var _noteAdapter: NoteAdapter? = null
+    //private var _noteAdapter: NoteAdapter? = null
     // This property is only valid between onCreateView and
     // onDestroyView.
-    private val noteAdapter get() = _noteAdapter!!
+    //private val noteAdapter get() = _noteAdapter!!
+    private lateinit var noteAdapter: NoteAdapter
 
     private lateinit var reference: RecyclerView.AdapterDataObserver
 
@@ -48,7 +48,6 @@ class Notes : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        Log.d("DB_Save", "onCreateView has been called")
         //binding = DataBindingUtil.inflate(inflater, R.layout.notes_list, container, false)
         _binding = NotesListBinding.inflate(inflater, container, false)
         val view = binding.root
@@ -56,56 +55,43 @@ class Notes : Fragment() {
         binding.mainFab.setOnClickListener { fabView: View ->
             exitTransition = MaterialElevationScale(false).apply {
                 duration = resources.getInteger(R.integer.reply_motion_duration_large).toLong()
-                excludeChildren(fabView, true)
             }
             reenterTransition = MaterialElevationScale(true).apply {
                 duration = resources.getInteger(R.integer.reply_motion_duration_large).toLong()
-                excludeChildren(fabView, true)
             }
             val extras =
                 FragmentNavigatorExtras(fabView to getString(R.string.note_detail_transition_name))
-            val directions = MainContentDirections.actionMainContentToNoteData()
+            val directions = MainContentFragmentDirections.actionMainContentToNoteData()
             findNavController().navigate(directions, extras)
         }
 
         // To use the View Model with data binding, you have to explicitly
         // give the binding object a reference to it.
-        binding.noteViewModel = myViewModel
+            //binding.noteViewModel = myViewModel
 
-        _noteAdapter = NoteAdapter(NoteListener { noteId, view ->
-            myViewModel.onNoteClicked(noteId, view)
+        noteAdapter = NoteAdapter(NoteListener { noteId, noteView ->
+            //myViewModel.onNoteClicked(noteId)
+            /*
+            exitTransition = MaterialElevationScale(false).apply {
+                duration =
+                    resources.getInteger(R.integer.reply_motion_duration_large).toLong()
+                //excludeTarget(noteView, true)
+            }
+            reenterTransition = MaterialElevationScale(true).apply {
+                duration =
+                    resources.getInteger(R.integer.reply_motion_duration_large).toLong()
+                //excludeTarget(noteView, true)
+            }
+             */
+            val extras =
+                FragmentNavigatorExtras(noteView to getString(R.string.note_detail_transition_name))
+            // The 'view' is the card view that was clicked to initiate the transition.
+            val directions = MainContentFragmentDirections.actionMainContentToNoteData(noteId)
+            findNavController().navigate(directions)//, extras)
         })
-
-        val footerAdapter = RecyclerViewFooterAdapter()
-        val adapter = ConcatAdapter(noteAdapter, footerAdapter)
 
         binding.recyclerView.setHasFixedSize(true)
-        binding.recyclerView.adapter = adapter
-
-        myViewModel.navigateToNoteEditor.observe(viewLifecycleOwner, { NoteId ->
-            NoteId?.let {
-                myViewModel.noteView.observe(viewLifecycleOwner, { View ->
-                    View?.let {
-                        exitTransition = MaterialElevationScale(false).apply {
-                            duration =
-                                resources.getInteger(R.integer.reply_motion_duration_large).toLong()
-                            //excludeChildren(View, true)
-                        }
-                        reenterTransition = MaterialElevationScale(true).apply {
-                            duration =
-                                resources.getInteger(R.integer.reply_motion_duration_large).toLong()
-                            //excludeChildren(View, true)
-                        }
-                        val extras =
-                            FragmentNavigatorExtras(View to getString(R.string.note_detail_transition_name))
-                        // The 'view' is the card view that was clicked to initiate the transition.
-                        val directions = MainContentDirections.actionMainContentToNoteData(NoteId)
-                        findNavController().navigate(directions, extras)
-                        myViewModel.onNoteNavigated()
-                    }
-                })
-            }
-        })
+        binding.recyclerView.adapter = ConcatAdapter(noteAdapter, RecyclerViewFooterAdapter())
 
         var dataRefreshes = 0
         myViewModel.allNotes.observe(viewLifecycleOwner, {
@@ -121,7 +107,7 @@ class Notes : Fragment() {
             }
         })
 
-        //val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(noteAdapter)
+        //could also use SimpleItemTouchHelper()
         ItemTouchHelper(object : ItemTouchHelper.Callback() {
             override fun isLongPressDragEnabled(): Boolean {
                 return true
@@ -170,9 +156,6 @@ class Notes : Fragment() {
                 viewHolder: RecyclerView.ViewHolder
             ) {
                 viewHolder.itemView.animate().alpha(1f).scaleX(1f).scaleY(1f).translationZ(0f)
-                    .withEndAction {
-                        //myViewModel.updateNoteItems(mutableNoteList)
-                    }
                 super.clearView(recyclerView, viewHolder)
             }
 
@@ -198,19 +181,10 @@ class Notes : Fragment() {
         return view
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        postponeEnterTransition()
-        view.doOnPreDraw {
-            startPostponedEnterTransition()
-        }
-        super.onViewCreated(view, savedInstanceState)
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
         myViewModel.updateNoteItemOrderInDatabase(mutableNoteList)
         noteAdapter.unregisterAdapterDataObserver(reference)
-        _noteAdapter = null
         _binding = null
     }
 }

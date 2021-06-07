@@ -54,23 +54,8 @@ class NoteAdapter(private val clickListener: NoteListener): ListAdapter<NoteItem
         ) //0 to 9
 
         fun bind(item: NoteItem, clickListener: NoteListener) {
-            binding.dragDropImage.setBackgroundResource(pastelColorArray[if(item.creation_date!!.get(Calendar.SECOND)/6 < 10){
-                item.creation_date.get(Calendar.SECOND)/6
-            }else{
-                9
-            }])
-
+            binding.dragDropImage.setBackgroundResource(pastelColorArray[item.creation_date!!.get(Calendar.SECOND)%10])
             binding.noteOrder.text = item.order.toString()
-            //binding.noteItemFull.transitionName = item.id.toString()
-/*
-            binding.noteItemFull.setBackgroundColor(   //dragDropImage
-                Color.rgb(
-                    255 - 2 * item.creation_date!!.get(Calendar.DATE),//Random.nextInt(75),
-                    255 - item.creation_date.get(Calendar.MINUTE),
-                    255 - item.creation_date.get(Calendar.SECOND)
-                )
-            )
- */
             binding.noteItem = item
             binding.clickListener = clickListener
             binding.executePendingBindings()

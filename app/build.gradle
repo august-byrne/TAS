@@ -11,6 +11,7 @@ android {
     buildToolsVersion "30.0.2"
     buildFeatures {
         dataBinding true
+        //viewBinding true
     }
     defaultConfig {
         applicationId "com.example.protosuite"
@@ -40,6 +41,7 @@ android {
 dependencies {
     def room_version = "2.4.0-alpha02"
     def nav_version = "2.3.5"
+    def fragment_version = "1.3.4"
     def koin_version = "2.2.2"
     implementation fileTree(include: ['*.jar'], dir: 'libs')
         //implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
@@ -50,23 +52,22 @@ dependencies {
     implementation 'androidx.viewpager2:viewpager2:1.0.0'
     implementation 'com.google.android.gms:play-services-ads:20.1.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
-    implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
 
-    implementation "androidx.window:window:1.0.0-alpha06"
+    //Fragments
+    //Kotlin
+    implementation "androidx.fragment:fragment-ktx:$fragment_version"
 
-    //recycler view
-    implementation "androidx.recyclerview:recyclerview:1.2.0"
+    //idk
+    implementation "androidx.window:window:1.0.0-alpha07"
+
+    //Recycler View
+    implementation "androidx.recyclerview:recyclerview:1.2.1"
     // For control over item selection of both touch and mouse driven selection
     implementation "androidx.recyclerview:recyclerview-selection:1.1.0"
-    
-    //ads
-    implementation 'com.google.firebase:firebase-ads:20.1.0'
-    implementation 'com.google.firebase:firebase-analytics:19.0.0'
-    implementation 'com.google.firebase:firebase-auth:21.0.1'
 
     //Lifecycle
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1'
+    implementation 'androidx.lifecycle:lifecycle-livedata-core-ktx:2.3.1'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
 
     // Room Component
@@ -74,7 +75,6 @@ dependencies {
     kapt "androidx.room:room-compiler:$room_version" // For Kotlin use kapt instead of annotationProcessor
     // optional - Kotlin Extensions and Coroutines support for Room
     implementation "androidx.room:room-ktx:$room_version"
-
 
     //Navigation Component
     // Kotlin

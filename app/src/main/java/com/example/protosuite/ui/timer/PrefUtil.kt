@@ -31,13 +31,13 @@ object PrefUtil{
 
     private const val TIMER_STATE_ID = "com.example.protosuite.timer_state"
 
-    fun getTimerState(context: Context): Timer.TimerState{
+    fun getTimerState(context: Context): TimerFragment.TimerState{
         val preferences = PreferenceManager.getDefaultSharedPreferences(context)
         val ordinal = preferences.getInt(TIMER_STATE_ID, 0)
-        return Timer.TimerState.values()[ordinal]
+        return TimerFragment.TimerState.values()[ordinal]
     }
 
-    fun setTimerState(state: Timer.TimerState, context: Context){
+    fun setTimerState(state: TimerFragment.TimerState, context: Context){
         val editor = PreferenceManager.getDefaultSharedPreferences(context).edit()
         val ordinal = state.ordinal
         editor.putInt(TIMER_STATE_ID, ordinal)

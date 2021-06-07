@@ -19,10 +19,9 @@
             </intent-filter>
         </activity>
         <!-- Sample AdMob App ID: ca-app-pub-3940256099942544~3347511713 -->
-        <!-- Real AdMob App ID: ca-app-pub-1844692913207088~1873000703 -->
         <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-1844692913207088~1873000703" />
+            android:name="@string/google_ads_name"
+            android:value="@string/google_ads_id" />
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />

@@ -2,7 +2,6 @@ package com.example.protosuite.adapters
 
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -41,9 +40,9 @@ class NoteDataAdapter(private val clickListener: DataListener, private var tempD
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+
         holder.activityTextListener.updatePosition(holder.bindingAdapterPosition)
         holder.timeTextListener.updatePosition(holder.bindingAdapterPosition)
-        Log.d("flicker bug", "onBindViewHolder bind gets item at position $position")
         holder.bind(getItem(position)!!, clickListener)
     }
 

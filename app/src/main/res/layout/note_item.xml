@@ -10,84 +10,125 @@
         <variable
             name="clickListener"
             type="com.example.protosuite.adapters.NoteListener" />
+        <variable
+            name="sdf"
+            type="java.text.SimpleDateFormat" />
     </data>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/note_item_full"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:layout_marginStart="4dp"
         android:layout_marginEnd="4dp"
-        android:elevation="2dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:transitionGroup="true"
+        android:transitionName="@{@string/note_transition_name(noteItem.id)}"
         android:onClick="@{(view) -> clickListener.onClick(noteItem,view)}"
-        android:background="@drawable/rounded_corners"
-        android:transitionName="@{@string/note_transition_name(noteItem.id)}">
+        android:backgroundTint="@color/secondaryUltraLightColorVariant"
+        app:cardCornerRadius="8dp">
 
-        <TextView
-            android:id="@+id/drag_drop_image"
-            android:layout_width="4dp"
-            android:layout_height="0dp"
-            android:elevation="2dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:srcCompat="@drawable/ic_baseline_drag_indicator_24" />
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-        <ImageView
-            android:id="@+id/play_image"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="4dp"
-            android:contentDescription="TODO"
-            android:onClick="@{() -> null}"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_baseline_play_arrow_24" />
+            <TextView
+                android:id="@+id/drag_drop_image"
+                android:layout_width="4dp"
+                android:layout_height="0dp"
+                android:elevation="2dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:srcCompat="@drawable/ic_baseline_drag_indicator_24" />
 
-        <TextView
-            android:id="@+id/note_item_description"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:fontFamily="@font/roboto"
-            android:hint="Description is empty"
-            android:maxLines="3"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp"
-            android:paddingBottom="4dp"
-            android:text="@{noteItem.description}"
-            android:textSize="16sp"
-            android:transitionName="@{@string/note_description_TN(noteItem.id)}"
-            app:layout_constraintEnd_toStartOf="@+id/play_image"
-            app:layout_constraintStart_toEndOf="@+id/drag_drop_image"
-            app:layout_constraintTop_toBottomOf="@+id/note_item_title" />
+            <Button
+                android:id="@+id/start_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="8dp"
+                android:text="Start"
+                android:onClick="@{() -> null}"
+                android:textColor="#00EED2"
+                app:strokeColor="@color/analogousColor"
+                app:iconTint="@color/analogousColor"
+                app:icon="@drawable/ic_baseline_play_arrow_24"
+                app:iconGravity="end"
+                app:shapeAppearance="@style/ShapeAppearance.App.SmallComponent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon" />
 
-        <TextView
-            android:id="@+id/note_item_title"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:fontFamily="@font/noto_sans"
-            android:hint="Title is empty"
-            android:maxLines="2"
-            android:padding="4dp"
-            android:text="@{noteItem.title}"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@+id/play_image"
-            app:layout_constraintStart_toEndOf="@+id/drag_drop_image"
-            app:layout_constraintTop_toTopOf="parent" />
+            <TextView
+                android:id="@+id/note_item_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="@font/noto_sans"
+                android:hint="Title is empty"
+                android:maxLines="1"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="8dp"
+                android:text="@{noteItem.title}"
+                android:textColor="@android:color/black"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toStartOf="@+id/start_button"
+                app:layout_constraintStart_toEndOf="@+id/drag_drop_image"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="Title" />
 
-        <TextView
-            android:id="@+id/note_order"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:layout_marginBottom="8dp"
-            android:text=""
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            <TextView
+                android:id="@+id/note_item_timedate"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="@font/noto_sans"
+                android:hint="Time and Date"
+                android:maxLines="1"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:text="@{noteItem.last_edited_on != null ? (sdf.getDateTimeInstance().format(noteItem.last_edited_on.time)): null}"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toStartOf="@+id/start_button"
+                app:layout_constraintStart_toEndOf="@+id/drag_drop_image"
+                app:layout_constraintTop_toBottomOf="@+id/note_item_title"
+                tools:text="Time/Date" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            <TextView
+                android:id="@+id/note_item_description"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="@font/roboto"
+                android:hint="Description is empty"
+                android:maxLines="2"
+                android:paddingTop="4dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="8dp"
+                android:text="@{noteItem.description}"
+                android:textSize="16sp"
+                app:layout_constraintEnd_toStartOf="@+id/start_button"
+                app:layout_constraintStart_toEndOf="@+id/drag_drop_image"
+                app:layout_constraintTop_toBottomOf="@+id/note_item_timedate"
+                tools:text="Description" />
+
+            <TextView
+                android:id="@+id/note_order"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_marginBottom="8dp"
+                android:text=""
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.card.MaterialCardView>
 </layout>

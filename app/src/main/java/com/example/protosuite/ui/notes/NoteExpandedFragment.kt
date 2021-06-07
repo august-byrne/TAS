@@ -10,13 +10,13 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ConcatAdapter
-import androidx.transition.Fade
+import androidx.transition.Slide
 import com.example.protosuite.R
 import com.example.protosuite.adapters.*
 import com.example.protosuite.data.db.entities.DataItem
 import com.example.protosuite.data.db.entities.NoteItem
 import com.example.protosuite.databinding.NoteDataBinding
-import com.example.protosuite.ui.MainContentArgs
+import com.example.protosuite.ui.MainContentFragmentArgs
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.transition.MaterialContainerTransform
@@ -24,22 +24,20 @@ import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import java.util.*
 
 
-class NoteData: Fragment() {
+class NoteExpandedFragment: Fragment() {
 
     private var _binding: NoteDataBinding? = null
-
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
 
-    private lateinit var arguments: MainContentArgs
+    private lateinit var arguments: MainContentFragmentArgs
 
     private val myViewModel: NoteViewModel by sharedViewModel()
 
-    //private val newNote: NoteItem = NoteItem(0, Calendar.getInstance(), null, 0, "", "")
-    private var delete: Int = 0
+    private var deleteNote: Boolean = false
 
-    private lateinit var noteDataListCopy: MutableList<DataItem>
+    private val noteDataListCopy: MutableList<DataItem> = mutableListOf()
 
     private lateinit var lazyNote: NoteItem
 
@@ -56,15 +54,13 @@ class NoteData: Fragment() {
     ): View? {
 
         //get the arguments passed from the previous fragment
-        arguments = MainContentArgs.fromBundle(requireArguments())
+        arguments = MainContentFragmentArgs.fromBundle(requireArguments())
 
         //binding = DataBindingUtil.inflate(inflater, R.layout.note_data, container, false)
         _binding = NoteDataBinding.inflate(inflater, container, false)
         val view = binding.root
 
-        binding.noteViewModel = myViewModel
-
-        val footerAdapter = RecyclerViewFooterAdapter()
+            //binding.noteViewModel = myViewModel
 
         binding.noteDataRecyclerView.setHasFixedSize(true)
         //binding.noteDataRecyclerView.setItemViewCacheSize(100)    //TODO: Get non-cached NoteDataAdapter List to be draggable
@@ -75,10 +71,32 @@ class NoteData: Fragment() {
 
         //show the toolbar text box for the note title, and initialize it for use
         toolbarTextBoxLayout = requireActivity().findViewById(R.id.note_text_box_activity_main)
-        fadein()
+        toolbarTextBoxLayout.apply {
+            //visible but fully transparent during the animation.
+            alpha = 0f
+            visibility = View.VISIBLE
+            // Animate the content view to 100% opacity, and clear any animation
+            // listener set on the view.
+            animate().alpha(1f)
+                .setDuration(resources.getInteger(R.integer.reply_motion_duration_large).toLong())
+                .setListener(null)
+        }
         toolbarTextBox = requireActivity().findViewById(R.id.note_title_activity_main)
 
-        //are we loading a note, or making a new one?
+        val noteItemAdapter = NoteDataAdapter(DataListener { itemId, view ->
+            //myViewModel.onNoteClicked(itemId, view)
+            //TODO: Implement timer here
+
+
+
+        }, noteDataListCopy)
+        binding.noteDataListFab.setOnClickListener {
+            noteDataListCopy.add(DataItem(0, lazyNote.id, 0, "", 0, 0))
+            noteItemAdapter.submitList(noteDataListCopy)
+            noteItemAdapter.onItemInserted(noteDataListCopy.size + 1) //(noteItemAdapter.itemCount+1)
+        }
+
+        //checking to see if we are loading a note or making a new one
         if (arguments.noteId != 0) {
             myViewModel.getNoteWithItemsById(arguments.noteId).observe(viewLifecycleOwner, {
                 it?.let {
@@ -87,18 +105,11 @@ class NoteData: Fragment() {
                     toolbarTextBox.setText(it.note.title)
                     headerAdapter =
                         RecyclerViewHeaderAdapter(it.note) //use lazynote only after initializing it
-                    noteDataListCopy = it.dataItems.toMutableList()
-                    val noteItemAdapter = NoteDataAdapter(DataListener { itemId, view ->
-                        myViewModel.onNoteClicked(itemId, view)
-                    }, noteDataListCopy)
-                    binding.noteDataListFab.setOnClickListener {
-                        noteDataListCopy.add(DataItem(0, lazyNote.id, 0, "", 0, 0))
-                        noteItemAdapter.submitList(noteDataListCopy)
-                        noteItemAdapter.onItemInserted(noteDataListCopy.size + 1) //(noteItemAdapter.itemCount+1)
-                    }
+                    noteDataListCopy.clear()
+                    noteDataListCopy.addAll(it.dataItems.toMutableList())
                     //myViewModel.refreshNoteDataList(it.dataItems)
                     noteItemAdapter.submitList(noteDataListCopy)
-                    concatAdapter = ConcatAdapter(headerAdapter, noteItemAdapter, footerAdapter)
+                    concatAdapter = ConcatAdapter(headerAdapter, noteItemAdapter, RecyclerViewFooterAdapter())
                     binding.noteDataRecyclerView.adapter = concatAdapter
                 }
             })
@@ -106,26 +117,13 @@ class NoteData: Fragment() {
             Log.d("DB_Save", "size of list is ${myViewModel.noteListSize}")
             lazyNote = NoteItem(0, Calendar.getInstance(), null, myViewModel.noteListSize, "", "")
             toolbarTextBox.setText("")
-            noteDataListCopy = mutableListOf()
-            headerAdapter =
-                RecyclerViewHeaderAdapter(lazyNote) //use lazynote only after initializing it
-            val noteItemAdapter = NoteDataAdapter(DataListener { itemId, view ->
-                myViewModel.onNoteClicked(itemId, view)
-            }, noteDataListCopy)
-            binding.noteDataListFab.setOnClickListener {
-                noteDataListCopy.add(DataItem(0, lazyNote.id, 0, "", 0, 0))
-                noteItemAdapter.submitList(noteDataListCopy)
-                noteItemAdapter.onItemInserted(noteDataListCopy.size + 1) //(noteItemAdapter.itemCount+1)
-            }
-            concatAdapter = ConcatAdapter(
-                headerAdapter,
-                noteItemAdapter,
-                footerAdapter
-            )
+            headerAdapter = RecyclerViewHeaderAdapter(lazyNote) //use lazynote only after initializing it
+            noteItemAdapter.submitList(noteDataListCopy)
+            concatAdapter = ConcatAdapter(headerAdapter, noteItemAdapter, RecyclerViewFooterAdapter())
             binding.noteDataRecyclerView.adapter = concatAdapter
-
-            sharedElementReturnTransition = Fade()
         }
+
+        sharedElementReturnTransition = Slide() //or can use Fade()
 
         setHasOptionsMenu(true)
 
@@ -133,13 +131,12 @@ class NoteData: Fragment() {
     }
 
     override fun onDestroyView() {
-        if (delete == 0) {
-            upsertNote()
-        } else {
+        if (deleteNote) {
             myViewModel.deleteNote(arguments.noteId)
+        } else {
+            upsertNote()
         }
         requireActivity().findViewById<MaterialToolbar>(R.id.toolbar).setOnClickListener(null)
-
         super.onDestroyView()
         _binding = null
     }
@@ -177,7 +174,7 @@ class NoteData: Fragment() {
             }
             R.id.delete_note -> {
                 // Handle delete note item press
-                delete = 1
+                deleteNote = true
                 findNavController().navigateUp()
                 Toast.makeText(context, "Note ${arguments.noteId} was deleted", Toast.LENGTH_LONG)
                     .show()
@@ -196,7 +193,7 @@ class NoteData: Fragment() {
         )
 
         if (newTitle.isEmpty() && newDescription.isEmpty() && noteDataListCopy.isEmpty()) {
-            if (MainContentArgs.fromBundle(requireArguments()).noteId == 0) {
+            if (arguments.noteId == 0) {
                 Toast.makeText(context, "Didn't save blank note", Toast.LENGTH_SHORT).show()
             } else {
                 myViewModel.deleteNote(arguments.noteId)
@@ -213,22 +210,7 @@ class NoteData: Fragment() {
             )
             myViewModel.upsertNoteAndData(note, noteDataListCopy)
         }
-        //TODO: upsert all of the note data items ----> DONE YOOOOOO HAHAHAHHA
+        //TODO: upsert all of the note data items ----> DONE!!!
     }
 
-    private fun fadein() {
-        toolbarTextBoxLayout.apply {
-            // Set the content view to 0% opacity but visible, so that it is visible
-            // (but fully transparent) during the animation.
-            alpha = 0f
-            visibility = View.VISIBLE
-
-            // Animate the content view to 100% opacity, and clear any animation
-            // listener set on the view.
-            animate()
-                .alpha(1f)
-                .setDuration(resources.getInteger(R.integer.reply_motion_duration_large).toLong())
-                .setListener(null)
-        }
-    }
 }

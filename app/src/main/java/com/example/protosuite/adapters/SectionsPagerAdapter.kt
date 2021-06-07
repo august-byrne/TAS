@@ -6,8 +6,8 @@ import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Lifecycle
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.example.protosuite.ui.Sleep
-import com.example.protosuite.ui.notes.Notes
-import com.example.protosuite.ui.timer.Timer
+import com.example.protosuite.ui.notes.NotesFragment
+import com.example.protosuite.ui.timer.TimerFragment
 
 /**
  * A [FragmentStateAdapter] that returns a fragment corresponding to
@@ -17,8 +17,8 @@ class SectionsPagerAdapter(@NonNull fragmentManager: FragmentManager, @NonNull l
     FragmentStateAdapter(fragmentManager, lifecycle){
 
     private var fragments:ArrayList<Fragment> = arrayListOf(
-        Notes(),
-        Timer(),
+        NotesFragment(),
+        TimerFragment(),
         Sleep()
     )
 
