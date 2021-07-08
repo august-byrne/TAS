@@ -1,16 +1,27 @@
 package com.example.protosuite.ui.notes
 
+import android.content.Context
+import android.os.CountDownTimer
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.protosuite.data.db.entities.DataItem
 import com.example.protosuite.data.db.entities.NoteItem
 import com.example.protosuite.data.db.entities.NoteWithItems
 import com.example.protosuite.data.repositories.NoteRepository
+import com.example.protosuite.ui.timer.PrefUtil
+import com.example.protosuite.ui.timer.TimerState
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-open class NoteViewModel (private val repo: NoteRepository): ViewModel() {
+@HiltViewModel
+class NoteViewModel @Inject constructor(
+    private val repo: NoteRepository
+): ViewModel() {
     /*
     var noteDataId: Long = 0
     fun upsert(item: NoteItem) = CoroutineScope(Dispatchers.Main).launch {
@@ -24,7 +35,6 @@ open class NoteViewModel (private val repo: NoteRepository): ViewModel() {
         CoroutineScope(Dispatchers.Main).launch {
             if (noteItem.id == 0) {
                 val noteDataId = repo.upsert(noteItem)
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
                     dataItems.replaceAll { dataItem ->
                         dataItem.copy(
                             id = dataItem.id,
@@ -34,7 +44,6 @@ open class NoteViewModel (private val repo: NoteRepository): ViewModel() {
                             time = dataItem.time
                         )
                     }
-                }
                 repo.upsertData(dataItems)
             } else {
                 repo.upsert(noteItem)
@@ -42,42 +51,30 @@ open class NoteViewModel (private val repo: NoteRepository): ViewModel() {
             }
         }
 
-    //private val tasksEventChannel = Channel<TasksEvent> {  }
-    //val tasksEvent = tasksEventChannel.receiveAsFlow()
-    //private val tasksFlow = combine(
-
-    //)
-    //val tasks = tasksFlow.asLiveData()
-
     fun deleteNote(id: Int) = CoroutineScope(Dispatchers.Main).launch {
         repo.deleteNoteWithData(id)
-        //tasksEventChannel.send(TasksEvent.ShowUndoDeleteTaskMessage(task))
     }
 
-    //sealed class TasksEvent {
-    //    data class ShowUndoDeleteTaskMessage(val task: Task): TasksEvent()
-    //}
-
+/*
     fun updateNoteItems(items: List<NoteItem>) = CoroutineScope(Dispatchers.Main).launch {
         repo.updateNoteItems(items)
     }
+ */
 
     fun updateNoteItemOrderInDatabase(noteListCopy: MutableList<NoteItem>) =
         CoroutineScope(Dispatchers.Main).launch {
-            val reorderedCopy: MutableList<NoteItem> = mutableListOf()
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                reorderedCopy.addAll(noteListCopy)
-                reorderedCopy.replaceAll { noteItem ->
+                noteListCopy.replaceAll { noteItem ->
                     noteItem.copy(
                         id = noteItem.id,
                         creation_date = noteItem.creation_date,
                         last_edited_on = noteItem.last_edited_on,
-                        order = reorderedCopy.lastIndex - reorderedCopy.indexOf(noteItem),
+                        order = noteListCopy.lastIndex - noteListCopy.indexOf(noteItem),
                         title = noteItem.title,
                         description = noteItem.description
                     )
                 }
-            } else {              //TODO: Make a for loop version for lower android apis::: Done, currently UNTESTED
+                repo.updateNoteItems(noteListCopy)
+            /*
                 for (i in 0..noteListCopy.lastIndex) {
                     if (noteListCopy[i].order != noteListCopy.lastIndex - i) {
                         reorderedCopy.add(
@@ -94,8 +91,8 @@ open class NoteViewModel (private val repo: NoteRepository): ViewModel() {
                         reorderedCopy.add(noteListCopy[i])
                     }
                 }
-            }
-            repo.updateNoteItems(reorderedCopy)
+                repo.updateNoteItems(reorderedCopy)
+            */
         }
 
     var allNotes: LiveData<List<NoteItem>> = repo.allNotes
@@ -118,4 +115,66 @@ open class NoteViewModel (private val repo: NoteRepository): ViewModel() {
         _noteListSize = input
     }
 
+    private lateinit var timer: CountDownTimer
+
+    @ExperimentalAnimationApi
+    fun startTimer(timerLength: Long,context: Context) {
+        timer = object: CountDownTimer(timerLength*1000, 1000){
+            override fun onTick(millisUntilFinished: Long) {
+                setTimerLength(millisUntilFinished/1000)
+            }
+            override fun onFinish() {
+                setTimerState(TimerState.Stopped, context)
+                //_timerState.value = TimerState.Stopped
+                setTimerLength(PrefUtil.getPreviousTimerLengthSeconds(context))
+                //set the length of the timer to be the one set in SettingsActivity
+                //if the length was changed when the timer was running
+                //myViewModel.setTimerLength(PrefUtil.getPreviousTimerLengthSeconds())
+
+                //binding.progressBar.progress = 0
+
+                //PrefUtil.setSecondsRemaining(timerLengthSeconds, requireContext())
+                //secondsRemaining = timerLengthSeconds
+            }
+        }.start()
+    }
+
+    @ExperimentalAnimationApi
+    fun stopTimer() {
+        timer.cancel()
+    }
+
+    // LiveData holds state which is observed by the UI
+    // (state flows down from ViewModel)
+    private var _timerLength = MutableLiveData(0L)
+    val timerLength: LiveData<Long> = _timerLength
+
+    // setTimerLength is an event we're defining that the UI can invoke
+    // (events flow up from UI)
+    fun setTimerLength(timerLength: Long) {
+        if (timerLength >= 0) {
+            _timerLength.value = timerLength
+        } else {
+            _timerLength.value = 0
+        }
+    }
+
+    // LiveData holds state which is observed by the UI
+    // (state flows down from ViewModel)
+    private var _timerState = MutableLiveData(TimerState.Stopped)
+    val timerState: LiveData<TimerState> = _timerState
+
+    // setTimerLength is an event we're defining that the UI can invoke
+    // (events flow up from UI)
+    @ExperimentalAnimationApi
+    fun setTimerState(timerState: TimerState, context: Context) {
+        _timerState.value = timerState
+        PrefUtil.setTimerState(timerState,context)
+    }
+
+    // onNameChange is an event we're defining that the UI can invoke
+    // (events flow up from UI)
+    //fun onNameChange(newName: String) {
+        //_name.value = newName
+    //}
 }

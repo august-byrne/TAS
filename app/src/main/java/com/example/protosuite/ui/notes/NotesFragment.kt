@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ConcatAdapter
@@ -19,10 +20,10 @@ import com.example.protosuite.data.db.entities.NoteItem
 import com.example.protosuite.databinding.NotesListBinding
 import com.example.protosuite.ui.MainContentFragmentDirections
 import com.google.android.material.transition.MaterialElevationScale
-import org.koin.androidx.viewmodel.ext.android.sharedViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import java.util.*
 
-
+@AndroidEntryPoint
 class NotesFragment : Fragment() {
 
     private var _binding: NotesListBinding? = null
@@ -30,16 +31,14 @@ class NotesFragment : Fragment() {
     // onDestroyView.
     private val binding get() = _binding!!
 
-    //private var _noteAdapter: NoteAdapter? = null
-    // This property is only valid between onCreateView and
-    // onDestroyView.
-    //private val noteAdapter get() = _noteAdapter!!
     private lateinit var noteAdapter: NoteAdapter
 
     private lateinit var reference: RecyclerView.AdapterDataObserver
 
     // Lazy Inject ViewModel
-    private val myViewModel: NoteViewModel by sharedViewModel()
+    //private val myViewModel: NoteViewModel by sharedViewModel()
+    //private val myViewModel: NoteViewModel by viewModels()
+    private val myViewModel: NoteViewModel by activityViewModels()
 
     private lateinit var mutableNoteList: MutableList<NoteItem>
 
@@ -70,7 +69,7 @@ class NotesFragment : Fragment() {
             //binding.noteViewModel = myViewModel
 
         noteAdapter = NoteAdapter(NoteListener { noteId, noteView ->
-            //myViewModel.onNoteClicked(noteId)
+                //myViewModel.onNoteClicked(noteId)
             /*
             exitTransition = MaterialElevationScale(false).apply {
                 duration =
@@ -97,7 +96,7 @@ class NotesFragment : Fragment() {
         myViewModel.allNotes.observe(viewLifecycleOwner, {
             it?.let {
                 Log.d("flicker bug", "list is size ${it.size}")
-                //myViewModel.refreshNoteList(it)
+                    //myViewModel.refreshNoteList(it)
                 dataRefreshes++
                 mutableNoteList = it.toMutableList()
                 myViewModel.setNoteListSize(it.size)

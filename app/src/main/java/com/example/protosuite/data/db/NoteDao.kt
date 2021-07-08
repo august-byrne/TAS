@@ -37,7 +37,6 @@ interface NoteDao {
         deleteData(key)
     }
 
-
     @Query("SELECT * FROM note_table ORDER BY `order` DESC")
     fun getAllNotes(): LiveData<List<NoteItem>>
 

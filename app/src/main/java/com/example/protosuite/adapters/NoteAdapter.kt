@@ -51,7 +51,7 @@ class NoteAdapter(private val clickListener: NoteListener): ListAdapter<NoteItem
             R.color.green_mid,
             R.color.pink_high,
             R.color.grey
-        ) //0 to 9
+        )
 
         fun bind(item: NoteItem, clickListener: NoteListener) {
             binding.dragDropImage.setBackgroundResource(pastelColorArray[item.creation_date!!.get(Calendar.SECOND)%10])

@@ -1,9 +1,11 @@
 package com.example.protosuite.ui.timer
 
 import android.content.Context
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.preference.PreferenceManager
 
 
+@ExperimentalAnimationApi
 object PrefUtil{
 
     /*
@@ -31,13 +33,14 @@ object PrefUtil{
 
     private const val TIMER_STATE_ID = "com.example.protosuite.timer_state"
 
-    fun getTimerState(context: Context): TimerFragment.TimerState{
+    //All TimerState were originally TimerFragment.TimerState
+    fun getTimerState(context: Context): TimerState{
         val preferences = PreferenceManager.getDefaultSharedPreferences(context)
         val ordinal = preferences.getInt(TIMER_STATE_ID, 0)
-        return TimerFragment.TimerState.values()[ordinal]
+        return TimerState.values()[ordinal]
     }
 
-    fun setTimerState(state: TimerFragment.TimerState, context: Context){
+    fun setTimerState(state: TimerState, context: Context){
         val editor = PreferenceManager.getDefaultSharedPreferences(context).edit()
         val ordinal = state.ordinal
         editor.putInt(TIMER_STATE_ID, ordinal)

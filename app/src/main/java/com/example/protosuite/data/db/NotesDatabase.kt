@@ -1,9 +1,6 @@
 package com.example.protosuite.data.db
 
-import android.content.Context
-
 import androidx.room.Database
-import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.protosuite.data.db.entities.DataItem
@@ -11,12 +8,16 @@ import com.example.protosuite.data.db.entities.NoteItem
 import com.example.protosuite.ui.notes.Converters
 
 // Annotates class to be a Room Database with a table (entity) of the Note class
-@Database(entities = [NoteItem::class, DataItem::class], version = 7, exportSchema = false)
+@Database(
+    entities = [NoteItem::class, DataItem::class],
+    version = 7,
+    exportSchema = false
+)
 @TypeConverters(Converters::class)
 abstract class NotesDatabase : RoomDatabase() {
 
-    abstract val noteDao: NoteDao
-
+    abstract fun noteDao(): NoteDao
+    /*
     companion object {
         // Singleton prevents multiple instances of database opening at the
         // same time.
@@ -24,13 +25,10 @@ abstract class NotesDatabase : RoomDatabase() {
         private var INSTANCE: NotesDatabase? = null
 
         fun getInstance(context: Context): NotesDatabase {
-
             synchronized(this) {
-
                 // Copy the current value of INSTANCE to a local variable so Kotlin can smart cast.
                 // Smart cast is only available to local variables.
                 var instance = INSTANCE
-
                 // If instance is `null` make a new database instance.
                 if (instance == null) {
                     instance = Room.databaseBuilder(
@@ -53,4 +51,5 @@ abstract class NotesDatabase : RoomDatabase() {
             }
         }
     }
+    */
 }

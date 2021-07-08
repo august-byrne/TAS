@@ -92,7 +92,7 @@
                 android:maxLines="1"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp"
-                android:text="@{noteItem.last_edited_on != null ? (sdf.getDateTimeInstance().format(noteItem.last_edited_on.time)): null}"
+                android:text="@{noteItem.creation_date != null ? (sdf.getDateInstance().format(noteItem.creation_date.time)): null}"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 app:layout_constraintEnd_toStartOf="@+id/start_button"

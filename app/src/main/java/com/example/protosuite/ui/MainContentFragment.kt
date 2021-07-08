@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import android.view.*
 import android.view.inputmethod.InputMethodManager
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.core.view.doOnPreDraw
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
@@ -13,13 +14,16 @@ import com.example.protosuite.R
 import com.example.protosuite.adapters.SectionsPagerAdapter
 import com.example.protosuite.databinding.ContentMainBinding
 import com.example.protosuite.ui.timer.PrefUtil
-import com.example.protosuite.ui.timer.TimerFragment
+import com.example.protosuite.ui.timer.TimerState
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.transition.MaterialElevationScale
+import dagger.hilt.android.AndroidEntryPoint
 
 
+@ExperimentalAnimationApi
+@AndroidEntryPoint
 class MainContentFragment : Fragment() {
 
     private var _binding: ContentMainBinding? = null
@@ -57,7 +61,7 @@ class MainContentFragment : Fragment() {
 
         //initialize fab
         binding.fab.setOnClickListener{ fabView ->
-            PrefUtil.setTimerState(TimerFragment.TimerState.Stopped, requireActivity().applicationContext)
+            PrefUtil.setTimerState(TimerState.Stopped, requireActivity().applicationContext)
             Snackbar.make(fabView, "Set TimerState to Stopped", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show()
         }

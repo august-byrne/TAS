@@ -5,8 +5,10 @@ import com.example.protosuite.data.db.NoteDao
 import com.example.protosuite.data.db.entities.DataItem
 import com.example.protosuite.data.db.entities.NoteItem
 import com.example.protosuite.data.db.entities.NoteWithItems
+import javax.inject.Inject
 
-class NoteRepository (private val noteDao: NoteDao) {
+class NoteRepository @Inject constructor(private val noteDao: NoteDao) {
+
     suspend fun upsert(item: NoteItem): Long = noteDao.upsert(item)
     suspend fun upsertData(items: List<DataItem>) = noteDao.upsertData(items)
     suspend fun delete(item: NoteItem) = noteDao.delete(item)
