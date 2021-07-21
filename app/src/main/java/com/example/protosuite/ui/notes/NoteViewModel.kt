@@ -125,16 +125,7 @@ class NoteViewModel @Inject constructor(
             }
             override fun onFinish() {
                 setTimerState(TimerState.Stopped, context)
-                //_timerState.value = TimerState.Stopped
                 setTimerLength(PrefUtil.getPreviousTimerLengthSeconds(context))
-                //set the length of the timer to be the one set in SettingsActivity
-                //if the length was changed when the timer was running
-                //myViewModel.setTimerLength(PrefUtil.getPreviousTimerLengthSeconds())
-
-                //binding.progressBar.progress = 0
-
-                //PrefUtil.setSecondsRemaining(timerLengthSeconds, requireContext())
-                //secondsRemaining = timerLengthSeconds
             }
         }.start()
     }

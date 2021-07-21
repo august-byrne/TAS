@@ -2,7 +2,9 @@ package com.example.protosuite.ui
 
 import android.os.Bundle
 import android.view.MenuItem
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
@@ -14,6 +16,9 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.window.WindowManager
 import com.example.protosuite.R
 import com.example.protosuite.databinding.ActivityMainBinding
+import com.example.protosuite.ui.notes.NoteViewModel
+import com.example.protosuite.ui.timer.PrefUtil
+import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
@@ -29,6 +34,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navController: NavController
     private lateinit var binding: ActivityMainBinding
 
+    // Lazy Inject ViewModel
+    private val myViewModel: NoteViewModel by viewModels()
+
     private val adaptiveAdSize: AdSize
         get() {
             var adWidthPixels = binding.adViewContainer.width.toFloat()
@@ -41,20 +49,18 @@ class MainActivity : AppCompatActivity() {
             return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, adWidth)
         }
 
+    @ExperimentalAnimationApi
+    @ExperimentalPagerApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        //Initialize ViewModel Values
+        myViewModel.setTimerState(PrefUtil.getTimerState(applicationContext), applicationContext)
+        myViewModel.setTimerLength(PrefUtil.getPreviousTimerLengthSeconds(applicationContext))
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
-
-        /*
-        // Start Koin
-        startKoin{
-            androidLogger(Level.ERROR)
-            androidContext(this@MainActivity)
-            modules(notesModule)
-        }
-         */
 
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.my_nav_host_fragment) as NavHostFragment
         navController = navHostFragment.findNavController()
@@ -92,14 +98,6 @@ class MainActivity : AppCompatActivity() {
         return item.onNavDestinationSelected(navController) || super.onOptionsItemSelected(item)
     }
 
-    /** OVERRIDES HERE **/
-    public override fun onStart() {
-        super.onStart()
-        // Check if user is signed in (non-null) and update UI accordingly.
-        //FirebaseUser currentUser = mAuth.getCurrentUser()
-        //updateUI(currentUser)
-    }
-
     /** Called when leaving the activity  */
     public override fun onPause() {
         mAdView.pause()
@@ -115,178 +113,148 @@ class MainActivity : AppCompatActivity() {
     /** Called before the activity is destroyed  */
     public override fun onDestroy() {
         mAdView.destroy()
-        //stopKoin()
         super.onDestroy()
     }
-
-
 }
+
 /*
+//typealias OnExploreItemClicked = (ExploreModel) -> Unit
+
+enum class CraneScreen {
+    Notes, Timer, Calender
+}
+
+@ExperimentalAnimationApi
+@ExperimentalMaterialApi
 @Composable
-fun MainActivityUI() {
-    //val navController = rememberNavController()
-
-    val baseTitle = "" // stringResource(id = R.string.app_name)
-    val (title, setTitle) = remember { mutableStateOf(baseTitle) }
-
-    val (canPop, setCanPop) = remember { mutableStateOf(false) }
-
-    val scaffoldState: ScaffoldState = rememberScaffoldState()
-    val scope = rememberCoroutineScope()
-
-    //navController.addOnDestinationChangedListener { controller, _, _ ->
-    //    setCanPop(controller.previousBackStackEntry != null)
-    //}
-
+fun CraneHome(
+    //onExploreItemClicked: OnExploreItemClicked,
+    //onDateSelectionClicked: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val scaffoldState = rememberScaffoldState()
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(text = "LayoutsCodelab")
-                },
-                navigationIcon = {
-                    if (canPop)
-                    {
-                        IconButton(onClick = {
-                            //navController.popBackStack()
-                        }) {
-                            Icon(
-                                imageVector = Icons.Outlined.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
-                    }
-                    else
-                    {
-                        IconButton(onClick = {
-                            scope.launch {
-                                scaffoldState.drawerState.open()
-                            }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Outlined.Menu,
-                                contentDescription = "Menu"
-                            )
-                        }
-                    }
-                },
-                actions = {
-                    DropdownMenu(
-                        expanded = false,
-                        onDismissRequest = {},
-                        content = {
-                            DropdownMenuItem(onClick = { }) {
-                                Text(text = "Option 1")
-                            }
-                            DropdownMenuItem(onClick = {  }) {
-                                Text(text = "Option 2")
-                            }
-                            DropdownMenuItem(onClick = {  }) {
-                                Text(text = "Settings")
-                            }
-                        }
-                    )
-                }
-            )
-        },
+        scaffoldState = scaffoldState,
+        modifier = Modifier.statusBarsPadding(),
         drawerContent = {
-            Column(modifier = Modifier.padding(0.dp, 0.dp, 0.dp, 58.dp)) {
-                Text(text = "body", fontSize = 32.sp)
-                Text(text = "asdf")
-            }
-        }//,
-        //bodyContent = {
+            CraneDrawer()
+        },
 
-        //}
-    ) { innerPadding ->
-        Column {
-
-            TextTabs()
-
-            //AdView()
-        }
-    }
-}
-
-@Composable
-fun TextTabs() {
-    var tabIndex = 0 //by remember { mutableStateOf(0) }
-    val tabData = listOf("NOTES", "TIMER", "CALENDER")
-    TabRow(selectedTabIndex = tabIndex) {
-        tabData.forEachIndexed { index, text ->
-            Tab(selected = tabIndex == index, onClick = {
-                tabIndex = index
-            }, text = {
-                Text(text = text)
-            })
-        }
-    }
-}
-
-@Composable
-fun AdView() {
-    // Adds view to Compose
-    AndroidView(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight(), // Occupy the max size in the Compose UI tree
-        factory = { context ->
-            var initialLayoutComplete = false
-            // Creates custom view
-            AdView(context).apply {
-                val adWidthPixels =
-                    WindowManager(context).getCurrentWindowMetrics().bounds.width().toFloat()
-                val density = context.resources.displayMetrics.density
-                val adWidth = (adWidthPixels.div(density)).toInt()
-                //return the optimal size depends on your orientation (landscape or portrait)
-                val adaptiveAdSize: AdSize =
-                    AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, adWidth)
-
-                // Sets up listeners for View -> Compose communication
-                //myView.setOnClickListener {
-                //selectedItem.value = 1
-                //}
-
-                //display our adaptively sized ads
-                MobileAds.initialize(context) {}   //initialize the mobile ads sdk
-                //val mAdView = AdView(context)  //create an adview
-                //this.addView(mAdView)    //add the adview into our container for sizing/constraints
-
-                this.viewTreeObserver.addOnGlobalLayoutListener {
-                    if (!initialLayoutComplete) {
-                        initialLayoutComplete = true
-                        //load banner
-                        this.adUnitId = context.getString(R.string.banner_ad_unit_id)
-                        this.adSize = adaptiveAdSize
-                        this.loadAd(AdRequest.Builder().build())
-                    }
+    ) {
+        val scope = rememberCoroutineScope()
+        CraneHomeContent(
+            modifier = modifier,
+            //onExploreItemClicked = onExploreItemClicked,
+            //onDateSelectionClicked = onDateSelectionClicked,
+            openDrawer = {
+                scope.launch {
+                    scaffoldState.drawerState.open()
                 }
             }
-        },
-        update = { view ->
-            // View's been inflated or state read in this block has been updated
-            // Add logic here if necessary
+        )
+    }
+}
 
-            // As selectedItem is read here, AndroidView will recompose
-            // whenever the state changes
-            // Example of Compose -> View communication
-            //view.coordinator.selectedItem = selectedItem.value
+@ExperimentalAnimationApi
+@ExperimentalMaterialApi
+@Composable
+fun CraneHomeContent(
+    //onExploreItemClicked: OnExploreItemClicked,
+    //onDateSelectionClicked: () -> Unit,
+    openDrawer: () -> Unit,
+    modifier: Modifier = Modifier,
+    //viewModel: NoteViewModel = viewModel()
+) {
+    //val suggestedDestinations by viewModel.suggestedDestinations.observeAsState()
+
+    //val onPeopleChanged: (Int) -> Unit = { viewModel.updatePeople(it) }
+    //var tabSelected by remember { mutableStateOf(CraneScreen.Notes) }
+    var tabSelected by remember { mutableStateOf(CraneScreen.Notes) }
+
+    BackdropScaffold(
+        modifier = modifier,
+        scaffoldState = rememberBackdropScaffoldState(BackdropValue.Revealed),
+        frontLayerScrimColor = Color.Transparent,
+        appBar = {
+            HomeTabBar(openDrawer, tabSelected, onTabSelected = { tabSelected = it })
+        },
+        backLayerContent = {
+            //SearchContent(
+            //    tabSelected,
+                //viewModel,
+                //onPeopleChanged,
+                //onDateSelectionClicked,
+                //onExploreItemClicked
+            //)
+        },
+        frontLayerContent = {
+            when (tabSelected) {
+                CraneScreen.Notes -> {
+                    /*
+                    suggestedDestinations?.let { destinations ->
+                        ExploreSection(
+                            title = "Explore Flights by Destination",
+                            exploreList = destinations,
+                            onItemClicked = onExploreItemClicked
+                        )
+                    }
+
+                     */
+                    //NotesFragment()
+                }
+                CraneScreen.Timer -> {
+                    TimerUI()
+                    /*
+                    ExploreSection(
+                        title = "Explore Properties by Destination",
+                        exploreList = viewModel.hotels,
+                        onItemClicked = onExploreItemClicked
+                    )
+
+                     */
+                }
+                CraneScreen.Calender -> {
+                    CalendarUI()
+                    /*
+                    ExploreSection(
+                        title = "Explore Restaurants by Destination",
+                        exploreList = viewModel.restaurants,
+                        onItemClicked = onExploreItemClicked
+                    )
+
+                     */
+                }
+            }
         }
     )
 }
 
-/*
-@Preview
 @Composable
-fun AdViewUIPreview() {
-    AdView()
+private fun HomeTabBar(
+    openDrawer: () -> Unit,
+    tabSelected: CraneScreen,
+    onTabSelected: (CraneScreen) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    CraneTabBar(
+        modifier = modifier,
+        onMenuClicked = openDrawer
+    ) { tabBarModifier ->
+        CraneTabs(
+            modifier = tabBarModifier,
+            titles = CraneScreen.values().map { it.name },
+            tabSelected = tabSelected,
+            onTabSelected = { newTab -> onTabSelected(CraneScreen.values()[newTab.ordinal]) }
+        )
+    }
 }
-*/
 
+@ExperimentalAnimationApi
+@ExperimentalMaterialApi
 @Preview
 @Composable
-fun MainActivityUIPreview() {
-    MainActivityUI()
+fun TestMain(){
+    CraneHome()
 }
+
  */
-

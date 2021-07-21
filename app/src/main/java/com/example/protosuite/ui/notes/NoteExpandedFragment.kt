@@ -13,7 +13,10 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.transition.Slide
 import com.example.protosuite.R
-import com.example.protosuite.adapters.*
+import com.example.protosuite.adapters.DataListener
+import com.example.protosuite.adapters.NoteDataAdapter
+import com.example.protosuite.adapters.RecyclerViewFooterAdapter
+import com.example.protosuite.adapters.RecyclerViewHeaderAdapter
 import com.example.protosuite.data.db.entities.DataItem
 import com.example.protosuite.data.db.entities.NoteItem
 import com.example.protosuite.databinding.NoteDataBinding
@@ -28,15 +31,11 @@ import java.util.*
 class NoteExpandedFragment: Fragment() {
 
     private var _binding: NoteDataBinding? = null
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
+    // This property is only valid between onCreateView and onDestroyView.
     private val binding get() = _binding!!
 
     private lateinit var arguments: MainContentFragmentArgs
 
-    //private val myViewModel: NoteViewModel by sharedViewModel()
-    //private val myViewModel: NoteViewModel by viewModels()
     private val myViewModel: NoteViewModel by activityViewModels()
 
     private var deleteNote: Boolean = false
@@ -56,7 +55,7 @@ class NoteExpandedFragment: Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
 
         //get the arguments passed from the previous fragment
         arguments = MainContentFragmentArgs.fromBundle(requireArguments())
@@ -157,7 +156,7 @@ class NoteExpandedFragment: Fragment() {
             drawingViewId = R.id.my_nav_host_fragment
             duration = resources.getInteger(R.integer.reply_motion_duration_large).toLong()
             scrimColor = Color.TRANSPARENT
-            setAllContainerColors(requireContext().themeColor(R.attr.colorSurface))
+            //setAllContainerColors(requireContext().themeColor(R.attr.colorSurface))
         }
     }
 
@@ -206,15 +205,15 @@ class NoteExpandedFragment: Fragment() {
                 Toast.makeText(context, "Deleted blank note", Toast.LENGTH_SHORT).show()
             }
         } else if (newTitle != lazyNote.title || newDescription != lazyNote.description || noteDataListCopy != noteDataInitialList) {
-                val note = lazyNote.copy(
-                    id = lazyNote.id,
-                    creation_date = lazyNote.creation_date,
-                    last_edited_on = Calendar.getInstance(),
-                    order = lazyNote.order,
-                    title = newTitle,
-                    description = newDescription
-                )
-                myViewModel.upsertNoteAndData(note, noteDataListCopy)
+            val note = lazyNote.copy(
+                id = lazyNote.id,
+                creation_date = lazyNote.creation_date,
+                last_edited_on = Calendar.getInstance(),
+                order = lazyNote.order,
+                title = newTitle,
+                description = newDescription
+            )
+            myViewModel.upsertNoteAndData(note, noteDataListCopy)
         }
     }
 }

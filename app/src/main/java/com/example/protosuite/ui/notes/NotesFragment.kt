@@ -1,34 +1,41 @@
 package com.example.protosuite.ui.notes
 
-import android.os.Bundle
-import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
-import androidx.navigation.fragment.FragmentNavigatorExtras
-import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.ConcatAdapter
-import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.RecyclerView
-import com.example.protosuite.R
-import com.example.protosuite.adapters.NoteAdapter
-import com.example.protosuite.adapters.NoteListener
-import com.example.protosuite.adapters.RecyclerViewFooterAdapter
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavDirections
 import com.example.protosuite.data.db.entities.NoteItem
-import com.example.protosuite.databinding.NotesListBinding
 import com.example.protosuite.ui.MainContentFragmentDirections
-import com.google.android.material.transition.MaterialElevationScale
+import com.example.protosuite.ui.values.blue500
+import com.example.protosuite.ui.values.special400
+import com.example.protosuite.ui.values.yellow100
+import com.example.protosuite.ui.values.yellow50
 import dagger.hilt.android.AndroidEntryPoint
+import java.text.SimpleDateFormat
 import java.util.*
 
 @AndroidEntryPoint
 class NotesFragment : Fragment() {
-
+/*
     private var _binding: NotesListBinding? = null
-    // This property is only valid between onCreateView and
-    // onDestroyView.
+    // This property is only valid between onCreateView and onDestroyView.
     private val binding get() = _binding!!
 
     private lateinit var noteAdapter: NoteAdapter
@@ -36,8 +43,6 @@ class NotesFragment : Fragment() {
     private lateinit var reference: RecyclerView.AdapterDataObserver
 
     // Lazy Inject ViewModel
-    //private val myViewModel: NoteViewModel by sharedViewModel()
-    //private val myViewModel: NoteViewModel by viewModels()
     private val myViewModel: NoteViewModel by activityViewModels()
 
     private lateinit var mutableNoteList: MutableList<NoteItem>
@@ -46,7 +51,7 @@ class NotesFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         //binding = DataBindingUtil.inflate(inflater, R.layout.notes_list, container, false)
         _binding = NotesListBinding.inflate(inflater, container, false)
         val view = binding.root
@@ -186,4 +191,130 @@ class NotesFragment : Fragment() {
         noteAdapter.unregisterAdapterDataObserver(reference)
         _binding = null
     }
+
+ */
+}
+
+@Composable
+fun NoteListUI(myViewModel: NoteViewModel = viewModel(),onNavigate: (NavDirections) -> Unit) {
+    val notes: List<NoteItem> by myViewModel.allNotes.observeAsState(listOf())
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(yellow50),
+        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        items(notes) { note ->
+            NoteItemUI(
+                note,
+                {
+                    val directions =
+                        MainContentFragmentDirections.actionMainContentToNoteData(note.id)
+                    onNavigate(directions)
+                },
+                {}
+            )
+        }
+        item {
+            Spacer(modifier = Modifier.size(80.dp))
+        }
+    }
+    Column(
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.Bottom,
+        horizontalAlignment = Alignment.End
+    ) {
+        FloatingActionButton(
+            onClick = {
+                val directions =
+                    MainContentFragmentDirections.actionMainContentToNoteData(0)
+                onNavigate(directions)
+            },
+            shape = RoundedCornerShape(
+                topStart = 16.dp
+            ),
+            backgroundColor = blue500
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "New Note"
+            )
+        }
+    }
+}
+
+@Composable
+fun NoteItemUI (
+    note: NoteItem,
+    onClick: () -> Unit,
+    onClickStart: () -> Unit
+    ) {
+    //val creationDate = if (note.creation_date != null) (SimpleDateFormat.getDateInstance().format(note.creation_date.time)) else ""
+    val creationDate = SimpleDateFormat.getDateInstance().format(note.creation_date!!.time)
+    Card(
+        shape = MaterialTheme.shapes.small,
+        modifier = Modifier
+            .padding(6.dp)
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        elevation = 4.dp,
+        backgroundColor = yellow100
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(
+                modifier = Modifier.wrapContentHeight(),
+                verticalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Text(
+                    style = MaterialTheme.typography.h6,
+                    text = note.title
+                )
+                Text(
+                    style = MaterialTheme.typography.body1,
+                    text = creationDate
+                )
+                Text(
+                    style = MaterialTheme.typography.body2,
+                    text = note.description
+                )
+            }
+            TextButton(
+                border = BorderStroke(1.dp, special400),
+                shape = MaterialTheme.shapes.small,
+                onClick = onClickStart
+            ) {
+                Text(
+                    color = special400,
+                    text = "Start"
+                )
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    tint = special400,
+                    contentDescription = "Play"
+                )
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun NoteItemUITest() {
+    val note = NoteItem(
+        id = 1,
+        title = "Title",
+        description = "Description",
+        order = 1,
+        last_edited_on = Calendar.getInstance(),
+        creation_date = Calendar.getInstance()
+    )
+    NoteItemUI(note,{},{})
 }

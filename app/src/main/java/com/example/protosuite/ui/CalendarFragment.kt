@@ -22,7 +22,7 @@ class CalendarFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         return ComposeView(requireContext()).apply {
             setContent {
                 CalendarUI()
@@ -32,7 +32,7 @@ class CalendarFragment : Fragment() {
 }
 
 @Composable
-private fun CalendarUI(){
+fun CalendarUI(){
     NotesTheme(darkTheme = false) {
         Column(
             modifier = Modifier
@@ -55,6 +55,6 @@ private fun CalendarUI(){
 
 @Preview
 @Composable
-fun CalendarUITest(){
+private fun CalendarUITest(){
     CalendarUI()
 }
