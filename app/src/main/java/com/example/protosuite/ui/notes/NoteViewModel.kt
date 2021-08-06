@@ -2,7 +2,11 @@ package com.example.protosuite.ui.notes
 
 import android.content.Context
 import android.os.CountDownTimer
+import android.util.Log
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -16,21 +20,28 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.text.DateFormat
+import java.text.SimpleDateFormat
 import javax.inject.Inject
 
 @HiltViewModel
 class NoteViewModel @Inject constructor(
     private val repo: NoteRepository
 ): ViewModel() {
-    /*
+
     var noteDataId: Long = 0
-    fun upsert(item: NoteItem) = CoroutineScope(Dispatchers.Main).launch {
-        noteDataId = repo.upsert(item)
+    fun upsert(item: NoteItem?) = CoroutineScope(Dispatchers.Main).launch {
+        if(item != null) {
+            noteDataId = repo.upsert(item)
+        } else {
+            Log.d("DB Interactions", "upsert failed: item was null")
+        }
     }
+
     fun upsertData(items: List<DataItem>) = CoroutineScope(Dispatchers.Main).launch {
         repo.upsertData(items)
     }
-    */
+
     fun upsertNoteAndData(noteItem: NoteItem, dataItems: MutableList<DataItem>) =
         CoroutineScope(Dispatchers.Main).launch {
             if (noteItem.id == 0) {
@@ -99,6 +110,13 @@ class NoteViewModel @Inject constructor(
 
     fun getNoteWithItemsById(id: Int): LiveData<NoteWithItems> = repo.getNoteWithItemsById(id)
 
+    var beginTyping by mutableStateOf(false)
+    var currentNoteTitle by mutableStateOf("")
+    var currentNoteDescription by mutableStateOf("")
+
+    var openSortPopup by mutableStateOf(false)
+    var sortType by mutableStateOf(0)
+
     private var _newLaunch: Boolean = true
     val newLaunch
         get() = _newLaunch
@@ -114,6 +132,8 @@ class NoteViewModel @Inject constructor(
     fun setNoteListSize(input: Int) {
         _noteListSize = input
     }
+
+    val simpleDateFormat: DateFormat = SimpleDateFormat.getDateInstance()
 
     private lateinit var timer: CountDownTimer
 

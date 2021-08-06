@@ -59,7 +59,7 @@
                 </com.google.android.material.appbar.MaterialToolbar>
 
             </com.google.android.material.appbar.AppBarLayout>
-
+<!--
             <androidx.fragment.app.FragmentContainerView
                 android:id="@+id/my_nav_host_fragment"
                 android:name="androidx.navigation.fragment.NavHostFragment"
@@ -71,7 +71,7 @@
                 app:layout_constraintTop_toBottomOf="@id/toolbarSpace"
                 app:defaultNavHost="true"
                 app:navGraph="@navigation/navigation" />
-
+-->
             <FrameLayout
                 android:id="@+id/ad_view_container"
                 android:layout_width="0dp"

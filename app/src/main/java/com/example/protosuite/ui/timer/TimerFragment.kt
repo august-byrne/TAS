@@ -31,7 +31,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.protosuite.ui.notes.NoteViewModel
 import com.example.protosuite.ui.values.NotesTheme
 import com.example.protosuite.ui.values.yellow50
@@ -135,11 +134,9 @@ class TimerFragment : Fragment() {
 
         return view
          */
-        myViewModel.setTimerState(PrefUtil.getTimerState(requireContext()), requireContext())
-        myViewModel.setTimerLength(PrefUtil.getPreviousTimerLengthSeconds(requireContext()))
         return ComposeView(requireContext()).apply {
             setContent {
-                TimerUI()
+                //TimerUI()
             }
         }
     }
@@ -324,7 +321,7 @@ fun removeAlarm(context: Context) {
 // on TimerState.Stopped, nothing, Paused, return value to timer, running, create time left value and start countdown timer
 @ExperimentalAnimationApi
 @Composable
-fun TimerUI(myViewModel: NoteViewModel = viewModel()) {
+fun TimerUI(myViewModel: NoteViewModel) {
     val timerLength: Long by myViewModel.timerLength.observeAsState(0)
     val timerState: TimerState by myViewModel.timerState.observeAsState(TimerState.Stopped)
     val hour = timerLength.div(60*60)
@@ -363,7 +360,7 @@ fun TimerUI(myViewModel: NoteViewModel = viewModel()) {
 @Preview
 @Composable
 private fun TimerUITest() {
-    TimerUI()
+    //TimerUI()
 }
 
 @ExperimentalAnimationApi

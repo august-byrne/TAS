@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -14,17 +15,17 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavDirections
 import com.example.protosuite.data.db.entities.NoteItem
-import com.example.protosuite.ui.MainContentFragmentDirections
+import com.example.protosuite.ui.SortPopupUI
 import com.example.protosuite.ui.values.blue500
-import com.example.protosuite.ui.values.special400
 import com.example.protosuite.ui.values.yellow100
 import com.example.protosuite.ui.values.yellow50
 import dagger.hilt.android.AndroidEntryPoint
@@ -196,12 +197,29 @@ class NotesFragment : Fragment() {
 }
 
 @Composable
-fun NoteListUI(myViewModel: NoteViewModel = viewModel(),onNavigate: (NavDirections) -> Unit) {
-    val notes: List<NoteItem> by myViewModel.allNotes.observeAsState(listOf())
+fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit) {
+    val noteList: List<NoteItem> by myViewModel.allNotes.observeAsState(listOf())
+    val notes = when(myViewModel.sortType) {
+        1 -> {
+            noteList.sortedByDescending { it.creation_date }
+        }
+        2 -> {
+            noteList.sortedByDescending { it.last_edited_on }
+        }
+        3 -> {
+            noteList.sortedByDescending { it.order }
+        }
+        else -> {
+            noteList
+        }
+    }
+    val listState = rememberLazyListState()
+    SortPopupUI(myViewModel = myViewModel)
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(yellow50),
+        state = listState,
         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
@@ -209,9 +227,7 @@ fun NoteListUI(myViewModel: NoteViewModel = viewModel(),onNavigate: (NavDirectio
             NoteItemUI(
                 note,
                 {
-                    val directions =
-                        MainContentFragmentDirections.actionMainContentToNoteData(note.id)
-                    onNavigate(directions)
+                    onNavigate(note.id)
                 },
                 {}
             )
@@ -222,16 +238,14 @@ fun NoteListUI(myViewModel: NoteViewModel = viewModel(),onNavigate: (NavDirectio
     }
     Column(
         modifier = Modifier
-            .padding(16.dp)
+            .padding(8.dp)
             .fillMaxSize(),
         verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.End
     ) {
         FloatingActionButton(
             onClick = {
-                val directions =
-                    MainContentFragmentDirections.actionMainContentToNoteData(0)
-                onNavigate(directions)
+                onNavigate(0)
             },
             shape = RoundedCornerShape(
                 topStart = 16.dp
@@ -252,55 +266,75 @@ fun NoteItemUI (
     onClick: () -> Unit,
     onClickStart: () -> Unit
     ) {
-    //val creationDate = if (note.creation_date != null) (SimpleDateFormat.getDateInstance().format(note.creation_date.time)) else ""
-    val creationDate = SimpleDateFormat.getDateInstance().format(note.creation_date!!.time)
+    val simpleDateFormat = remember { SimpleDateFormat.getDateInstance() }
+    val creationDate = simpleDateFormat.format(note.creation_date!!.time)
     Card(
         shape = MaterialTheme.shapes.small,
         modifier = Modifier
-            .padding(6.dp)
+            .padding(4.dp)
             .fillMaxWidth()
             .clickable(onClick = onClick),
         elevation = 4.dp,
         backgroundColor = yellow100
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(6.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(8.dp),
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(
-                modifier = Modifier.wrapContentHeight(),
-                verticalArrangement = Arrangement.SpaceEvenly
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
             ) {
-                Text(
-                    style = MaterialTheme.typography.h6,
-                    text = note.title
-                )
-                Text(
-                    style = MaterialTheme.typography.body1,
-                    text = creationDate
-                )
-                Text(
-                    style = MaterialTheme.typography.body2,
-                    text = note.description
-                )
+                Column(
+                    modifier = Modifier.wrapContentHeight().fillMaxWidth(0.76F),
+                    verticalArrangement = Arrangement.Top
+                ) {
+                    Text(
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.h6,
+                        text = if (note.title.isNotBlank()) {
+                            note.title
+                        } else {
+                            "Title"
+                        }
+                    )
+                    Text(
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.body1,
+                        text = creationDate
+                    )
+                }
+                TextButton(
+                    modifier = Modifier.padding(start = 4.dp),
+                    border = BorderStroke(1.dp, Color.Green),
+                    shape = MaterialTheme.shapes.small,
+                    onClick = onClickStart
+                ) {
+                    Text(
+                        color = Color.Green,
+                        text = "Start"
+                    )
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        tint = Color.Green,
+                        contentDescription = "Play"
+                    )
+                }
             }
-            TextButton(
-                border = BorderStroke(1.dp, special400),
-                shape = MaterialTheme.shapes.small,
-                onClick = onClickStart
-            ) {
-                Text(
-                    color = special400,
-                    text = "Start"
-                )
-                Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    tint = special400,
-                    contentDescription = "Play"
-                )
-            }
+            Text(
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.body2,
+                text = if (note.description.isNotBlank()) {
+                    note.description
+                } else {
+                    "Description"
+                }
+            )
         }
     }
 }
@@ -310,8 +344,8 @@ fun NoteItemUI (
 fun NoteItemUITest() {
     val note = NoteItem(
         id = 1,
-        title = "Title",
-        description = "Description",
+        title = "This is a title that is way too long",
+        description = "Description that is reagdfsgdfg sdfgsdg sdfgsdfgsdfgs fdsdfgsdf gsdfgsdsdf hashd fhadhf as dhasdf hasd fhddfd",
         order = 1,
         last_edited_on = Calendar.getInstance(),
         creation_date = Calendar.getInstance()

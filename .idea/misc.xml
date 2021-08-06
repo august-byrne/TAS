@@ -6,10 +6,11 @@
         <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/drawable/ic_time_blocking.xml" value="0.10972222222222222" />
         <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/activity_main.xml" value="0.13819444444444445" />
         <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/content_main.xml" value="0.1493421052631579" />
-        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/data_item.xml" value="0.14788273615635178" />
+        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/data_item.xml" value="0.176" />
         <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/nav_header_main.xml" value="0.1" />
+        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/note_data.xml" value="0.14788273615635178" />
         <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/note_data_header.xml" value="0.264" />
-        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/note_item.xml" value="0.1493421052631579" />
+        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/note_item.xml" value="0.2" />
         <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/notes_list.xml" value="0.14788273615635178" />
         <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/sleep.xml" value="0.1493421052631579" />
         <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/timer.xml" value="0.14788273615635178" />

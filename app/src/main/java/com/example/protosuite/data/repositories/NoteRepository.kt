@@ -14,7 +14,7 @@ class NoteRepository @Inject constructor(private val noteDao: NoteDao) {
     suspend fun delete(item: NoteItem) = noteDao.delete(item)
     suspend fun deleteNoteWithData(id: Int) = noteDao.deleteNoteAndData(id)
     val allNotes: LiveData<List<NoteItem>> = noteDao.getAllNotes()
-    fun getNoteWithItemsById(noteId: Int): LiveData<NoteWithItems> = noteDao.getNoteWithItems(noteId)   //will this work? yeeeees hehehehehehehehehehashdfhasjdfh
+    fun getNoteWithItemsById(noteId: Int): LiveData<NoteWithItems> = noteDao.getNoteWithItems(noteId)
     fun getNoteById(noteId: Int): LiveData<NoteItem> = noteDao.getNoteWithId(noteId)
     suspend fun updateNoteItems(noteItems: List<NoteItem>) = noteDao.updateNoteItems(noteItems)
 

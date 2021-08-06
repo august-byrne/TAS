@@ -1,9 +1,5 @@
 package com.example.protosuite.ui
 
-import android.content.Context
-import android.os.Bundle
-import android.view.*
-import android.view.inputmethod.InputMethodManager
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,32 +12,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.core.view.doOnPreDraw
-import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavDirections
-import androidx.navigation.findNavController
-import androidx.navigation.ui.NavigationUI
-import com.example.protosuite.R
 import com.example.protosuite.ui.notes.NoteListUI
+import com.example.protosuite.ui.notes.NoteViewModel
 import com.example.protosuite.ui.timer.TimerUI
-import com.example.protosuite.ui.values.NotesTheme
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.pagerTabIndicatorOffset
 import com.google.accompanist.pager.rememberPagerState
-import com.google.android.material.textfield.TextInputLayout
-import com.google.android.material.transition.MaterialElevationScale
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
 class MainContentFragment : Fragment() {
-
+/*
     //private var _binding: ContentMainBinding? = null
     // This property is only valid between onCreateView and onDestroyView.
     //private val binding get() = _binding!!
@@ -72,9 +57,10 @@ class MainContentFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 NotesTheme(darkTheme = false) {
-                    MainUI { directions ->
-                        findNavController().navigate(directions)
-                    }
+                    NavGraph()
+                    //MainUI { //directions ->
+                        //findNavController().navigate(directions)
+                    //}
                 }
             }
         }
@@ -137,14 +123,14 @@ class MainContentFragment : Fragment() {
             requireView().findNavController()
         ) || super.onOptionsItemSelected(item)
     }
-
+*/
 }
 
 @ExperimentalAnimationApi
 @ExperimentalPagerApi
 @Composable
-fun MainUI(onNavigate: (NavDirections) -> Unit) {
-    val pages = remember { listOf("Notes", "Timer", "Calender") }
+fun MainUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit) {
+    val pages = remember { listOf("Notes", "Timer", "Calendar") }
     Column(Modifier.fillMaxSize()) {
         val pagerState = rememberPagerState(pageCount = pages.size)
         val composableScope = rememberCoroutineScope()
@@ -180,10 +166,12 @@ fun MainUI(onNavigate: (NavDirections) -> Unit) {
         ) { page ->
             when (page) {
                 0 -> {
-                    NoteListUI(myViewModel = viewModel(), onNavigate)
+                    NoteListUI(myViewModel) { noteId: Int ->
+                        onNavigate(noteId)
+                    }
                 }
                 1 -> {
-                    TimerUI()
+                    TimerUI(myViewModel)
                 }
                 2 -> {
                     CalendarUI()
@@ -192,14 +180,15 @@ fun MainUI(onNavigate: (NavDirections) -> Unit) {
         }
     }
 }
-
+/*
 @ExperimentalPagerApi
 @ExperimentalAnimationApi
 @Preview
 @Composable
 fun TabLayoutPreview() {
     NotesTheme {
-        MainUI {}
+        MainUI(navController = rememberNavController())
     }
 }
+ */
 
