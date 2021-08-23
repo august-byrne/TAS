@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.codelab.layouts.ui
+package com.example.protosuite.ui.values
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Shapes

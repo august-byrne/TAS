@@ -1,9 +1,7 @@
 package com.example.protosuite.data.db.entities
 
-import androidx.room.Embedded
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-import androidx.room.Relation
+import androidx.room.*
+import androidx.room.ForeignKey.CASCADE
 import java.util.*
 
 @Entity(tableName = "note_table")
@@ -16,7 +14,16 @@ data class NoteItem(
     val description: String
 )
 
-@Entity(tableName = "data_table")
+@Entity(
+    tableName = "data_table",
+    foreignKeys = [ForeignKey(
+        entity = NoteItem::class,
+        parentColumns = ["id"],
+        childColumns = ["parent_id"],
+        onDelete = CASCADE
+    )],
+    indices = [Index("parent_id")]
+)
 data class DataItem(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val parent_id: Int,
