@@ -11,3 +11,7 @@ class Converters {
     @TypeConverter
     fun fromCalendar(c: Calendar?): Long? = c?.time?.time
 }
+
+enum class TimerState {
+    Stopped, Paused, Running
+}

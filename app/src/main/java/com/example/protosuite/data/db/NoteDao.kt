@@ -41,6 +41,10 @@ interface NoteDao {
     fun getAllNotes(): Flow<List<NoteItem>>
 
     @Transaction
+    @Query("SELECT * FROM note_table ORDER BY `creation_date` DESC")
+    fun getAllNotesWithItems(): Flow<List<NoteWithItems>>
+
+    @Transaction
     @Query("SELECT * FROM note_table WHERE id = :key ORDER BY `id` DESC")
     fun getNoteWithItems(key: Int): Flow<NoteWithItems>
 

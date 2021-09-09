@@ -1,8 +1,7 @@
-package com.example.protosuite.ui.notes
+package com.example.protosuite.ui.timer
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,12 +9,11 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -24,13 +22,12 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.protosuite.ui.BackgroundGradient
-import com.example.protosuite.ui.timer.FlashingTimerText
-import com.example.protosuite.ui.timer.PreferenceManager
-import com.example.protosuite.ui.timer.TimerState
-import com.example.protosuite.ui.timer.TimerText
+import androidx.compose.ui.unit.sp
+import com.example.protosuite.ui.AutoSizingText
+import com.example.protosuite.ui.notes.TimerState
 import com.example.protosuite.ui.values.NotesTheme
 import com.example.protosuite.ui.values.blue500
 import com.example.protosuite.ui.values.yellow200
@@ -130,7 +127,7 @@ fun PreviewProgressBar() {
 private const val PROGRESS_FULL_DEGREES = 360f
 /*
 @ExperimentalAnimationApi
-fun setAlarm2(context: Context, milliSecRemaining: Long) {
+fun setAlarm(context: Context, milliSecRemaining: Long) {
     val wakeUpTime = Calendar.getInstance().timeInMillis + milliSecRemaining
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     val intent = Intent(context, TimerBroadcastReceiver::class.java)
@@ -140,7 +137,7 @@ fun setAlarm2(context: Context, milliSecRemaining: Long) {
 }
 
 @ExperimentalAnimationApi
-fun removeAlarm2(context: Context) {
+fun removeAlarm(context: Context) {
     val intent = Intent(context, TimerBroadcastReceiver::class.java)
     val pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0)
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -152,18 +149,14 @@ fun removeAlarm2(context: Context) {
 // stop: remove alarm and reset time to 0
 // on a button press save TimerState to preferences
 // on TimerState.Stopped, nothing, Paused, return value to timer, running, create time left value and start countdown timer
-@ExperimentalAnimationApi
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun NoteTimer(noteId: Int, currentItemIndex: Int, myViewModel: NoteViewModel, onNavBack: () -> Unit) {
+fun NoteTimer(onNavBack: () -> Unit) {
     val context = LocalContext.current
-    val noteWithItems by myViewModel.getNoteWithItemsById(
-        myViewModel.activeNoteId
-    ).observeAsState()
-    val timerLengthMilli: Long by myViewModel.timerLengthMilli.observeAsState(1L)
-    //val timerLengthMilli: Long by myViewModel.flowTime.collectAsState(1L)
-    val timerState: TimerState by myViewModel.timerState.observeAsState(TimerState.Stopped)
-    val itemIndex: Int by myViewModel.itemIndex.observeAsState(0)
-    val totalTimerLengthMilli: Long by myViewModel.totalTimerLengthMilli.observeAsState(1L)
+    val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
+    val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
+    val itemIndex: Int by TimerService.itemIndex.observeAsState(0)
+    val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(1L)
 
     val timerLengthAdjusted = if (timerState == TimerState.Stopped) {
         totalTimerLengthMilli.div(1000)
@@ -190,36 +183,50 @@ fun NoteTimer(noteId: Int, currentItemIndex: Int, myViewModel: NoteViewModel, on
         verticalArrangement = Arrangement.SpaceBetween
     ) {
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            Icon(
-                modifier = Modifier
-                    //.scale(2f)
-                    .clickable(onClick = onNavBack)
-                    .padding(8.dp), //padding applied in clickable, expanding clickable region
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Back",
-                tint = Color.Black
-            )
-
-            Text(
-                modifier = Modifier.wrapContentWidth(),
-                text = noteWithItems?.note?.title ?: "",
-                //myViewModel.currentNote.title,
-                style = MaterialTheme.typography.h5
-            )
-
-            Spacer(modifier = Modifier.width(40.dp))
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
+        TopAppBar(
+            title = {
+                AutoSizingText(
+                    modifier = Modifier.fillMaxWidth(0.9F),
+                    textStyle = MaterialTheme.typography.h6.copy(
+                        textAlign = TextAlign.Center,
+                        color = Color.Black
+                    ),
+                    text = TimerService.currentNote.title
+                )
+                    },
+            navigationIcon = {
+                IconButton(
+                    onClick = onNavBack
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color.Black
+                    )
+                }
+            },
+            actions = {
+                var expanded by remember { mutableStateOf(false) }
+                IconButton(onClick = { expanded = true }) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "Menu",
+                        tint = Color.Black
+                    )
+                }
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    content = {
+                        DropdownMenuItem(onClick = {  }) {
+                            Text("Settings")
+                        }
+                    }
+                )
+            },
+            backgroundColor = Color.Transparent,
+            elevation = 0.dp
+        )
 
         Column(
             modifier = Modifier
@@ -248,36 +255,23 @@ fun NoteTimer(noteId: Int, currentItemIndex: Int, myViewModel: NoteViewModel, on
                     .wrapContentHeight(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                noteWithItems?.dataItems?.let { items ->
-                    for (item in items) {
-                        Icon(
-                            modifier = Modifier
-                                .padding(2.dp)
-                                .scale(0.5f),
-                            imageVector = Icons.Default.FiberManualRecord,
-                            tint = if (items[itemIndex] == item) Color.Green else Color.DarkGray,
-                            contentDescription = "dot"
-                        )
-                    }
+                for (item in TimerService.currentNoteItems) {
+                    Icon(
+                        modifier = Modifier
+                            .padding(2.dp)
+                            .scale(0.5f),
+                        imageVector = Icons.Default.FiberManualRecord,
+                        tint = if (TimerService.currentNoteItems[itemIndex] == item) Color.Green else Color.DarkGray,
+                        contentDescription = "dot"
+                    )
                 }
-/*                    for (item in noteWithItems?.dataItems?: listOf()) {
-                        Icon(
-                            modifier = Modifier
-                                .padding(2.dp)
-                                .scale(0.5f),
-                            imageVector = Icons.Default.FiberManualRecord,
-                            tint = if (myViewModel.currentNoteItems[itemIndex] == item) Color.Green else Color.DarkGray,
-                            contentDescription = "dot"
-                        )
-                    }*/
             }
 
             Text(
                 modifier = Modifier
                     .wrapContentSize()
                     .padding(8.dp),
-                text = noteWithItems?.dataItems?.get(itemIndex)?.activity ?: "",
-                //myViewModel.currentNoteItems[itemIndex].activity,
+                text = TimerService.currentNoteItems[itemIndex].activity,
                 style = MaterialTheme.typography.h5
             )
 
@@ -294,12 +288,11 @@ fun NoteTimer(noteId: Int, currentItemIndex: Int, myViewModel: NoteViewModel, on
                     modifier = Modifier
                         .clickable {
                             if (timerLengthMilli > totalTimerLengthMilli - 5000L) {
-                                myViewModel.modifyTimer(myViewModel.currentNoteItems, itemIndex - 1)
+                                TimerService.modifyTimer(itemIndex - 1)
                             } else {
-                                myViewModel.modifyTimer(myViewModel.currentNoteItems, itemIndex)
+                                TimerService.modifyTimer(itemIndex)
                             }
                         }
-
                         .scale(2f)
                         .padding(8.dp),
                     imageVector = Icons.Default.SkipPrevious,
@@ -311,29 +304,28 @@ fun NoteTimer(noteId: Int, currentItemIndex: Int, myViewModel: NoteViewModel, on
                         if (timerLengthMilli != 0L) {
                             if (timerState == TimerState.Running) {
                                 // Clicked Pause
-                                myViewModel.pauseTimer(timerLengthMilli)
-                                //removeAlarm2(context)
+                                TimerService.pauseTimer(timerLengthMilli)
+                                //removeAlarm(context)
                             } else {
                                 // Clicked Start
                                 if (timerState == TimerState.Stopped) {
                                     PreferenceManager(context).timeInMillis =
-                                        myViewModel.timerLengthMilli.value ?: 1L
+                                        TimerService.timerLengthMilli.value ?: 1L
                                 }
                                 //temp disabled for testing
-                                //setAlarm2(
+                                //setAlarm(
                                 //    context = context,
                                 //    milliSecRemaining = timerLengthMilli
                                 //)
-                                myViewModel.startTimer(myViewModel.currentNoteItems, itemIndex)
+                                TimerService.startTimer(itemIndex)
                             }
                         }
                     },
                     onClickStop = {
                         if (timerLengthMilli != 0L) {
-                            //removeAlarm2(context)
-                            myViewModel.stopTimer()
-                            //timerLengthMilli = PreferenceManager(context).timeInMillis
-                            myViewModel.setTimerLength(PreferenceManager(context).timeInMillis)
+                            //removeAlarm(context)
+                            TimerService.stopTimer()
+                            TimerService.setTimerLength(PreferenceManager(context).timeInMillis)
                         }
                     }
                 )
@@ -341,7 +333,7 @@ fun NoteTimer(noteId: Int, currentItemIndex: Int, myViewModel: NoteViewModel, on
                 Icon(
                     modifier = Modifier
                         .clickable {
-                            myViewModel.modifyTimer(myViewModel.currentNoteItems, itemIndex + 1)
+                            TimerService.modifyTimer(itemIndex + 1)
                         }
                         .scale(2f)
                         .padding(8.dp),
@@ -392,4 +384,34 @@ private fun PlayPauseStopButtons(timerState: TimerState, onClickStartPause: () -
             }
         }
     }
+}
+
+@Composable
+fun FlashingTimerText(timerText: String) {
+    val infiniteTransition = rememberInfiniteTransition()
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 1.0f,
+        targetValue = 0.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(400, easing = FastOutLinearInEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+    TimerText(
+        modifier = Modifier.alpha(alpha),
+        timerText = timerText
+    )
+}
+
+@Composable
+fun TimerText(modifier: Modifier = Modifier, timerText: String) {
+    Text(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        fontSize = 90.sp,
+        style = MaterialTheme.typography.h1,
+        text = timerText,
+        textAlign = TextAlign.Center
+    )
 }

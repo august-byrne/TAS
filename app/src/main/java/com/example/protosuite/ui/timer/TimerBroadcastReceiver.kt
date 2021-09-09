@@ -98,7 +98,6 @@ class NoteBroadcastReceiver: BroadcastReceiver() {
         val channel = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel(channelId, label, importance).apply {
                 setSound(null, null)
-                //notificationManager.createNotificationChannel(this)
                 description = "Notification for timer functionality of the app"
             }
         } else {

@@ -1,32 +1,27 @@
 package com.example.protosuite.ui
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.Tab
-import androidx.compose.material.TabRow
-import androidx.compose.material.TabRowDefaults
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.fragment.app.Fragment
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import com.example.protosuite.ui.notes.NoteListUI
 import com.example.protosuite.ui.notes.NoteViewModel
-import com.example.protosuite.ui.timer.TimerUI
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.pagerTabIndicatorOffset
 import com.google.accompanist.pager.rememberPagerState
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
-@ExperimentalAnimationApi
 @ExperimentalPagerApi
 @Composable
-fun MainUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavigateStart: (noteId: Int) -> Unit) {
+fun MainUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavigateStart: () -> Unit) {
     val pages = remember { listOf("Notes", "Timer", "Calendar") }
     Column(Modifier.fillMaxSize()) {
         val pagerState = rememberPagerState(pageCount = pages.size)
@@ -67,15 +62,16 @@ fun MainUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavi
                         { noteId: Int ->
                             onNavigate(noteId)
                         },
-                        { noteId: Int ->
-                            onNavigateStart(noteId)
-                        })
+                        {
+                            onNavigateStart()
+                        },
+                        {})
                 }
                 1 -> {
-                    TimerUI(myViewModel)
+                    //TimerUI(myViewModel)
                 }
                 2 -> {
-                    CalendarUI()
+                    //CalendarUI()
                 }
             }
         }
@@ -92,4 +88,28 @@ fun TabLayoutPreview() {
     }
 }
  */
+
+@Composable
+fun AutoSizingText(modifier: Modifier = Modifier, textStyle: TextStyle = LocalTextStyle.current, text: String) {
+    var readyToDraw by remember { mutableStateOf(false) }
+    var mutableTextStyle by remember { mutableStateOf(textStyle) }
+    Text(
+        text = text,
+        maxLines = 1,
+        softWrap = false,
+        style = mutableTextStyle,
+        modifier = modifier.drawWithContent {
+            if (readyToDraw) drawContent()
+        },
+        onTextLayout = { textLayoutResult: TextLayoutResult ->
+            if (textLayoutResult.didOverflowWidth) {
+                mutableTextStyle = mutableTextStyle.copy(fontSize = mutableTextStyle.fontSize * 0.9)
+            } else {
+                readyToDraw = true
+            }
+        },
+        textAlign = TextAlign.Center,
+        color = Color.Black
+    )
+}
 

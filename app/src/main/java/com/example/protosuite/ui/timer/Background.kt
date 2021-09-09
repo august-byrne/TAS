@@ -1,4 +1,4 @@
-package com.example.protosuite.ui
+package com.example.protosuite.ui.timer
 
 import android.os.Build
 import androidx.compose.animation.animateColor

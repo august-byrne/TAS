@@ -1,6 +1,6 @@
 package com.example.protosuite.ui.notes
 
-import android.util.Log
+import android.content.Intent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,13 +11,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,7 +22,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.protosuite.data.db.entities.NoteItem
+import com.example.protosuite.data.db.entities.NoteWithItems
 import com.example.protosuite.ui.SortPopupUI
+import com.example.protosuite.ui.timer.TimerService
 import com.example.protosuite.ui.values.blue500
 import com.example.protosuite.ui.values.yellow100
 import com.example.protosuite.ui.values.yellow50
@@ -35,77 +33,154 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
-fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavigateStart: (noteId: Int) -> Unit) {
-    val noteList: List<NoteItem> by myViewModel.allNotes.observeAsState(listOf())
-    //val noteList: List<NoteItem> by myViewModel.noteListFlow.collectAsState(listOf())
-    Log.d("Flow vs LiveData","Recomp ${myViewModel.run { recompCounter++ }}")
+fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavigateTimerStart: () -> Unit, onDrawerOpen: () -> Unit) {
+    //val noteList: List<NoteItem> by myViewModel.allNotes.observeAsState(listOf())
+    val noteList: List<NoteWithItems> by myViewModel.allNotesWithItems.observeAsState(listOf())
+    //Log.d("Flow vs LiveData","Recomp ${myViewModel.run { recompCounter++ }}")
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-    val notes = when(myViewModel.sortType) {
+    val notes = when (myViewModel.sortType) {
         1 -> {
-            noteList.sortedByDescending { it.creation_date }
+            noteList.sortedByDescending { it.note.creation_date }
         }
         2 -> {
-            noteList.sortedByDescending { it.last_edited_on }
+            noteList.sortedByDescending { it.note.last_edited_on }
         }
         3 -> {
-            noteList.sortedByDescending { it.order }
+            noteList.sortedByDescending { it.note.order }
         }
         else -> {
             noteList
         }
     }
-    SortPopupUI(myViewModel)
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(yellow50),
-        state = listState,
-        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        coroutineScope.launch {
-            listState.scrollToItem(
-                myViewModel.noteListScrollIndex,
-                myViewModel.noteListScrollOffset
-            )
-        }
-        items(notes) { note ->
-            NoteItemUI(
-                note,
-                {
-                    myViewModel.noteListScrollIndex = listState.firstVisibleItemIndex
-                    myViewModel.noteListScrollOffset = listState.firstVisibleItemScrollOffset
-                    onNavigate(note.id)
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().background(yellow50)) {
+            TopAppBar(
+                title = {
+                    Text(text = "Tasky or Plan/r", color = Color.White)
                 },
-                {
-                    //myViewModel.setActiveDataAndStartTimer(
-                    //    myViewModel.currentNote,
-                    //    myViewModel.currentNoteItems
-                    //)
-                    onNavigateStart(note.id)
-                    // Disable for now TODO
-                    //setNoteAlarm(
-                    //    context,
-                    //    myViewModel.currentNote,
-                    //    myViewModel.currentNoteItems
-                    //)
+                navigationIcon = {
+                    IconButton(
+                        onClick = onDrawerOpen
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "Menu",
+                            tint = Color.White
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {
+                        myViewModel.openSortPopup = true
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Sort,
+                            contentDescription = "Sort",
+                            tint = Color.White
+                        )
+                    }
+                    var expanded by remember { mutableStateOf(false) }
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "Menu",
+                            tint = Color.White
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        content = {
+                            DropdownMenuItem(onClick = {
+                                /* Handle sort! */
+                                expanded = false
+                            }) {
+                                Text("Sort?")
+                            }
+                            DropdownMenuItem(onClick = {
+                                /* Handle settings! */
+                                expanded = false
+                            }) {
+                                Text("Settings")
+                            }
+                            Divider()
+                            DropdownMenuItem(onClick = {
+                                /* Handle donate or send feedback! */
+                                expanded = false
+                            }) {
+                                Text("Donate")
+                            }
+                        }
+                    )
                 }
             )
+
+            SortPopupUI(myViewModel)
+            LazyColumn(
+                state = listState,
+                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                coroutineScope.launch {
+                    listState.scrollToItem(
+                        myViewModel.noteListScrollIndex,
+                        myViewModel.noteListScrollOffset
+                    )
+                }
+                items(notes) { notesWithData ->
+                    NoteItemUI(
+                        notesWithData.note,
+                        {
+                            myViewModel.noteListScrollIndex = listState.firstVisibleItemIndex
+                            myViewModel.noteListScrollOffset =
+                                listState.firstVisibleItemScrollOffset
+                            onNavigate(notesWithData.note.id)
+                        },
+                        {
+                            myViewModel.run {
+                                currentNote = notesWithData.note
+                                currentNoteItems = notesWithData.dataItems.toMutableStateList()
+                                //startTimerWithIndex()
+                            }
+                            TimerService.initTimerService(
+                                myViewModel.currentNote,
+                                myViewModel.currentNoteItems,
+                                0
+                            )
+                            onNavigateTimerStart()
+                            // Disable for now TODO
+                            //setNoteAlarm(
+                            //    context,
+                            //    myViewModel.currentNote,
+                            //    myViewModel.currentNoteItems
+                            //)
+                            Intent(context, TimerService::class.java).also {
+                                it.action = "ACTION_START_OR_RESUME_SERVICE"
+                                context.startService(it)
+                            }
+                        }
+                    )
+                }
+                item {
+                    Spacer(modifier = Modifier.size(80.dp))
+                }
+            }
+/*            Column(
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Bottom,
+                horizontalAlignment = Alignment.End
+            ) {
+
+            }*/
         }
-        item {
-            Spacer(modifier = Modifier.size(80.dp))
-        }
-    }
-    Column(
-        modifier = Modifier
-            .padding(8.dp)
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.Bottom,
-        horizontalAlignment = Alignment.End
-    ) {
         FloatingActionButton(
+            modifier = Modifier
+                .padding(8.dp)
+                .align(Alignment.BottomEnd),
             onClick = {
                 onNavigate(0)
             },

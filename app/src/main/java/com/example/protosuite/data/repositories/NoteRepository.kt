@@ -15,6 +15,7 @@ class NoteRepository @Inject constructor(private val noteDao: NoteDao) {
     suspend fun deleteNoteWithData(id: Int) = noteDao.deleteNoteAndData(id)
     suspend fun deleteNote(id: Int) = noteDao.deleteNote(id)
     val allNotes: Flow<List<NoteItem>> = noteDao.getAllNotes()
+    val allNotesWithItems: Flow<List<NoteWithItems>> = noteDao.getAllNotesWithItems()
     fun getNoteWithItemsById(noteId: Int): Flow<NoteWithItems> = noteDao.getNoteWithItems(noteId)
     suspend fun updateNoteItems(noteItems: List<NoteItem>) = noteDao.updateNoteItems(noteItems)
 

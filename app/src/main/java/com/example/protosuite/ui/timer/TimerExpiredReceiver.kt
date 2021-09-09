@@ -13,8 +13,7 @@ class TimerExpiredReceiver : BroadcastReceiver() {
         //NotificationUtil.showTimerExpired(context)
         Toast.makeText(context, "Broadcast Receiver Working", Toast.LENGTH_LONG).show()
 
-        //Originally TimerFragment.TimerState.Stopped
-        PrefUtil.setTimerState(TimerState.Stopped, context)
+        //PrefUtil.setTimerState(TimerState.Stopped, context)
         //PrefUtil.setAlarmSetTime(0, context)
     }
 }

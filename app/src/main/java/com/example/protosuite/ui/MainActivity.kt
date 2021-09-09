@@ -1,45 +1,54 @@
 package com.example.protosuite.ui
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Popup
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.window.layout.WindowMetricsCalculator
+import com.example.protosuite.R
 import com.example.protosuite.data.db.entities.NoteWithItems
 import com.example.protosuite.ui.notes.ExpandedNoteUI
 import com.example.protosuite.ui.notes.NoteListUI
-import com.example.protosuite.ui.notes.NoteTimer
 import com.example.protosuite.ui.notes.NoteViewModel
+import com.example.protosuite.ui.notes.TimerState
+import com.example.protosuite.ui.timer.NoteTimer
 import com.example.protosuite.ui.timer.PreferenceManager
-import com.example.protosuite.ui.timer.TimerState
+import com.example.protosuite.ui.timer.TimerService
+import com.example.protosuite.ui.timer.orange
 import com.example.protosuite.ui.values.NotesTheme
 import com.example.protosuite.ui.values.blue100
 import com.example.protosuite.ui.values.blue200
-import com.example.protosuite.ui.values.blue500
-import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -65,8 +74,6 @@ class MainActivity : AppCompatActivity() {
             return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, adWidth)
         }
 
-    @ExperimentalAnimationApi
-    @ExperimentalPagerApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -75,10 +82,10 @@ class MainActivity : AppCompatActivity() {
 
         //Initialize ViewModel Values
         //myViewModel.setPrevTimeType(PreferenceManager.lastUsedTimeUnit)
-        myViewModel.setTimerState(preferences.timerState)
-        myViewModel.setTimerLength(preferences.timeInMillis)
-        myViewModel.activeNoteId = preferences.noteId
-        myViewModel.setActiveItemIndex(preferences.itemIndex)
+        //myViewModel.setTimerState(preferences.timerState)
+        //myViewModel.setTimerLength(preferences.timeInMillis)
+        //myViewModel.activeNoteId = preferences.noteId
+        //myViewModel.setActiveItemIndex(preferences.itemIndex)
         myViewModel.setPrevTimeType(preferences.lastUsedTimeUnit)
 
         setContent {
@@ -91,7 +98,7 @@ class MainActivity : AppCompatActivity() {
                 // Create a coroutine scope. Opening of drawer and snackbar should happen in
                 // background thread without blocking main thread
                 val coroutineScope = rememberCoroutineScope()
-                var expanded by remember { mutableStateOf(false) }
+                //var expanded by remember { mutableStateOf(false) }
                 val drawerEnabled by remember {
                     derivedStateOf {
                         navBackStackEntry?.destination?.id == navController.findDestination(
@@ -99,22 +106,23 @@ class MainActivity : AppCompatActivity() {
                         )!!.id
                     }
                 }
-
 /*                Log.d("navLearning", "name ${navBackStackEntry?.destination?.displayName}\n" +
                         "id ${navBackStackEntry?.destination?.id}\n" +
                         "route ${navBackStackEntry?.destination?.route}\n" +
                         "route from nav ${navController.findDestination("note_expanded/{noteId}")?.route}\n" +
                         "id from nav ${navController.findDestination("note_expanded/{noteId}")?.id}")*/
                 LaunchedEffect(key1 = true) {
-                    if (PreferenceManager(applicationContext).timerState == TimerState.Running) {
-                        navController.navigate("note_timer")
-                    }
+                    navigateToTimerIfNeeded(intent, navController)
+                    //if (PreferenceManager(applicationContext).timerState == TimerState.Running) {
+                    //    navController.navigate("note_timer")
+                    //}
                 }
                 Scaffold(
                     scaffoldState = scaffoldState,
+                    /*
                     topBar = {
                         if (navBackStackEntry?.destination?.id != navController.findDestination(
-                                "note_timer/{noteId}/{itemIndex}"
+                                "note_timer"
                             )?.id
                         ) {
                             TopAppBar(
@@ -268,56 +276,178 @@ class MainActivity : AppCompatActivity() {
                                     }
                                 },
                                 backgroundColor = if (navBackStackEntry?.destination?.id == navController.findDestination(
-                                        "note_timer/{noteId}/{itemIndex}"
+                                        "note_timer"
                                     )?.id
                                 ) Color.Transparent else blue500
                             )
                         }
                     },
+                    */
                     snackbarHost = {
                         scaffoldState.snackbarHostState
                     },
                     drawerContent = {
+                        // to close use -> scaffoldState.drawerState.close()
                         Column(
                             Modifier
                                 .fillMaxSize()
                                 .padding(start = 24.dp, top = 48.dp)
                         ) {
-                            //Image(
-                            //    painter = painterResource(R.drawable.ic_crane_drawer),
-                            //    contentDescription = stringResource(R.string.cd_drawer)
-                            //)
-                            //for (screen in screens) {
                             Spacer(Modifier.height(24.dp))
                             Text(text = "screen", style = MaterialTheme.typography.h5)
-                            //}
                         }
                     },
                     drawerGesturesEnabled = drawerEnabled
                 ) {
-                    Box {
+                    Box(modifier = Modifier.fillMaxSize()) {
                         Column(
-                            modifier = Modifier.fillMaxSize(),
                             verticalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            NavGraph(myViewModel, navController)
-                            //TODO: AdView
-/*                            AndroidView(
-                                factory = { context ->
-                                    AdView(context)
-                                },
-                                modifier = Modifier.fillMaxWidth(),
+                            val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(
+                                1L
+                            )
+                            val timerState: TimerState by TimerService.timerState.observeAsState(
+                                TimerState.Stopped
+                            )
+                            val itemIndex: Int by TimerService.itemIndex.observeAsState(0)
+                            val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(
+                                1L
+                            )
+                            val icon =
+                                if (timerState == TimerState.Running) Icons.Default.Pause else Icons.Default.PlayArrow
+                            Row(modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)) {
+                                NavGraph(myViewModel, coroutineScope, navController, scaffoldState)
+                            }
+                            if (timerState != TimerState.Stopped && navBackStackEntry?.destination?.id != navController.findDestination(
+                                    "note_timer"
+                                )!!.id
                             ) {
-                                val params = ConstraintLayout.LayoutParams(
-                                    ConstraintLayout.LayoutParams.MATCH_PARENT,
-                                    adaptiveAdSize.height
-                                )
-                                it.layoutParams = params
-
-                                it.adUnitId = getString(R.string.google_ads_id)
-                                it.adSize = adaptiveAdSize
-                                it.loadAd(AdRequest.Builder().build())
-                            }*/
+                                Column(
+                                    modifier = Modifier
+                                    .wrapContentHeight()
+                                    .fillMaxWidth()
+                                    .background(blue100)
+                                    .clickable {
+                                        navController.navigate("note_timer")
+                                    },
+                                    verticalArrangement = Arrangement.SpaceEvenly
+                                ) {
+                                    val bgColor = MaterialTheme.colors.onSurface.copy(alpha = 0.2f)
+                                    Canvas(
+                                        Modifier
+                                        .wrapContentHeight()
+                                        .fillMaxWidth()
+                                    ) {
+                                        val progressLine = size.width * (1f - (timerLengthMilli.toFloat() / totalTimerLengthMilli.toFloat()))
+                                        drawLine(
+                                            color = bgColor,
+                                            strokeWidth = 4.dp.toPx(),
+                                            cap = StrokeCap.Square,
+                                            start = Offset(y = 2.dp.toPx(), x = 0f),
+                                            end = Offset(y = 2.dp.toPx(), x = size.width)
+                                        )
+                                        drawLine(
+                                            color = orange,
+                                            strokeWidth = 4.dp.toPx(),
+                                            cap = StrokeCap.Square,
+                                            start = Offset(y = 2.dp.toPx(), x = 0f),
+                                            end = Offset(
+                                                y = 2.dp.toPx(),
+                                                x = progressLine
+                                            )
+                                        )
+                                    }
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .wrapContentHeight(),
+                                        horizontalArrangement = Arrangement.End,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(
+                                            modifier = Modifier
+                                                .padding(8.dp)
+                                                .wrapContentHeight()
+                                                .weight(1f)
+                                        ) {
+                                            Text(
+                                                text = TimerService.currentNote.title,
+                                                style = MaterialTheme.typography.h6,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Text(
+                                                text = TimerService.currentNoteItems[itemIndex].activity,
+                                                style = MaterialTheme.typography.subtitle1,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                        Row(
+                                            modifier = Modifier.wrapContentSize()
+                                        ) {
+                                            Icon(
+                                                modifier = Modifier
+                                                    .clickable {
+                                                        if (timerLengthMilli > totalTimerLengthMilli - 5000L) {
+                                                            TimerService.modifyTimer(itemIndex - 1)
+                                                        } else {
+                                                            TimerService.modifyTimer(itemIndex)
+                                                        }
+                                                    }
+                                                    .padding(8.dp),
+                                                imageVector = Icons.Default.SkipPrevious,
+                                                contentDescription = "back to previous item")
+                                            Icon(
+                                                modifier = Modifier
+                                                    .clickable {
+                                                        if (timerLengthMilli != 0L) {
+                                                            if (timerState == TimerState.Running) {
+                                                                // Clicked Pause
+                                                                TimerService.pauseTimer(
+                                                                    timerLengthMilli
+                                                                )
+                                                                //removeAlarm(context)
+                                                            } else {
+                                                                // Clicked Start
+                                                                //temp disabled for testing
+                                                                //setAlarm(
+                                                                //    context = context,
+                                                                //    milliSecRemaining = timerLengthMilli
+                                                                //)
+                                                                TimerService.startTimer(itemIndex)
+                                                            }
+                                                        }
+                                                    }
+                                                    .padding(8.dp),
+                                                imageVector = icon,
+                                                contentDescription = "Start or Pause"
+                                            )
+                                            Icon(
+                                                modifier = Modifier
+                                                    .clickable {
+                                                        TimerService.modifyTimer(itemIndex + 1)
+                                                    }
+                                                    .padding(8.dp),
+                                                imageVector = Icons.Default.SkipNext,
+                                                contentDescription = "skip to next item"
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            AndroidView(
+                                modifier = Modifier.fillMaxWidth(),
+                                factory = { context ->
+                                    AdView(context).apply {
+                                        adSize = adaptiveAdSize // AdSize.BANNER
+                                        adUnitId = context.getString(R.string.banner_ad_unit_id)
+                                        loadAd(AdRequest.Builder().build())
+                                    }
+                                }
+                            )
                         }
                         DefaultSnackbar(
                             snackbarHostState = scaffoldState.snackbarHostState,
@@ -338,22 +468,33 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    @ExperimentalAnimationApi
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setContent {
+            val navController = rememberNavController()
+            navigateToTimerIfNeeded(intent, navController)
+        }
+    }
+
     override fun onDestroy() {
         //PrefUtil.setPrevTimeType(myViewModel.prevTimeType, applicationContext)
-        preferences.timerState = myViewModel.timerState.value ?: TimerState.Stopped
-        preferences.timeInMillis = myViewModel.totalTimerLengthMilli.value ?: 1L
-        preferences.noteId = myViewModel.activeNoteId
-        preferences.itemIndex = myViewModel.itemIndex.value ?: 0
+        //preferences.timerState = myViewModel.timerState.value ?: TimerState.Stopped
+        //preferences.timeInMillis = myViewModel.totalTimerLengthMilli.value ?: 1L
+        //preferences.noteId = myViewModel.activeNoteId
+        //preferences.itemIndex = myViewModel.itemIndex.value ?: 0
         preferences.lastUsedTimeUnit = myViewModel.prevTimeType
         super.onDestroy()
     }
+
+    private fun navigateToTimerIfNeeded(intent: Intent?, navController: NavController) {
+        if (intent?.action == TimerService.ACTION_SHOW_TRACKING_FRAGMENT) {
+            navController.navigate("note_timer")
+        }
+    }
 }
 
-@ExperimentalPagerApi
-@ExperimentalAnimationApi
 @Composable
-fun NavGraph(myViewModel: NoteViewModel, navController: NavHostController) {
+fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navController: NavHostController, scaffoldState: ScaffoldState) {
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             /*
@@ -371,8 +512,13 @@ fun NavGraph(myViewModel: NoteViewModel, navController: NavHostController) {
                 { noteId: Int ->
                     navController.navigate("note_expanded/$noteId")
                 },
-                { noteId: Int ->
-                    navController.navigate("note_timer/$noteId/0")
+                {
+                    navController.navigate("note_timer")
+                },
+                {
+                    coroutineScope.launch {
+                        scaffoldState.drawerState.open()
+                    }
                 }
             )
         }
@@ -386,25 +532,34 @@ fun NavGraph(myViewModel: NoteViewModel, navController: NavHostController) {
             )
         ) {
             val noteId = it.arguments?.getInt("noteId") ?: 0
-            ExpandedNoteUI(noteId, myViewModel) { itemIndex ->
-                navController.navigate("note_timer/$noteId/$itemIndex")
-            }
-        }
-        composable(
-            route = "note_timer/{noteId}/{itemIndex}",
-            arguments = listOf(
-                navArgument("noteId") {
-                    // Make argument type safe
-                    type = NavType.IntType
+            ExpandedNoteUI(
+                noteId,
+                myViewModel,
+                {
+                    navController.navigate("note_timer")
                 },
-                navArgument("itemIndex") {
-                    type = NavType.IntType
+                {
+                    myViewModel.tempSavedNote = NoteWithItems(
+                        myViewModel.currentNote,
+                        myViewModel.currentNoteItems
+                    )
+                    navController.popBackStack()
+                    myViewModel.deleteNote(noteId)
+                    coroutineScope.launch {
+                        scaffoldState.snackbarHostState.showSnackbar(
+                            message = "Note deleted",
+                            actionLabel = "Undo",
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                },
+                {
+                    navController.popBackStack()
                 }
             )
-        ) {
-            val noteId = it.arguments?.getInt("noteId") ?: 0
-            val itemIndex = it.arguments?.getInt("itemIndex") ?: 0
-            NoteTimer(noteId, itemIndex, myViewModel) {
+        }
+        composable("note_timer") {
+            NoteTimer {
                 navController.popBackStack()
             }
         }
@@ -447,9 +602,10 @@ fun SortPopupUI(myViewModel: NoteViewModel) {
             }
         ) {
             Card(
-                shape = MaterialTheme.shapes.medium,
+                shape = MaterialTheme.shapes.medium.copy(CornerSize(16.dp)),
                 modifier = Modifier
-                    .wrapContentSize(),
+                    .wrapContentHeight()
+                    .width(IntrinsicSize.Max),
                 elevation = 24.dp,
                 backgroundColor = Color.White
             ) {
@@ -458,23 +614,22 @@ fun SortPopupUI(myViewModel: NoteViewModel) {
                         .wrapContentSize(),
                     verticalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Row(
+                    Text(
                         modifier = Modifier
-                            .background(blue200)
                             .fillMaxWidth()
-                    ) {
-                        Text(
-                            modifier = Modifier.padding(8.dp),
-                            textAlign = TextAlign.Center,
-                            style = MaterialTheme.typography.h6,
-                            text = "Sort by"
-                        )
-                    }
+                            .wrapContentHeight()
+                            .background(blue200)
+                            .padding(8.dp),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.h6,
+                        text = "Sort by"
+                    )
                     Column(
                         modifier = Modifier
                             .wrapContentSize()
                             .padding(16.dp),
-                        verticalArrangement = Arrangement.SpaceEvenly
+                        verticalArrangement = Arrangement.SpaceEvenly,
+                        horizontalAlignment = Alignment.End
                     ) {
                         Row(
                             modifier = Modifier
@@ -486,8 +641,9 @@ fun SortPopupUI(myViewModel: NoteViewModel) {
                                 },
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
+                            Text("Creation date")
                             RadioButton(
-                                modifier = Modifier.padding(end = 8.dp),
+                                modifier = Modifier.padding(horizontal = 8.dp),
                                 selected = myViewModel.sortType == 1,
                                 /*
                                 colors = RadioButtonColors.radioColor(
@@ -497,7 +653,6 @@ fun SortPopupUI(myViewModel: NoteViewModel) {
 
                                  */
                                 onClick = { })
-                            Text("Creation date")
                         }
                         Row(
                             modifier = Modifier
@@ -509,11 +664,11 @@ fun SortPopupUI(myViewModel: NoteViewModel) {
                                 },
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
+                            Text("Last edited")
                             RadioButton(
-                                modifier = Modifier.padding(end = 8.dp),
+                                modifier = Modifier.padding(horizontal = 8.dp),
                                 selected = myViewModel.sortType == 2,
                                 onClick = { })
-                            Text("Last edited")
                         }
                         Row(
                             modifier = Modifier
@@ -525,11 +680,11 @@ fun SortPopupUI(myViewModel: NoteViewModel) {
                                 },
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
+                            Text("Custom")
                             RadioButton(
-                                modifier = Modifier.padding(end = 8.dp),
+                                modifier = Modifier.padding(horizontal = 8.dp),
                                 selected = myViewModel.sortType == 3,
                                 onClick = { })
-                            Text("Custom")
                         }
                     }
                 }
