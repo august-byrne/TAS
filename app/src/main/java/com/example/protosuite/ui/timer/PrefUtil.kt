@@ -2,6 +2,7 @@ package com.example.protosuite.ui.timer
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.example.protosuite.ui.notes.SortType
 import com.example.protosuite.ui.notes.TimerState
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -19,6 +20,7 @@ class PreferenceManager @Inject constructor(
         private const val PREF_KEY_NOTE_ID = "note_id"
         private const val PREF_KEY_ITEM_INDEX = "item_index"
         private const val PREF_KEY_PREVIOUS_UNIT = "previous_unit"
+        private const val PREF_KEY_SORT_BY = "sort_type"
     }
 
     private val pref: SharedPreferences =
@@ -51,5 +53,9 @@ class PreferenceManager @Inject constructor(
     var lastUsedTimeUnit: Int
         get() = pref.getInt(PREF_KEY_PREVIOUS_UNIT, 0)
         set(unitOfTime) = pref.edit().putInt(PREF_KEY_PREVIOUS_UNIT, unitOfTime).apply()
+
+    var sortType: SortType
+        get() = SortType.values()[pref.getInt(PREF_KEY_SORT_BY, 0)]
+        set(sortType) = pref.edit().putInt(PREF_KEY_SORT_BY, sortType.ordinal).apply()
 
 }

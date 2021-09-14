@@ -1,6 +1,6 @@
 package com.example.protosuite.ui.notes
 
-import android.util.Log
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -15,6 +15,7 @@ import com.example.protosuite.data.repositories.NoteRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -25,6 +26,7 @@ class NoteViewModel @Inject constructor(
     private val repo: NoteRepository
 ): ViewModel() {
 
+    /*
     var noteDataId: Long = 0
     fun upsert(item: NoteItem?) = CoroutineScope(Dispatchers.Main).launch {
         if (item != null) {
@@ -37,6 +39,7 @@ class NoteViewModel @Inject constructor(
     fun upsertData(items: List<DataItem>) = CoroutineScope(Dispatchers.Main).launch {
         repo.upsertData(items)
     }
+    */
 
     fun upsertNoteAndData(noteItem: NoteItem, dataItems: MutableList<DataItem>) =
         CoroutineScope(Dispatchers.Main).launch {
@@ -62,12 +65,6 @@ class NoteViewModel @Inject constructor(
         repo.deleteNote(id)
     }
 
-/*
-    fun updateNoteItems(items: List<NoteItem>) = CoroutineScope(Dispatchers.Main).launch {
-        repo.updateNoteItems(items)
-    }
- */
-
     fun updateNoteItemOrderInDatabase(noteListCopy: MutableList<NoteItem>) =
         CoroutineScope(Dispatchers.Main).launch {
             noteListCopy.replaceAll { noteItem ->
@@ -81,33 +78,30 @@ class NoteViewModel @Inject constructor(
                 )
             }
             repo.updateNoteItems(noteListCopy)
-            /*
-                for (i in 0..noteListCopy.lastIndex) {
-                    if (noteListCopy[i].order != noteListCopy.lastIndex - i) {
-                        reorderedCopy.add(
-                            noteListCopy[i].copy(
-                                id = noteListCopy[i].id,
-                                creation_date = noteListCopy[i].creation_date,
-                                last_edited_on = noteListCopy[i].last_edited_on,
-                                order = noteListCopy.lastIndex - i,
-                                title = noteListCopy[i].title,
-                                description = noteListCopy[i].description
-                            )
-                        )
-                    } else {
-                        reorderedCopy.add(noteListCopy[i])
-                    }
-                }
-                repo.updateNoteItems(reorderedCopy)
-            */
         }
 
-    var allNotes: LiveData<List<NoteItem>> = repo.allNotes.asLiveData()
+    //var allNotes: LiveData<List<NoteItem>> = repo.allNotes.asLiveData()
 
     var allNotesWithItems: LiveData<List<NoteWithItems>> = repo.allNotesWithItems.asLiveData()
 
-    //var noteListFlow: Flow<List<NoteItem>> = repo.allNotes
-    var recompCounter: Int = 0
+    fun sortedAllNotesWithItems(): LiveData<List<NoteWithItems>> {
+        return repo.allNotesWithItems.map { list ->
+            when (sortType) {
+                SortType.Creation -> {
+                    list.sortedByDescending { it.note.creation_date }
+                }
+                SortType.LastEdited -> {
+                    list.sortedByDescending { it.note.last_edited_on }
+                }
+                SortType.Order -> {
+                    list.sortedByDescending { it.note.order }
+                }
+                SortType.Default -> {
+                    list
+                }
+            }
+        }.asLiveData()
+    }
 
     fun getNoteWithItemsById(id: Int): LiveData<NoteWithItems> =
         repo.getNoteWithItemsById(id).asLiveData()
@@ -118,72 +112,10 @@ class NoteViewModel @Inject constructor(
     var tempSavedNote: NoteWithItems? = null
 
     var openSortPopup by mutableStateOf(false)
-    var sortType by mutableStateOf(0)
+    var sortType by mutableStateOf(SortType.Default)
 
     val simpleDateFormat: DateFormat = SimpleDateFormat.getDateInstance()
 
-    var noteListScrollIndex = 0
-    var noteListScrollOffset = 0
-/*
-    private var timer: CountDownTimer? = null
-
-    //takes care of all time unit (and some timer state) manipulation
-    fun startTimer(itemIndex: Int) {
-        setActiveItemIndex(itemIndex)
-        val activeItem = currentNoteItems[itemIndex]
-        var activeTimeLengthMilli = activeItem.time.times(1000L) * 60F.pow(activeItem.unit).toLong()
-        setTotalTimerLengthMilli(activeTimeLengthMilli)
-        if (isPaused) {
-            isPaused = false
-            activeTimeLengthMilli = tempSavedTimerLengthMilli
-        }
-        setTimerLength(activeTimeLengthMilli)
-        setTimerState(TimerState.Running)
-        timer = object : CountDownTimer(activeTimeLengthMilli, 10L) {
-            override fun onTick(millisUntilFinished: Long) {
-                setTimerLength(millisUntilFinished)
-            }
-
-            override fun onFinish() {
-                if (itemIndex < currentNoteItems.lastIndex) {
-                    setActiveItemIndex(itemIndex.inc())
-                    startTimer(itemIndex.inc())
-                } else {
-                    setTimerState(TimerState.Stopped)
-                }
-            }
-        }.start()
-    }
-
-    fun stopTimer() {
-        setTimerState(TimerState.Stopped)
-        isPaused = false
-        timer?.cancel()
-    }
-
-    fun modifyTimer(index: Int) {
-        stopTimer()
-        if (index in 0..currentNoteItems.lastIndex) {
-            startTimer(index)
-        }
-    }
-
-    fun pauseTimer(currentTimerLength: Long) {
-        timer?.cancel()
-        setTimerState(TimerState.Paused)
-        isPaused = true
-        tempSavedTimerLengthMilli = currentTimerLength
-    }
-
-    private var tempSavedTimerLengthMilli = 0L
-    private var isPaused: Boolean = false
-
-    fun startTimerWithIndex(index: Int = 0) {
-        stopTimer()
-        setActiveItemIndex(index)
-        startTimer(index)
-    }
-*/
     private var _prevTimeType = 0
     val prevTimeType: Int
         get() = _prevTimeType
@@ -195,44 +127,13 @@ class NoteViewModel @Inject constructor(
             0
         }
     }
-/*
-    // LiveData holds state which is observed by the UI
-    // (state flows down from ViewModel)
-    private var _timerLengthMilli: MutableLiveData<Long> = MutableLiveData(1L)
-    val timerLengthMilli: LiveData<Long> = _timerLengthMilli
 
-    // setTimerLength is an event we're defining that the UI can invoke
-    // (events flow up from UI)
-    fun setTimerLength(timerLength: Long) {
-        if (timerLength >= 0L) {
-            _timerLengthMilli.value = timerLength
-        } else {
-            _timerLengthMilli.value = 0L
-        }
+    private var listState: LazyListState = LazyListState()
+    fun saveListPosition(newListState: LazyListState) {
+        listState = newListState
     }
 
-    private var _timerState = MutableLiveData(TimerState.Stopped)
-    val timerState: LiveData<TimerState> = _timerState
-
-    fun setTimerState(timerState: TimerState) {
-        _timerState.value = timerState
+    fun loadListPosition(): LazyListState {
+        return listState
     }
-
-    private var _itemIndex = MutableLiveData(0)
-    val itemIndex: LiveData<Int> = _itemIndex
-
-    private fun setActiveItemIndex(itemIndex: Int) {
-        if (itemIndex >= 0) {
-            _itemIndex.value = itemIndex
-        }
-    }
-
-    private var _totalTimerLengthMilli: MutableLiveData<Long> = MutableLiveData(1L)
-    val totalTimerLengthMilli: LiveData<Long> = _totalTimerLengthMilli
-
-    private fun setTotalTimerLengthMilli(timeInMilli: Long) {
-        _totalTimerLengthMilli.value = timeInMilli
-    }
- */
-
 }

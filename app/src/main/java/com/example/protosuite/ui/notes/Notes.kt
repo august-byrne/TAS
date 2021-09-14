@@ -6,14 +6,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,6 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.protosuite.data.db.entities.NoteItem
 import com.example.protosuite.data.db.entities.NoteWithItems
+import com.example.protosuite.ui.MainAppBar
 import com.example.protosuite.ui.SortPopupUI
 import com.example.protosuite.ui.timer.TimerService
 import com.example.protosuite.ui.values.blue500
@@ -34,131 +40,54 @@ import java.util.*
 
 @Composable
 fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavigateTimerStart: () -> Unit, onDrawerOpen: () -> Unit) {
-    //val noteList: List<NoteItem> by myViewModel.allNotes.observeAsState(listOf())
-    val noteList: List<NoteWithItems> by myViewModel.allNotesWithItems.observeAsState(listOf())
-    //Log.d("Flow vs LiveData","Recomp ${myViewModel.run { recompCounter++ }}")
+    val notes: List<NoteWithItems> by myViewModel.sortedAllNotesWithItems().observeAsState(listOf())
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-    val notes = when (myViewModel.sortType) {
-        1 -> {
-            noteList.sortedByDescending { it.note.creation_date }
-        }
-        2 -> {
-            noteList.sortedByDescending { it.note.last_edited_on }
-        }
-        3 -> {
-            noteList.sortedByDescending { it.note.order }
-        }
-        else -> {
-            noteList
-        }
-    }
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize().background(yellow50)) {
-            TopAppBar(
-                title = {
-                    Text(text = "Tasky or Plan/r", color = Color.White)
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onDrawerOpen
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Menu,
-                            contentDescription = "Menu",
-                            tint = Color.White
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {
-                        myViewModel.openSortPopup = true
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Sort,
-                            contentDescription = "Sort",
-                            tint = Color.White
-                        )
-                    }
-                    var expanded by remember { mutableStateOf(false) }
-                    IconButton(onClick = { expanded = true }) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "Menu",
-                            tint = Color.White
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false },
-                        content = {
-                            DropdownMenuItem(onClick = {
-                                /* Handle sort! */
-                                expanded = false
-                            }) {
-                                Text("Sort?")
-                            }
-                            DropdownMenuItem(onClick = {
-                                /* Handle settings! */
-                                expanded = false
-                            }) {
-                                Text("Settings")
-                            }
-                            Divider()
-                            DropdownMenuItem(onClick = {
-                                /* Handle donate or send feedback! */
-                                expanded = false
-                            }) {
-                                Text("Donate")
-                            }
-                        }
-                    )
-                }
-            )
 
-            SortPopupUI(myViewModel)
+    // TODO: Fix listState re-scrolling when rotated/clicked miniTimerView
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(yellow50)
+        ) {
+            MainAppBar(myViewModel, onDrawerOpen)
+            if (myViewModel.openSortPopup) {
+                myViewModel.saveListPosition(listState)
+                SortPopupUI(myViewModel)
+            }
             LazyColumn(
                 state = listState,
                 contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 coroutineScope.launch {
-                    listState.scrollToItem(
-                        myViewModel.noteListScrollIndex,
-                        myViewModel.noteListScrollOffset
-                    )
+                    myViewModel.loadListPosition().run {
+                        listState.scrollToItem(
+                            firstVisibleItemIndex,
+                            firstVisibleItemScrollOffset
+                        )
+                    }
                 }
                 items(notes) { notesWithData ->
                     NoteItemUI(
-                        notesWithData.note,
-                        {
-                            myViewModel.noteListScrollIndex = listState.firstVisibleItemIndex
-                            myViewModel.noteListScrollOffset =
-                                listState.firstVisibleItemScrollOffset
+                        note = notesWithData.note,
+                        onClickItem = {
+                            myViewModel.saveListPosition(listState)
                             onNavigate(notesWithData.note.id)
                         },
-                        {
-                            myViewModel.run {
-                                currentNote = notesWithData.note
-                                currentNoteItems = notesWithData.dataItems.toMutableStateList()
-                                //startTimerWithIndex()
-                            }
-                            TimerService.initTimerService(
-                                myViewModel.currentNote,
-                                myViewModel.currentNoteItems,
-                                0
-                            )
-                            onNavigateTimerStart()
-                            // Disable for now TODO
-                            //setNoteAlarm(
-                            //    context,
-                            //    myViewModel.currentNote,
-                            //    myViewModel.currentNoteItems
-                            //)
-                            Intent(context, TimerService::class.java).also {
-                                it.action = "ACTION_START_OR_RESUME_SERVICE"
-                                context.startService(it)
+                        onClickStart = {
+                            if (!notesWithData.dataItems.isNullOrEmpty()) {
+                                myViewModel.saveListPosition(listState)
+                                TimerService.initTimerService(notesWithData.note, notesWithData.dataItems)
+                                onNavigateTimerStart()
+                                // Disable for now TODO
+                                // setNoteAlarm(context,myViewModel.currentNote,myViewModel.currentNoteItems)
+                                Intent(context, TimerService::class.java).also {
+                                    it.action = "ACTION_START_OR_RESUME_SERVICE"
+                                    context.startService(it)
+                                }
                             }
                         }
                     )
@@ -167,15 +96,6 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                     Spacer(modifier = Modifier.size(80.dp))
                 }
             }
-/*            Column(
-                modifier = Modifier
-                    .padding(8.dp)
-                    .fillMaxSize(),
-                verticalArrangement = Arrangement.Bottom,
-                horizontalAlignment = Alignment.End
-            ) {
-
-            }*/
         }
         FloatingActionButton(
             modifier = Modifier
@@ -183,6 +103,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                 .align(Alignment.BottomEnd),
             onClick = {
                 onNavigate(0)
+                myViewModel.saveListPosition(LazyListState())
             },
             shape = RoundedCornerShape(
                 topStart = 16.dp
@@ -200,7 +121,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
 @Composable
 fun NoteItemUI (
     note: NoteItem,
-    onClick: () -> Unit,
+    onClickItem: () -> Unit,
     onClickStart: () -> Unit
     ) {
     val simpleDateFormat = remember { SimpleDateFormat.getDateInstance() }
@@ -210,7 +131,7 @@ fun NoteItemUI (
         modifier = Modifier
             .padding(4.dp)
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClickItem),
         elevation = 4.dp,
         backgroundColor = yellow100
     ) {

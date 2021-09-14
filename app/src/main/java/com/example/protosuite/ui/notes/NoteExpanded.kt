@@ -44,18 +44,16 @@ import com.example.protosuite.ui.values.yellow200
 import java.util.*
 import kotlin.math.pow
 
-// about 150 lines of compose code
-// vs
-// 250 (NoteExpanded.kt) - 50 (imports) + 100 (data_item.xml) + 50 (note_data.xml) + 50 (note_data_header.xml) + 200 (NoteDataAdapter.kt)
-// = 600 for old fragment xml ui design
 @SuppressLint("UnrememberedMutableState")
 @Composable
 fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStart: () -> Unit, onDeleteNote: () -> Unit, onNavBack: () -> Unit) {
     val context = LocalContext.current
-    Log.d("noteId.toString()",noteId.toString())
     val noteWithItems by myViewModel.getNoteWithItemsById(noteId).observeAsState()
+    //var note by rememberSaveable{ mutableStateOf(noteWithItems?.note ?: NoteItem(0, null, null, 0, "", "")) }
+    //var noteItems by rememberSaveable{ mutableStateListOf(noteWithItems?.dataItems?: mutableListOf()) }
     val listState = rememberLazyListState()
     if (!myViewModel.beginTyping) {
+        //note = noteWithItems?.note ?: NoteItem(0, null, null, 0, "", "")
         myViewModel.currentNote = noteWithItems?.note ?: NoteItem(0, null, null, 0, "", "")
         myViewModel.currentNoteItems = noteWithItems?.dataItems?.toMutableStateList() ?: mutableStateListOf()
     }
@@ -71,8 +69,6 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                     } else {
                         upsertNoteAndData(
                             currentNote.copy(
-                                //title = currentNoteTitle,
-                                //description = currentNoteDescription,
                                 last_edited_on = Calendar.getInstance(),
                                 creation_date = currentNote.creation_date ?: Calendar.getInstance()
                             ),
@@ -89,79 +85,13 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().background(yellow100)) {
-            TopAppBar(
-                title = {
-                    BasicTextField(
-                        modifier = Modifier
-                            .background(blue100, MaterialTheme.shapes.small)
-                            .fillMaxWidth(0.9F)
-                            .border(
-                                border = BorderStroke(
-                                    0.5.dp,
-                                    color = Color.Black
-                                ),
-                                shape = MaterialTheme.shapes.small
-                            )
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        textStyle = MaterialTheme.typography.subtitle1,
-                        value = myViewModel.currentNote.title,
-                        onValueChange = { newValue ->
-                            myViewModel.beginTyping = true
-                            myViewModel.currentNote =
-                                myViewModel.currentNote.copy(title = newValue)
-                        },
-                        //placeholder = { Text("Title", color = Color.White) },
-                        singleLine = true,
-                        decorationBox = { innerTextField ->
-                            if (myViewModel.currentNote.title.isEmpty()) {
-                                Text(
-                                    text = "Title",
-                                    color = Color.Gray,
-                                    style = MaterialTheme.typography.subtitle1
-                                )
-                            }
-                            innerTextField()
-                        }
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onNavBack
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White
-                        )
-                    }
-                },
-                actions = {
-                    var expanded by remember { mutableStateOf(false) }
-                    IconButton(onClick = { expanded = true }) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "Menu",
-                            tint = Color.White
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false },
-                        content = {
-                            DropdownMenuItem(onClick = onDeleteNote) {
-                                Text("Delete")
-                            }
-                        }
-                    )
-                }
-            )
-
+            NoteExpandedTopBar(myViewModel, onNavBack, onDeleteNote)
             LazyColumn(
                 state = listState,
                 contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
                 verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
-                item {
+                item {  // Note Description Item
                     BasicTextField(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -215,25 +145,22 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                             myViewModel.currentNoteItems[index] = dataItem
                         },
                         onClickStart = {
-                            //myViewModel.startTimerWithIndex(index)
-                            TimerService.initTimerService(
-                                myViewModel.currentNote,
-                                myViewModel.currentNoteItems,
-                                index
-                            )
-                            // Disable for now TODO
-                            //setNoteAlarm(
-                            //    context,
-                            //    myViewModel.currentNote,
-                            //    myViewModel.currentNoteItems,
-                            //    index
-                            //)
-                            onNavigateTimerStart()
-                            Intent(context, TimerService::class.java).also {
-                                it.action = "ACTION_START_OR_RESUME_SERVICE"
-                                context.startService(it)
+                            if (!myViewModel.currentNoteItems.isNullOrEmpty()) {
+                                TimerService.initTimerService(
+                                    myViewModel.currentNote,
+                                    myViewModel.currentNoteItems,
+                                    index
+                                )
+                                // Disable for now TODO
+                                //setNoteAlarm(context,myViewModel.currentNote,myViewModel.currentNoteItems,index)
+                                onNavigateTimerStart()
+                                Intent(context, TimerService::class.java).also {
+                                    it.action = "ACTION_START_OR_RESUME_SERVICE"
+                                    context.startService(it)
+                                }
                             }
-                        })
+                        }
+                    )
                     Divider(modifier = Modifier.padding(horizontal = 8.dp))
                 }
 
@@ -241,15 +168,6 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                     Spacer(modifier = Modifier.size(80.dp))
                 }
             }
-/*            Column(
-                modifier = Modifier
-                    .padding(8.dp)
-                    .fillMaxSize(),
-                verticalArrangement = Arrangement.Bottom,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-
-            }*/
         }
         FloatingActionButton(
             modifier = Modifier
@@ -277,6 +195,76 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
             )
         }
     }
+}
+
+@Composable
+fun NoteExpandedTopBar(myViewModel: NoteViewModel, onNavBack: () -> Unit, onDeleteNote: () -> Unit) {
+    TopAppBar(
+        title = {
+            BasicTextField(
+                modifier = Modifier
+                    .background(blue100, MaterialTheme.shapes.small)
+                    .fillMaxWidth(0.9F)
+                    .border(
+                        border = BorderStroke(
+                            0.5.dp,
+                            color = Color.Black
+                        ),
+                        shape = MaterialTheme.shapes.small
+                    )
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                textStyle = MaterialTheme.typography.subtitle1,
+                value = myViewModel.currentNote.title,
+                onValueChange = { newValue ->
+                    myViewModel.beginTyping = true
+                    myViewModel.currentNote =
+                        myViewModel.currentNote.copy(title = newValue)
+                },
+                //placeholder = { Text("Title", color = Color.White) },
+                singleLine = true,
+                decorationBox = { innerTextField ->
+                    if (myViewModel.currentNote.title.isEmpty()) {
+                        Text(
+                            text = "Title",
+                            color = Color.Gray,
+                            style = MaterialTheme.typography.subtitle1
+                        )
+                    }
+                    innerTextField()
+                }
+            )
+        },
+        navigationIcon = {
+            IconButton(
+                onClick = onNavBack
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White
+                )
+            }
+        },
+        actions = {
+            var expanded by remember { mutableStateOf(false) }
+            IconButton(onClick = { expanded = true }) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "Menu",
+                    tint = Color.White
+                )
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                content = {
+                    DropdownMenuItem(onClick = onDeleteNote) {
+                        Text("Delete")
+                    }
+                }
+            )
+        }
+    )
 }
 
 @Composable

@@ -15,3 +15,7 @@ class Converters {
 enum class TimerState {
     Stopped, Paused, Running
 }
+
+enum class SortType {
+    Creation, LastEdited, Order, Default
+}
