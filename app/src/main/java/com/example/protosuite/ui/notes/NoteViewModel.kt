@@ -114,6 +114,8 @@ class NoteViewModel @Inject constructor(
     var openSortPopup by mutableStateOf(false)
     var sortType by mutableStateOf(SortType.Default)
 
+    var adState by mutableStateOf(true)
+
     val simpleDateFormat: DateFormat = SimpleDateFormat.getDateInstance()
 
     private var _prevTimeType = 0

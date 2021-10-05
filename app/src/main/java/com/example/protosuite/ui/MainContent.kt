@@ -1,21 +1,23 @@
 package com.example.protosuite.ui
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material.icons.rounded.Menu
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Sort
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.protosuite.ui.notes.NoteListUI
 import com.example.protosuite.ui.notes.NoteViewModel
@@ -30,7 +32,7 @@ import kotlinx.coroutines.launch
 fun MainUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavigateStart: () -> Unit) {
     val pages = remember { listOf("Notes", "Timer", "Calendar") }
     Column(Modifier.fillMaxSize()) {
-        val pagerState = rememberPagerState(pageCount = pages.size)
+        val pagerState = rememberPagerState(initialPage = 0)
         val composableScope = rememberCoroutineScope()
         TabRow(
             // Our selected tab is our current page
@@ -61,6 +63,7 @@ fun MainUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavi
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth(),
+            count = pages.size
         ) { page ->
             when (page) {
                 0 -> {
@@ -83,21 +86,11 @@ fun MainUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavi
         }
     }
 }
-/*
-@ExperimentalPagerApi
-@ExperimentalAnimationApi
-@Preview
-@Composable
-fun TabLayoutPreview() {
-    NotesTheme {
-        MainUI(navController = rememberNavController())
-    }
-}
- */
 
 @Composable
-fun MainAppBar(myViewModel: NoteViewModel, onDrawerOpen: () -> Unit) {
+fun MainAppBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, onDrawerOpen: () -> Unit) {
     TopAppBar(
+        modifier = modifier,
         title = {
             Text(text = "Tasky or Plan/r", color = Color.White)
         },
@@ -106,7 +99,7 @@ fun MainAppBar(myViewModel: NoteViewModel, onDrawerOpen: () -> Unit) {
                 onClick = onDrawerOpen
             ) {
                 Icon(
-                    imageVector = Icons.Default.Menu,
+                    imageVector = Icons.Rounded.Menu,
                     contentDescription = "Menu",
                     tint = Color.White
                 )
@@ -117,7 +110,7 @@ fun MainAppBar(myViewModel: NoteViewModel, onDrawerOpen: () -> Unit) {
                 myViewModel.openSortPopup = true
             }) {
                 Icon(
-                    imageVector = Icons.Default.Sort,
+                    imageVector = Icons.Rounded.Sort,
                     contentDescription = "Sort",
                     tint = Color.White
                 )
@@ -125,7 +118,7 @@ fun MainAppBar(myViewModel: NoteViewModel, onDrawerOpen: () -> Unit) {
             var expanded by remember { mutableStateOf(false) }
             IconButton(onClick = { expanded = true }) {
                 Icon(
-                    imageVector = Icons.Default.MoreVert,
+                    imageVector = Icons.Rounded.MoreVert,
                     contentDescription = "Menu",
                     tint = Color.White
                 )
@@ -134,12 +127,6 @@ fun MainAppBar(myViewModel: NoteViewModel, onDrawerOpen: () -> Unit) {
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
                 content = {
-                    DropdownMenuItem(onClick = {
-                        /* Handle sort! */
-                        expanded = false
-                    }) {
-                        Text("Sort?")
-                    }
                     DropdownMenuItem(onClick = {
                         /* Handle settings! */
                         expanded = false
@@ -187,5 +174,26 @@ fun AutoSizingText(modifier: Modifier = Modifier, textStyle: TextStyle = LocalTe
         textAlign = TextAlign.Center,
         color = Color.Black
     )
+}
+
+@Composable
+fun ItemButton(icon: ImageVector, text: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .padding(8.dp)
+            .clickable { onClick() }) {
+        Icon(
+            modifier = Modifier.padding(8.dp),
+            imageVector = icon,
+            contentDescription = "item icon"
+        )
+        Text(
+            modifier = Modifier.padding(8.dp),
+            fontWeight = FontWeight.SemiBold,
+            text = text
+        )
+    }
 }
 

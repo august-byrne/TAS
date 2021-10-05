@@ -14,6 +14,7 @@ class PreferenceManager @Inject constructor(
     companion object {
         private const val PREF_PACKAGE_NAME = "com.augustbyrne.protosuite.preferences"
         private const val PREF_KEY_TIMER = "timer"
+        private const val PREF_KEY_SHOW_ADS = "ads_state"
         private const val PREF_KEY_TEMP_TIMER = "temp_timer"
         private const val PREF_KEY_TIMER_RUNNING = "timer_running"
         private const val PREF_KEY_TIMER_STATE = "timer_state"
@@ -25,6 +26,11 @@ class PreferenceManager @Inject constructor(
 
     private val pref: SharedPreferences =
         context.getSharedPreferences(PREF_PACKAGE_NAME, Context.MODE_PRIVATE)
+
+    var showAds: Boolean
+        get() = pref.getBoolean(PREF_KEY_SHOW_ADS, true)
+        set(value) = pref.edit().putBoolean(PREF_KEY_SHOW_ADS, value).apply()
+
 
     var timeInMillis: Long
         get() = pref.getLong(PREF_KEY_TIMER, 0)

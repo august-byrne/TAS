@@ -12,7 +12,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Undo
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -29,7 +34,11 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
-import androidx.navigation.compose.*
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import androidx.window.layout.WindowMetricsCalculator
 import com.example.protosuite.R
 import com.example.protosuite.data.db.entities.NoteWithItems
@@ -81,6 +90,7 @@ class MainActivity : AppCompatActivity() {
         //Initialize ViewModel Values
         myViewModel.setPrevTimeType(preferences.lastUsedTimeUnit)
         myViewModel.sortType = preferences.sortType
+        myViewModel.adState = preferences.showAds
 
         setContent {
             val navController = rememberNavController()
@@ -111,11 +121,21 @@ class MainActivity : AppCompatActivity() {
                         // to close use -> scaffoldState.drawerState.close()
                         Column(
                             Modifier
+                                .padding(24.dp)
                                 .fillMaxSize()
-                                .padding(start = 24.dp, top = 48.dp)
                         ) {
                             Spacer(Modifier.height(24.dp))
-                            Text(text = "screen", style = MaterialTheme.typography.h5)
+                            Text(text = "What doesn't work yet", style = MaterialTheme.typography.h5)
+                            Text("* Any Drag/Drop")
+                            Text("* Deleting Individual Activity Items")
+                            Text("* Timer Sounds")
+                            Divider()
+                            ItemButton(icon = Icons.Rounded.Settings, text = "Settings") {
+                                coroutineScope.launch {
+                                    scaffoldState.drawerState.close()
+                                }
+                                navController.navigate("settings")
+                            }
                         }
                     },
                     drawerGesturesEnabled = drawerEnabled
@@ -140,16 +160,18 @@ class MainActivity : AppCompatActivity() {
                             ) {
                                 CollapsedTimerUI(navController)
                             }
-                            AndroidView(
-                                modifier = Modifier.fillMaxWidth(),
-                                factory = { context ->
-                                    AdView(context).apply {
-                                        adSize = adaptiveAdSize // AdSize.BANNER
-                                        adUnitId = context.getString(R.string.banner_ad_unit_id)
-                                        loadAd(AdRequest.Builder().build())
+                            if (myViewModel.adState) {
+                                AndroidView(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    factory = { context ->
+                                        AdView(context).apply {
+                                            adSize = adaptiveAdSize // AdSize.BANNER
+                                            adUnitId = context.getString(R.string.banner_ad_unit_id)
+                                            loadAd(AdRequest.Builder().build())
+                                        }
                                     }
-                                }
-                            )
+                                )
+                            }
                         }
                         DefaultSnackbar(
                             snackbarHostState = scaffoldState.snackbarHostState,
@@ -246,7 +268,7 @@ fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navCont
                     coroutineScope.launch {
                         scaffoldState.snackbarHostState.showSnackbar(
                             message = "Note deleted",
-                            actionLabel = "Undo",
+                            actionLabel = " Undo",
                             duration = SnackbarDuration.Short
                         )
                     }
@@ -258,6 +280,11 @@ fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navCont
         }
         composable("note_timer") {
             NoteTimer {
+                navController.popBackStack()
+            }
+        }
+        composable("settings") {
+            SettingsUI(myViewModel) {
                 navController.popBackStack()
             }
         }
@@ -406,8 +433,8 @@ fun DefaultSnackbar(
             action = {
                 snackBarData.actionLabel?.let { actionLabel ->
                     TextButton(onClick = onDismiss) {
+                        Icon(Icons.Rounded.Undo, "undo delete")
                         Text(actionLabel)
-                        Icon(Icons.Default.Undo, "undo delete")
                     }
                 }
             }

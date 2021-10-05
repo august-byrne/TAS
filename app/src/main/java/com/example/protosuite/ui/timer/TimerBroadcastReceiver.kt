@@ -127,3 +127,24 @@ class NoteBroadcastReceiver: BroadcastReceiver() {
         return builder.build()
     }
 }
+
+class NotificationReceiver: BroadcastReceiver() {
+    override fun onReceive(context: Context?, intent: Intent) {
+        val currentIndex = intent.getIntExtra("com.example.protosuite.ItemListIndex", 0)
+        when(intent.action) {
+            "PREV_ITEM" -> {
+                TimerService.setActiveItemIndex(currentIndex.dec())
+            }
+            "PLAY" -> {
+                TimerService.startTimer(currentIndex)
+            }
+            "PAUSE" -> {
+                TimerService.timerLengthMilli.value?.let { TimerService.pauseTimer(it) }
+            }
+            "NEXT_ITEM" -> {
+                TimerService.setActiveItemIndex(currentIndex.inc())
+            }
+        }
+    }
+
+}

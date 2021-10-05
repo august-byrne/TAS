@@ -38,6 +38,7 @@
 
         <receiver android:name=".ui.timer.TimerBroadcastReceiver" />
         <receiver android:name=".ui.timer.NoteBroadcastReceiver" />
+        <receiver android:name=".ui.timer.NotificationReceiver" />
         <service android:name=".ui.timer.TimerService" />
     </application>
 

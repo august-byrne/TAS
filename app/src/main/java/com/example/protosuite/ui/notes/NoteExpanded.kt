@@ -22,7 +22,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -190,7 +190,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
             backgroundColor = blue500
         ) {
             Icon(
-                imageVector = Icons.Default.Add,
+                imageVector = Icons.Rounded.Add,
                 contentDescription = "New Item"
             )
         }
@@ -207,7 +207,7 @@ fun NoteExpandedTopBar(myViewModel: NoteViewModel, onNavBack: () -> Unit, onDele
                     .fillMaxWidth(0.9F)
                     .border(
                         border = BorderStroke(
-                            0.5.dp,
+                            width = 0.5.dp,
                             color = Color.Black
                         ),
                         shape = MaterialTheme.shapes.small
@@ -239,7 +239,7 @@ fun NoteExpandedTopBar(myViewModel: NoteViewModel, onNavBack: () -> Unit, onDele
                 onClick = onNavBack
             ) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    imageVector = Icons.Rounded.ArrowBack,
                     contentDescription = "Back",
                     tint = Color.White
                 )
@@ -249,7 +249,7 @@ fun NoteExpandedTopBar(myViewModel: NoteViewModel, onNavBack: () -> Unit, onDele
             var expanded by remember { mutableStateOf(false) }
             IconButton(onClick = { expanded = true }) {
                 Icon(
-                    imageVector = Icons.Default.MoreVert,
+                    imageVector = Icons.Rounded.MoreVert,
                     contentDescription = "Menu",
                     tint = Color.White
                 )
@@ -258,6 +258,9 @@ fun NoteExpandedTopBar(myViewModel: NoteViewModel, onNavBack: () -> Unit, onDele
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
                 content = {
+                    DropdownMenuItem(onClick = onDeleteNote/*onCloneNote*/) {
+                        Text("Clone Note")
+                    }
                     DropdownMenuItem(onClick = onDeleteNote) {
                         Text("Delete")
                     }
@@ -275,9 +278,9 @@ fun DataItemUI (
 ) {
     var expanded by remember { mutableStateOf(false) }
     val iconResource = if (expanded) {
-        Icons.Default.ArrowDropUp
+        Icons.Rounded.ArrowDropUp
     } else {
-        Icons.Default.ArrowDropDown
+        Icons.Rounded.ArrowDropDown
     }
     val timeTypeName: String =
         when (dataItem.unit) {
@@ -372,7 +375,7 @@ fun DataItemUI (
             onClick = onClickStart
         ) {
             Icon(
-                imageVector = Icons.Default.PlayArrow,
+                imageVector = Icons.Rounded.PlayArrow,
                 tint = Color.Green,
                 contentDescription = "Play"
             )

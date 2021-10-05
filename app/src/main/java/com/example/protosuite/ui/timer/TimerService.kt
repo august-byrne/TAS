@@ -11,11 +11,12 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.CountDownTimer
-import android.os.IBinder
+import android.support.v4.media.session.MediaSessionCompat
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.app.NotificationCompat
+import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.protosuite.R
@@ -27,11 +28,9 @@ import com.example.protosuite.ui.values.yellow100
 import kotlin.math.pow
 
 // if lifecycle interaction with the service or lifecycleScope is needed, instead implement lifecycleService()
-class TimerService : Service() {
+class TimerService : LifecycleService() {
 
-    var isFirstRun = true
-
-    //var timer: CountDownTimer? = null
+    private var isFirstRun = true
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         intent?.let {
@@ -55,34 +54,122 @@ class TimerService : Service() {
         return super.onStartCommand(intent, flags, startId)
     }
 
-    override fun onBind(p0: Intent?): IBinder? {
+/*    override fun onBind(p0: Intent?): IBinder? {
         // we don't want to implement binding
         return null
-    }
+    }*/
 
     private fun startForegroundService() {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE)
                 as NotificationManager
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel(notificationManager)
         }
+
+        // Create a media session. NotificationCompat.MediaStyle
+        // PlayerService is your own Service or Activity responsible for media playback.
+        val mediaSession = MediaSessionCompat(this, "PlayerService")
+
+        // Create a MediaStyle object and supply your media session token to it.
+        val mediaStyle = androidx.media.app.NotificationCompat.MediaStyle()
+            .setMediaSession(mediaSession.sessionToken)
+            .setShowActionsInCompactView(0, 1, 2)
 
         val notificationBuilder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setAutoCancel(false)
             .setOngoing(true)
             .setSmallIcon(R.drawable.ic_baseline_play_arrow_24)
             .setContentTitle(currentNote.title)
-            .setContentText("currentNoteItems[itemIndex].activity")
+            //.setContentText(currentNoteItems[0].activity)
             .setColor(yellow100.toArgb())
             .setColorized(true)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(getMainActivityPendingIntent())
             // TODO: add notification actions
-            //.addAction(R.drawable.ic_baseline_drag_indicator_24, "rewind/previous item", rewindIntent)
-            //.addAction(R.drawable.ic_baseline_drag_indicator_24, "play/pause item", playPauseIntent)
-            //.addAction(R.drawable.ic_baseline_drag_indicator_24, "next item", fastForwardIntent)
+            .addAction(
+                R.drawable.previous,
+                "previous",
+                getNotificationPendingIntent("PREV_ITEM", 0)
+            )
+            .addAction(R.drawable.pause, "play_pause", getNotificationPendingIntent("PAUSE"))
+            .addAction(R.drawable.next, "next", getNotificationPendingIntent("NEXT_ITEM", 0))
+            .setStyle(mediaStyle)
 
         startForeground(NOTIFICATION_ID, notificationBuilder.build())
+        var tempIndex = 0
+        itemIndex.observe(this, { index ->
+            tempIndex = index
+            notificationBuilder
+                .setContentText(currentNoteItems[index].activity)
+                .clearActions()
+                .addAction(
+                    R.drawable.previous,
+                    "previous",
+                    getNotificationPendingIntent("PREV_ITEM", index)
+                )
+                .addAction(
+                    if (timerState.value == TimerState.Running) {
+                        R.drawable.pause
+                    } else {
+                        R.drawable.play
+                           },
+                    "play_pause", getNotificationPendingIntent(
+                        if (timerState.value == TimerState.Running) {
+                            "PAUSE"
+                        } else {
+                            "PLAY"
+                        }
+                    ))
+                .addAction(
+                    R.drawable.next,
+                    "next",
+                    getNotificationPendingIntent("NEXT_ITEM", index)
+                )
+            notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
+        })
+
+        timerState.observe(this, { timerState ->
+            when (timerState) {
+                TimerState.Stopped -> {
+                    stopForeground(Service.STOP_FOREGROUND_REMOVE)
+                }
+                TimerState.Paused -> {
+                    notificationBuilder
+                        .clearActions()
+                        .addAction(
+                            R.drawable.previous,
+                            "previous",
+                            getNotificationPendingIntent("PREV_ITEM", tempIndex)
+                        )
+                        .addAction(R.drawable.play, "play_pause", getNotificationPendingIntent("PLAY"))
+                        .addAction(
+                            R.drawable.next,
+                            "next",
+                            getNotificationPendingIntent("NEXT_ITEM", tempIndex)
+                        )
+                    notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
+                }
+                TimerState.Running -> {
+                    notificationBuilder
+                        .clearActions()
+                        .addAction(
+                            R.drawable.previous,
+                            "previous",
+                            getNotificationPendingIntent("PREV_ITEM", tempIndex)
+                        )
+                        .addAction(R.drawable.pause, "play_pause", getNotificationPendingIntent("PAUSE"))
+                        .addAction(
+                            R.drawable.next,
+                            "next",
+                            getNotificationPendingIntent("NEXT_ITEM", tempIndex)
+                        )
+                    notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
+                }
+                else -> {
+                }
+            }
+        })
     }
 
     private fun getMainActivityPendingIntent() = PendingIntent.getActivity(
@@ -91,6 +178,19 @@ class TimerService : Service() {
         Intent(this, MainActivity::class.java).also {
             it.action = ACTION_SHOW_TRACKING_FRAGMENT
         },
+        FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE
+    )
+
+    private fun getNotificationPendingIntent(clickAction: String, index: Int? = null) = PendingIntent.getBroadcast(
+        this,
+        0,
+        Intent(this, NotificationReceiver::class.java)
+            .also {
+                it.action = clickAction
+                if (index != null) {
+                    it.putExtra("com.example.protosuite.ItemListIndex", index)
+                }
+            },
         FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE
     )
 
@@ -125,7 +225,8 @@ class TimerService : Service() {
         fun startTimer(itemIndex: Int) {
             setActiveItemIndex(itemIndex)
             val activeItem = currentNoteItems[itemIndex]
-            var activeTimeLengthMilli = activeItem.time.times(1000L) * 60F.pow(activeItem.unit).toLong()
+            var activeTimeLengthMilli =
+                activeItem.time.times(1000L) * 60F.pow(activeItem.unit).toLong()
             setTotalTimerLengthMilli(activeTimeLengthMilli)
             if (isPaused) {
                 isPaused = false
@@ -212,6 +313,18 @@ class TimerService : Service() {
             if (itemIndex >= 0) {
                 _itemIndex.value = itemIndex
             }
+        }
+
+        fun decItemIndex() {
+            _itemIndex.value.let {
+                if (it != null && it > 0) {
+                    _itemIndex.value?.dec()
+                }
+            }
+        }
+
+        fun incItemIndex() {
+            _itemIndex.value?.inc()
         }
 
         private var _totalTimerLengthMilli: MutableLiveData<Long> = MutableLiveData(1L)
