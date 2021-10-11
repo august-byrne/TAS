@@ -7,7 +7,6 @@ import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -46,20 +45,17 @@ import kotlin.math.pow
 
 @SuppressLint("UnrememberedMutableState")
 @Composable
-fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStart: () -> Unit, onDeleteNote: () -> Unit, onNavBack: () -> Unit) {
+fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStart: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit, onNavBack: () -> Unit) {
     val context = LocalContext.current
     val noteWithItems by myViewModel.getNoteWithItemsById(noteId).observeAsState()
-    //var note by rememberSaveable{ mutableStateOf(noteWithItems?.note ?: NoteItem(0, null, null, 0, "", "")) }
-    //var noteItems by rememberSaveable{ mutableStateListOf(noteWithItems?.dataItems?: mutableListOf()) }
     val listState = rememberLazyListState()
     if (!myViewModel.beginTyping) {
-        //note = noteWithItems?.note ?: NoteItem(0, null, null, 0, "", "")
         myViewModel.currentNote = noteWithItems?.note ?: NoteItem(0, null, null, 0, "", "")
         myViewModel.currentNoteItems = noteWithItems?.dataItems?.toMutableStateList() ?: mutableStateListOf()
     }
     DisposableEffect(key1 = myViewModel) {
         onDispose {
-            Log.d("Side Effect Tracker", "navigating away from ExpandedNoteUI")
+            //Log.d("Side Effect Tracker", "navigating away from ExpandedNoteUI")
             myViewModel.apply {
                 if (beginTyping) {
                     if (currentNote.title.isEmpty() && currentNote.description.isEmpty() && currentNoteItems.isNullOrEmpty()) {
@@ -67,17 +63,19 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                             deleteNote(currentNote.id)
                         }
                     } else {
-                        upsertNoteAndData(
-                            currentNote.copy(
-                                last_edited_on = Calendar.getInstance(),
-                                creation_date = currentNote.creation_date ?: Calendar.getInstance()
-                            ),
-                            currentNoteItems.toMutableList()
-                        )
-                        beginTyping = false
+                        if (!noteDeleted) {
+                            upsertNoteAndData(
+                                currentNote.copy(
+                                    last_edited_on = Calendar.getInstance(),
+                                    creation_date = Calendar.getInstance()
+                                ),
+                                currentNoteItems
+                            )
+                            beginTyping = false
+                        } else {
+                            noteDeleted = false
+                        }
                     }
-                    //currentNote = NoteItem(0, null, null, 0, "", "")
-                    //currentNoteItems.clear()
                 }
             }
         }
@@ -85,7 +83,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().background(yellow100)) {
-            NoteExpandedTopBar(myViewModel, onNavBack, onDeleteNote)
+            NoteExpandedTopBar(myViewModel, onNavBack, onDeleteNote, onCloneNote)
             LazyColumn(
                 state = listState,
                 contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
@@ -198,7 +196,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
 }
 
 @Composable
-fun NoteExpandedTopBar(myViewModel: NoteViewModel, onNavBack: () -> Unit, onDeleteNote: () -> Unit) {
+fun NoteExpandedTopBar(myViewModel: NoteViewModel, onNavBack: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit) {
     TopAppBar(
         title = {
             BasicTextField(
@@ -258,7 +256,7 @@ fun NoteExpandedTopBar(myViewModel: NoteViewModel, onNavBack: () -> Unit, onDele
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
                 content = {
-                    DropdownMenuItem(onClick = onDeleteNote/*onCloneNote*/) {
+                    DropdownMenuItem(onClick = onCloneNote) {
                         Text("Clone Note")
                     }
                     DropdownMenuItem(onClick = onDeleteNote) {

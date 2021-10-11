@@ -74,7 +74,7 @@ fun MainUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavi
                         {
                             onNavigateStart()
                         },
-                        {})
+                        {},{})
                 }
                 1 -> {
                     //TimerUI(myViewModel)
@@ -88,11 +88,11 @@ fun MainUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavi
 }
 
 @Composable
-fun MainAppBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, onDrawerOpen: () -> Unit) {
+fun MainAppBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, onDrawerOpen: () -> Unit, onNavSettings: () -> Unit) {
     TopAppBar(
         modifier = modifier,
         title = {
-            Text(text = "Tasky or Plan/r", color = Color.White)
+            Text(text = "Timed Activity System (TAS)", color = Color.White)
         },
         navigationIcon = {
             IconButton(
@@ -130,6 +130,7 @@ fun MainAppBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, onDraw
                     DropdownMenuItem(onClick = {
                         /* Handle settings! */
                         expanded = false
+                        onNavSettings()
                     }) {
                         Text("Settings")
                     }
@@ -177,20 +178,18 @@ fun AutoSizingText(modifier: Modifier = Modifier, textStyle: TextStyle = LocalTe
 }
 
 @Composable
-fun ItemButton(icon: ImageVector, text: String, onClick: () -> Unit) {
+fun ItemButton(modifier: Modifier = Modifier, icon: ImageVector, text: String, onClick: () -> Unit) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .padding(8.dp)
             .clickable { onClick() }) {
         Icon(
-            modifier = Modifier.padding(8.dp),
             imageVector = icon,
             contentDescription = "item icon"
         )
         Text(
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier.padding(start = 16.dp),
             fontWeight = FontWeight.SemiBold,
             text = text
         )

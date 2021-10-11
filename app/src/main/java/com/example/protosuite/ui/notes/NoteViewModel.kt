@@ -106,6 +106,7 @@ class NoteViewModel @Inject constructor(
     fun getNoteWithItemsById(id: Int): LiveData<NoteWithItems> =
         repo.getNoteWithItemsById(id).asLiveData()
 
+    var noteDeleted: Boolean = false
     var beginTyping by mutableStateOf(false)
     var currentNote by mutableStateOf(NoteItem(0, null, null, 0, "", ""))
     var currentNoteItems = mutableStateListOf<DataItem>()

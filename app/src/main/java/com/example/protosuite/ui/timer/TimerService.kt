@@ -133,6 +133,7 @@ class TimerService : LifecycleService() {
             when (timerState) {
                 TimerState.Stopped -> {
                     stopForeground(Service.STOP_FOREGROUND_REMOVE)
+                    notificationManager.cancel(NOTIFICATION_ID)
                 }
                 TimerState.Paused -> {
                     notificationBuilder
@@ -214,7 +215,7 @@ class TimerService : LifecycleService() {
         const val NOTIFICATION_CHANNEL_NAME = "Tracking"
         const val NOTIFICATION_ID = 1
 
-        val isTiming = MutableLiveData<Boolean>()
+        //val isTiming = MutableLiveData<Boolean>()
 
         var currentNote by mutableStateOf(NoteItem(0, null, null, 0, "", ""))
         var currentNoteItems = mutableStateListOf<DataItem>()
@@ -228,8 +229,7 @@ class TimerService : LifecycleService() {
             var activeTimeLengthMilli =
                 activeItem.time.times(1000L) * 60F.pow(activeItem.unit).toLong()
             setTotalTimerLengthMilli(activeTimeLengthMilli)
-            if (isPaused) {
-                isPaused = false
+            if (internalTimerState == TimerState.Paused) {
                 activeTimeLengthMilli = tempSavedTimerLengthMilli
             }
             setTimerLength(activeTimeLengthMilli)
@@ -244,8 +244,13 @@ class TimerService : LifecycleService() {
                         setActiveItemIndex(itemIndex.inc())
                         startTimer(itemIndex.inc())
                     } else {
-                        setTimerState(TimerState.Stopped)
                         setActiveItemIndex(0)
+                        val firstItem = currentNoteItems[0]
+                        val firstTimeLengthMilli =
+                            firstItem.time.times(1000L) * 60F.pow(firstItem.unit).toLong()
+                        setTotalTimerLengthMilli(firstTimeLengthMilli)
+                        setTimerLength(firstTimeLengthMilli)
+                        stopTimer()
                     }
                 }
             }.start()
@@ -253,14 +258,23 @@ class TimerService : LifecycleService() {
 
         fun stopTimer() {
             setTimerState(TimerState.Stopped)
-            isPaused = false
             timer?.cancel()
         }
 
         fun modifyTimer(index: Int) {
-            stopTimer()
+            timer?.cancel()
             if (index in 0..currentNoteItems.lastIndex) {
-                startTimer(index)
+                if (internalTimerState == TimerState.Running) {
+                    startTimer(index)
+                } else {
+                    setTimerState(TimerState.Stopped)
+                    setActiveItemIndex(index)
+                    val firstItem = currentNoteItems[index]
+                    val firstTimeLengthMilli =
+                        firstItem.time.times(1000L) * 60F.pow(firstItem.unit).toLong()
+                    setTotalTimerLengthMilli(firstTimeLengthMilli)
+                    setTimerLength(firstTimeLengthMilli)
+                }
             } else {
                 setActiveItemIndex(0)
             }
@@ -269,12 +283,11 @@ class TimerService : LifecycleService() {
         fun pauseTimer(currentTimerLength: Long) {
             timer?.cancel()
             setTimerState(TimerState.Paused)
-            isPaused = true
             tempSavedTimerLengthMilli = currentTimerLength
         }
 
         private var tempSavedTimerLengthMilli = 0L
-        private var isPaused: Boolean = false
+        private var internalTimerState: TimerState = TimerState.Stopped
 
         fun initTimerService(note: NoteItem, dataItems: List<DataItem>, index: Int = 0) {
             currentNote = note
@@ -302,8 +315,9 @@ class TimerService : LifecycleService() {
         private var _timerState = MutableLiveData(TimerState.Stopped)
         val timerState: LiveData<TimerState> = _timerState
 
-        fun setTimerState(timerState: TimerState) {
+        private fun setTimerState(timerState: TimerState) {
             _timerState.value = timerState
+            internalTimerState = timerState
         }
 
         private var _itemIndex = MutableLiveData(0)
@@ -313,18 +327,6 @@ class TimerService : LifecycleService() {
             if (itemIndex >= 0) {
                 _itemIndex.value = itemIndex
             }
-        }
-
-        fun decItemIndex() {
-            _itemIndex.value.let {
-                if (it != null && it > 0) {
-                    _itemIndex.value?.dec()
-                }
-            }
-        }
-
-        fun incItemIndex() {
-            _itemIndex.value?.inc()
         }
 
         private var _totalTimerLengthMilli: MutableLiveData<Long> = MutableLiveData(1L)

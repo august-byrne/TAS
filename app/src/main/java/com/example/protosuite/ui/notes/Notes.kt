@@ -43,7 +43,7 @@ import java.util.*
 import kotlin.math.roundToInt
 
 @Composable
-fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavigateTimerStart: () -> Unit, onDrawerOpen: () -> Unit) {
+fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavigateTimerStart: () -> Unit, onDrawerOpen: () -> Unit, onNavSettings: () -> Unit) {
     val notes: List<NoteWithItems> by myViewModel.sortedAllNotesWithItems().observeAsState(listOf())
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -144,7 +144,8 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
             .height(toolbarHeight)
             .offset { IntOffset(x = 0, y = toolbarOffsetHeightPx.value.roundToInt()) },
         myViewModel,
-        onDrawerOpen
+        onDrawerOpen,
+        onNavSettings
     )
     Box(modifier = Modifier.fillMaxSize()) {
         FloatingActionButton(

@@ -57,6 +57,7 @@ import com.google.android.gms.ads.MobileAds
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.util.*
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -121,16 +122,17 @@ class MainActivity : AppCompatActivity() {
                         // to close use -> scaffoldState.drawerState.close()
                         Column(
                             Modifier
-                                .padding(24.dp)
-                                .fillMaxSize()
+                                .padding(16.dp)
+                                .fillMaxHeight()
+                                .wrapContentWidth()
                         ) {
-                            Spacer(Modifier.height(24.dp))
-                            Text(text = "What doesn't work yet", style = MaterialTheme.typography.h5)
-                            Text("* Any Drag/Drop")
-                            Text("* Deleting Individual Activity Items")
-                            Text("* Timer Sounds")
-                            Divider()
-                            ItemButton(icon = Icons.Rounded.Settings, text = "Settings") {
+                            Spacer(Modifier.height(16.dp))
+                            Text(modifier = Modifier.padding(vertical = 8.dp), text = "What doesn't work yet", style = MaterialTheme.typography.h5)
+                            Text(modifier = Modifier.padding(vertical = 8.dp), text = "* Any Drag/Drop")
+                            Text(modifier = Modifier.padding(vertical = 8.dp), text = "* Deleting Individual Activity Items")
+                            Text(modifier = Modifier.padding(vertical = 8.dp), text = "* Timer Sounds")
+                            Divider(modifier = Modifier.padding(vertical = 8.dp))
+                            ItemButton(modifier = Modifier.padding(vertical = 8.dp), icon = Icons.Rounded.Settings, text = "Settings") {
                                 coroutineScope.launch {
                                     scaffoldState.drawerState.close()
                                 }
@@ -239,6 +241,9 @@ fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navCont
                     coroutineScope.launch {
                         scaffoldState.drawerState.open()
                     }
+                },
+                {
+                    navController.navigate("settings")
                 }
             )
         }
@@ -259,12 +264,12 @@ fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navCont
                     navController.navigate("note_timer")
                 },
                 {
-                    myViewModel.tempSavedNote = NoteWithItems(
-                        myViewModel.currentNote,
-                        myViewModel.currentNoteItems
-                    )
+                    myViewModel.apply {
+                        tempSavedNote = NoteWithItems(currentNote, currentNoteItems)
+                        deleteNote(noteId)
+                        noteDeleted = true
+                    }
                     navController.popBackStack()
-                    myViewModel.deleteNote(noteId)
                     coroutineScope.launch {
                         scaffoldState.snackbarHostState.showSnackbar(
                             message = "Note deleted",
@@ -272,6 +277,23 @@ fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navCont
                             duration = SnackbarDuration.Short
                         )
                     }
+                },
+                {
+                    myViewModel.apply {
+                        upsertNoteAndData(
+                            currentNote.copy(
+                                id = 0,
+                                title = currentNote.title.plus(" - Copy"),
+                                last_edited_on = Calendar.getInstance(),
+                                creation_date = currentNote.creation_date
+                                    ?: Calendar.getInstance()
+                            ),
+                            currentNoteItems.mapTo(mutableListOf()) { dataItem ->
+                                dataItem.copy(id = 0)
+                            }
+                        )
+                    }
+                    navController.popBackStack()
                 },
                 {
                     navController.popBackStack()

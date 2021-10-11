@@ -28,8 +28,13 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
     val uriHandler = LocalUriHandler.current
     val context = LocalContext.current
     val showAdHiderPopup = rememberSaveable { mutableStateOf(false) }
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize()) {
+    Box(modifier = Modifier
+        .fillMaxSize()
+    ) {
+        Column(
+            Modifier
+                .fillMaxSize()
+        ) {
             TopAppBar(
                 title = {
                     Text(text = "Settings")
@@ -46,6 +51,11 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
                     }
                 }
             )
+            Spacer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            )
             Text(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -53,9 +63,14 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
                     .clickable {
                         showAdHiderPopup.value = true
                     }
-                    .padding(8.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 text = "Remove Ads",
                 style = MaterialTheme.typography.body1
+            )
+            Divider(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             )
             Text(
                 modifier = Modifier
@@ -64,9 +79,14 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
                     .clickable {
                         uriHandler.openUri("https://github.com/august-byrne/ProtoSuite")
                     }
-                    .padding(8.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 text = "Project Github",
                 style = MaterialTheme.typography.body1
+            )
+            Divider(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             )
         }
         if (showAdHiderPopup.value) {

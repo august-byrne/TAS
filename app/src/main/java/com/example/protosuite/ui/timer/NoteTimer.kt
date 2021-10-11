@@ -92,7 +92,7 @@ fun DeterminateProgressBar(
                 drawArc(
                     brush = brushTip,
                     startAngle = PROGRESS_FULL_DEGREES,
-                    sweepAngle = 0.014f,
+                    sweepAngle = 0.1f,
                     useCenter = false,
                     style = drawStyle
                 )
@@ -114,7 +114,7 @@ fun PreviewProgressBar() {
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight(),
-            progressInMilli = 991L
+            progressInMilli = 911L
         ) {
             TimerText(
                 Modifier
@@ -149,7 +149,6 @@ fun removeAlarm(context: Context) {
 // stop: remove alarm and reset time to 0
 // on a button press save TimerState to preferences
 // on TimerState.Stopped, nothing, Paused, return value to timer, running, create time left value and start countdown timer
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun NoteTimer(onNavBack: () -> Unit) {
     val context = LocalContext.current
@@ -293,7 +292,7 @@ fun NoteTimer(onNavBack: () -> Unit) {
                                 TimerService.modifyTimer(itemIndex)
                             }
                         }
-                        .scale(2f)
+                        .scale(1.5f)
                         .padding(8.dp),
                     imageVector = Icons.Default.SkipPrevious,
                     contentDescription = "back to previous item")
@@ -335,7 +334,7 @@ fun NoteTimer(onNavBack: () -> Unit) {
                         .clickable {
                             TimerService.modifyTimer(itemIndex + 1)
                         }
-                        .scale(2f)
+                        .scale(1.5f)
                         .padding(8.dp),
                     imageVector = Icons.Default.SkipNext,
                     contentDescription = "skip to next item"
@@ -345,7 +344,7 @@ fun NoteTimer(onNavBack: () -> Unit) {
     }
 }
 
-@ExperimentalAnimationApi
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun PlayPauseStopButtons(timerState: TimerState, onClickStartPause: () -> Unit, onClickStop: () -> Unit) {
     val icon =
