@@ -38,7 +38,6 @@ import com.example.protosuite.ui.timer.NoteBroadcastReceiver
 import com.example.protosuite.ui.timer.TimerService
 import com.example.protosuite.ui.values.blue100
 import com.example.protosuite.ui.values.blue500
-import com.example.protosuite.ui.values.yellow100
 import com.example.protosuite.ui.values.yellow200
 import java.util.*
 import kotlin.math.pow
@@ -81,8 +80,14 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize().background(yellow100)) {
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                //.background(yellow100)
+        ) {
             NoteExpandedTopBar(myViewModel, onNavBack, onDeleteNote, onCloneNote)
             LazyColumn(
                 state = listState,
@@ -290,7 +295,7 @@ fun DataItemUI (
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(yellow100)
+            //.background(yellow100)
             .padding(8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically

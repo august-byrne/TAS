@@ -92,12 +92,13 @@ class MainActivity : AppCompatActivity() {
         myViewModel.setPrevTimeType(preferences.lastUsedTimeUnit)
         myViewModel.sortType = preferences.sortType
         myViewModel.adState = preferences.showAds
+        myViewModel.isDarkTheme = preferences.isDarkTheme
 
         setContent {
             val navController = rememberNavController()
             val navBackStackEntry by navController.currentBackStackEntryAsState()
 
-            NotesTheme(darkTheme = false) {
+            NotesTheme(myViewModel.isDarkTheme) {
                 // create a scaffold state, set it to close by default
                 val scaffoldState = rememberScaffoldState(rememberDrawerState(DrawerValue.Closed))
                 // Create a coroutine scope. Opening of drawer and snackbar should happen in
@@ -205,6 +206,7 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         preferences.lastUsedTimeUnit = myViewModel.prevTimeType
         preferences.sortType = myViewModel.sortType
+        preferences.isDarkTheme = myViewModel.isDarkTheme
         super.onStop()
     }
 

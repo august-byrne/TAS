@@ -323,8 +323,8 @@ fun NoteTimer(onNavBack: () -> Unit) {
                     onClickStop = {
                         if (timerLengthMilli != 0L) {
                             //removeAlarm(context)
-                            TimerService.stopTimer()
-                            TimerService.setTimerLength(PreferenceManager(context).timeInMillis)
+                            TimerService.stopTimer(itemIndex)
+                            //TimerService.setTimerLength(myViewModel.timeInMillis)
                         }
                     }
                 )

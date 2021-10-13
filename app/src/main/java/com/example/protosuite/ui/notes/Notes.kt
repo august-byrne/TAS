@@ -2,7 +2,6 @@ package com.example.protosuite.ui.notes
 
 import android.content.Intent
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -36,7 +35,6 @@ import com.example.protosuite.ui.SortPopupUI
 import com.example.protosuite.ui.timer.TimerService
 import com.example.protosuite.ui.values.blue500
 import com.example.protosuite.ui.values.yellow100
-import com.example.protosuite.ui.values.yellow50
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -85,7 +83,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(yellow50)
+            //.background(yellow50)
             // attach as a parent to the nested scroll system
             .nestedScroll(nestedScrollConnection)
     ) {
@@ -112,6 +110,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
             items(notes) { notesWithData ->
                 NoteItemUI(
                     note = notesWithData.note,
+                    bgColor = if (!myViewModel.isDarkTheme) yellow100 else Color.DarkGray,
                     onClickItem = {
                         myViewModel.saveListPosition(listState)
                         onNavigate(notesWithData.note.id)
@@ -178,6 +177,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
 @Composable
 fun NoteItemUI (
     note: NoteItem,
+    bgColor: Color,
     onClickItem: () -> Unit,
     onClickStart: () -> Unit
     ) {
@@ -190,7 +190,7 @@ fun NoteItemUI (
             .fillMaxWidth()
             .clickable(onClick = onClickItem),
         elevation = 4.dp,
-        backgroundColor = yellow100
+        backgroundColor = bgColor
     ) {
         Column(
             modifier = Modifier
@@ -269,5 +269,5 @@ fun NoteItemUITest() {
         last_edited_on = Calendar.getInstance(),
         creation_date = Calendar.getInstance()
     )
-    NoteItemUI(note,{},{})
+    NoteItemUI(note, yellow100,{},{})
 }

@@ -9,6 +9,7 @@ import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.media.*
 import android.os.Build
 import android.os.CountDownTimer
 import android.support.v4.media.session.MediaSessionCompat
@@ -25,7 +26,11 @@ import com.example.protosuite.data.db.entities.NoteItem
 import com.example.protosuite.ui.MainActivity
 import com.example.protosuite.ui.notes.TimerState
 import com.example.protosuite.ui.values.yellow100
+import kotlin.math.ln
 import kotlin.math.pow
+
+
+
 
 // if lifecycle interaction with the service or lifecycleScope is needed, instead implement lifecycleService()
 class TimerService : LifecycleService() {
@@ -97,6 +102,15 @@ class TimerService : LifecycleService() {
             .setStyle(mediaStyle)
 
         startForeground(NOTIFICATION_ID, notificationBuilder.build())
+
+        finalBeep.observe(this, {
+            if (it) {
+                //Beeper(this).play(100)
+            } else {
+                //Beeper(this).play(75)
+            }
+        })
+
         var tempIndex = 0
         itemIndex.observe(this, { index ->
             tempIndex = index
@@ -215,11 +229,11 @@ class TimerService : LifecycleService() {
         const val NOTIFICATION_CHANNEL_NAME = "Tracking"
         const val NOTIFICATION_ID = 1
 
-        //val isTiming = MutableLiveData<Boolean>()
-
         var currentNote by mutableStateOf(NoteItem(0, null, null, 0, "", ""))
         var currentNoteItems = mutableStateListOf<DataItem>()
 
+        private var finalBeep: MutableLiveData<Boolean> = MutableLiveData(false)
+        private val beeper: ToneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
         private var timer: CountDownTimer? = null
 
         //takes care of all time unit (and some timer state) manipulation
@@ -241,23 +255,26 @@ class TimerService : LifecycleService() {
 
                 override fun onFinish() {
                     if (itemIndex < currentNoteItems.lastIndex) {
-                        setActiveItemIndex(itemIndex.inc())
+                        finalBeep.value = false
+                        beeper.startTone(ToneGenerator.TONE_PROP_BEEP, 200)
                         startTimer(itemIndex.inc())
                     } else {
-                        setActiveItemIndex(0)
-                        val firstItem = currentNoteItems[0]
-                        val firstTimeLengthMilli =
-                            firstItem.time.times(1000L) * 60F.pow(firstItem.unit).toLong()
-                        setTotalTimerLengthMilli(firstTimeLengthMilli)
-                        setTimerLength(firstTimeLengthMilli)
+                        finalBeep.value = true
+                        beeper.startTone(ToneGenerator.TONE_PROP_BEEP2, 400)
                         stopTimer()
                     }
                 }
             }.start()
         }
 
-        fun stopTimer() {
+        fun stopTimer(index: Int = 0) {
             setTimerState(TimerState.Stopped)
+            setActiveItemIndex(index)
+            val firstItem = currentNoteItems[index]
+            val firstTimeLengthMilli =
+                firstItem.time.times(1000L) * 60F.pow(firstItem.unit).toLong()
+            setTotalTimerLengthMilli(firstTimeLengthMilli)
+            setTimerLength(firstTimeLengthMilli)
             timer?.cancel()
         }
 
@@ -267,16 +284,10 @@ class TimerService : LifecycleService() {
                 if (internalTimerState == TimerState.Running) {
                     startTimer(index)
                 } else {
-                    setTimerState(TimerState.Stopped)
-                    setActiveItemIndex(index)
-                    val firstItem = currentNoteItems[index]
-                    val firstTimeLengthMilli =
-                        firstItem.time.times(1000L) * 60F.pow(firstItem.unit).toLong()
-                    setTotalTimerLengthMilli(firstTimeLengthMilli)
-                    setTimerLength(firstTimeLengthMilli)
+                    stopTimer(index)
                 }
             } else {
-                setActiveItemIndex(0)
+                stopTimer()
             }
         }
 
@@ -292,8 +303,7 @@ class TimerService : LifecycleService() {
         fun initTimerService(note: NoteItem, dataItems: List<DataItem>, index: Int = 0) {
             currentNote = note
             currentNoteItems = dataItems.toMutableStateList()
-            stopTimer()
-            setActiveItemIndex(index)
+            stopTimer(index)
             startTimer(index)
         }
 
@@ -334,6 +344,39 @@ class TimerService : LifecycleService() {
 
         private fun setTotalTimerLengthMilli(timeInMilli: Long) {
             _totalTimerLengthMilli.value = timeInMilli
+        }
+    }
+}
+
+class Beeper(val context: Context) {
+
+    private val maxVolume = 100f
+    private val mediaPlayer = MediaPlayer()
+
+    init {
+
+        //val beep = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.beep)
+        val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+
+
+        val audioAttributes = AudioAttributes.Builder()
+            .setFlags(AudioAttributes.FLAG_AUDIBILITY_ENFORCED)
+            .setLegacyStreamType(AudioManager.STREAM_ALARM)
+            .setUsage(AudioAttributes.USAGE_ALARM)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+
+        mediaPlayer.setDataSource(context, soundUri)
+        mediaPlayer.setAudioAttributes(audioAttributes)
+
+        mediaPlayer.prepare()
+    }
+
+    fun play(volume: Int){
+        if (!mediaPlayer.isPlaying) {
+            val calculatedVolume = 1 - (ln(maxVolume - volume.toFloat()) / ln(maxVolume))
+            mediaPlayer.setVolume(calculatedVolume, calculatedVolume)
+            mediaPlayer.start()
         }
     }
 }

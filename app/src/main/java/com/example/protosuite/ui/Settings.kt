@@ -88,6 +88,32 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             )
+            Row(
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .fillMaxWidth()
+                    .clickable {
+                        myViewModel.isDarkTheme = !myViewModel.isDarkTheme
+                    }
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Dark Theme",
+                    style = MaterialTheme.typography.body1
+                )
+                Switch(
+                    checked = myViewModel.isDarkTheme,
+                    onCheckedChange = {
+                    myViewModel.isDarkTheme = it
+                    }
+                )
+            }
+            Divider(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
         }
         if (showAdHiderPopup.value) {
             RemoveAdsPopupUI(

@@ -22,6 +22,7 @@ class PreferenceManager @Inject constructor(
         private const val PREF_KEY_ITEM_INDEX = "item_index"
         private const val PREF_KEY_PREVIOUS_UNIT = "previous_unit"
         private const val PREF_KEY_SORT_BY = "sort_type"
+        private const val DARK_MODE_ENABLED = "dark_mode_enabled"
     }
 
     private val pref: SharedPreferences =
@@ -30,6 +31,10 @@ class PreferenceManager @Inject constructor(
     var showAds: Boolean
         get() = pref.getBoolean(PREF_KEY_SHOW_ADS, true)
         set(value) = pref.edit().putBoolean(PREF_KEY_SHOW_ADS, value).apply()
+
+    var isDarkTheme: Boolean
+        get() = pref.getBoolean(DARK_MODE_ENABLED, false)
+        set(value) = pref.edit().putBoolean(DARK_MODE_ENABLED, value).apply()
 
 
     var timeInMillis: Long
