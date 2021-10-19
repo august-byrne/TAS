@@ -152,8 +152,11 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                 .padding(8.dp)
                 .align(Alignment.BottomEnd),
             onClick = {
-                onNavigate(0)
-                myViewModel.saveListPosition(LazyListState())
+                coroutineScope.launch {
+                    onNavigate(myViewModel.upsert(NoteItem(0, null, null, 0, "", "")).toInt())
+                    myViewModel.saveListPosition(LazyListState())
+                }
+
             },
             shape = RoundedCornerShape(
                 topStart = 16.dp

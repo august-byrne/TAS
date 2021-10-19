@@ -26,20 +26,28 @@ class NoteViewModel @Inject constructor(
     private val repo: NoteRepository
 ): ViewModel() {
 
-    /*
-    var noteDataId: Long = 0
-    fun upsert(item: NoteItem?) = CoroutineScope(Dispatchers.Main).launch {
+
+    //var noteDataId: Long = 0
+    suspend fun upsert(item: NoteItem?): Long {
+        return if (item != null) {
+            repo.upsert(item)
+        } else {
+            0
+        }
+    }
+/*    fun upsert(item: NoteItem?): Long = CoroutineScope(Dispatchers.Main).launch {
         if (item != null) {
-            noteDataId = repo.upsert(item)
+            return repo.upsert(item)
+            //noteDataId = repo.upsert(item)
         } else {
             Log.d("DB Interactions", "upsert failed: item was null")
         }
-    }
+    }*/
 
     fun upsertData(items: List<DataItem>) = CoroutineScope(Dispatchers.Main).launch {
         repo.upsertData(items)
     }
-    */
+
 
     fun upsertNoteAndData(noteItem: NoteItem, dataItems: MutableList<DataItem>) =
         CoroutineScope(Dispatchers.Main).launch {

@@ -94,7 +94,8 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                 contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
                 verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
-                item {  // Note Description Item
+                // Note Description Item
+                item {
                     BasicTextField(
                         modifier = Modifier
                             .fillMaxWidth()

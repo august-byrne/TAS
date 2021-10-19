@@ -6,13 +6,13 @@ import android.app.NotificationManager.IMPORTANCE_LOW
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
-import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.media.*
 import android.os.Build
 import android.os.CountDownTimer
 import android.support.v4.media.session.MediaSessionCompat
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.toArgb
@@ -86,12 +86,10 @@ class TimerService : LifecycleService() {
             .setOngoing(true)
             .setSmallIcon(R.drawable.ic_baseline_play_arrow_24)
             .setContentTitle(currentNote.title)
-            //.setContentText(currentNoteItems[0].activity)
             .setColor(yellow100.toArgb())
             .setColorized(true)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(getMainActivityPendingIntent())
-            // TODO: add notification actions
             .addAction(
                 R.drawable.previous,
                 "previous",
@@ -105,6 +103,7 @@ class TimerService : LifecycleService() {
 
         finalBeep.observe(this, {
             if (it) {
+                Toast.makeText(this, "Timed Activity Complete", Toast.LENGTH_SHORT).show()
                 //Beeper(this).play(100)
             } else {
                 //Beeper(this).play(75)
@@ -140,14 +139,16 @@ class TimerService : LifecycleService() {
                     "next",
                     getNotificationPendingIntent("NEXT_ITEM", index)
                 )
-            notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
+            if (internalTimerState != TimerState.Stopped) {
+                notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
+            }
         })
 
         timerState.observe(this, { timerState ->
             when (timerState) {
                 TimerState.Stopped -> {
-                    stopForeground(Service.STOP_FOREGROUND_REMOVE)
-                    notificationManager.cancel(NOTIFICATION_ID)
+                    stopForeground(true)
+                    //notificationManager.cancel(NOTIFICATION_ID)
                 }
                 TimerState.Paused -> {
                     notificationBuilder
@@ -179,7 +180,8 @@ class TimerService : LifecycleService() {
                             "next",
                             getNotificationPendingIntent("NEXT_ITEM", tempIndex)
                         )
-                    notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
+                    startForeground(NOTIFICATION_ID, notificationBuilder.build())
+                    //notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
                 }
                 else -> {
                 }

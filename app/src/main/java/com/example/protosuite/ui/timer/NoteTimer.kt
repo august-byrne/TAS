@@ -125,25 +125,6 @@ fun PreviewProgressBar() {
 }
 
 private const val PROGRESS_FULL_DEGREES = 360f
-/*
-@ExperimentalAnimationApi
-fun setAlarm(context: Context, milliSecRemaining: Long) {
-    val wakeUpTime = Calendar.getInstance().timeInMillis + milliSecRemaining
-    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-    val intent = Intent(context, TimerBroadcastReceiver::class.java)
-    val pendingIntent = PendingIntent.getBroadcast(context, 0, intent, FLAG_UPDATE_CURRENT)
-    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, wakeUpTime, pendingIntent)
-    PrefUtil.setAlarmEndTime(wakeUpTime, context)
-}
-
-@ExperimentalAnimationApi
-fun removeAlarm(context: Context) {
-    val intent = Intent(context, TimerBroadcastReceiver::class.java)
-    val pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0)
-    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-    alarmManager.cancel(pendingIntent)
-    PrefUtil.setAlarmEndTime(0, context)
-}*/
 
 // play: run parsed time on clock, pause, stop alarm and leave time on clock (and save time in preferences
 // stop: remove alarm and reset time to 0
@@ -241,9 +222,33 @@ fun NoteTimer(onNavBack: () -> Unit) {
                 progressInMilli = progressInMilli
             ) {
                 if (timerState == TimerState.Running && timerLengthMilli <= 5000) {
-                    FlashingTimerText(formattedTimerLength)
+                    val infiniteTransition = rememberInfiniteTransition()
+                    val alpha by infiniteTransition.animateFloat(
+                        initialValue = 1.0f,
+                        targetValue = 0.0f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(400, easing = FastOutLinearInEasing),
+                            repeatMode = RepeatMode.Reverse
+                        )
+                    )
+                    AutoSizingText(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp)
+                            .alpha(alpha),
+                        textStyle = MaterialTheme.typography.h1,
+                        text = formattedTimerLength
+                    )
+                    //FlashingTimerText(formattedTimerLength)
                 } else {
-                    TimerText(Modifier, formattedTimerLength)
+                    AutoSizingText(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        textStyle = MaterialTheme.typography.h1,
+                        text = formattedTimerLength
+                    )
+                    //TimerText(Modifier, formattedTimerLength)
                 }
             }
 
@@ -304,27 +309,19 @@ fun NoteTimer(onNavBack: () -> Unit) {
                             if (timerState == TimerState.Running) {
                                 // Clicked Pause
                                 TimerService.pauseTimer(timerLengthMilli)
-                                //removeAlarm(context)
                             } else {
                                 // Clicked Start
                                 if (timerState == TimerState.Stopped) {
                                     PreferenceManager(context).timeInMillis =
                                         TimerService.timerLengthMilli.value ?: 1L
                                 }
-                                //temp disabled for testing
-                                //setAlarm(
-                                //    context = context,
-                                //    milliSecRemaining = timerLengthMilli
-                                //)
                                 TimerService.startTimer(itemIndex)
                             }
                         }
                     },
                     onClickStop = {
                         if (timerLengthMilli != 0L) {
-                            //removeAlarm(context)
                             TimerService.stopTimer(itemIndex)
-                            //TimerService.setTimerLength(myViewModel.timeInMillis)
                         }
                     }
                 )

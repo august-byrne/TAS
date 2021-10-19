@@ -1,6 +1,8 @@
 package com.example.protosuite.ui
 
+import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -82,9 +84,11 @@ class MainActivity : AppCompatActivity() {
             return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, adWidth)
         }
 
+    @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         //initialize the mobile ads sdk
         MobileAds.initialize(this) {}
 
@@ -128,12 +132,29 @@ class MainActivity : AppCompatActivity() {
                                 .wrapContentWidth()
                         ) {
                             Spacer(Modifier.height(16.dp))
-                            Text(modifier = Modifier.padding(vertical = 8.dp), text = "What doesn't work yet", style = MaterialTheme.typography.h5)
-                            Text(modifier = Modifier.padding(vertical = 8.dp), text = "* Any Drag/Drop")
-                            Text(modifier = Modifier.padding(vertical = 8.dp), text = "* Deleting Individual Activity Items")
-                            Text(modifier = Modifier.padding(vertical = 8.dp), text = "* Timer Sounds")
+                            Text(
+                                modifier = Modifier.padding(vertical = 8.dp),
+                                text = "What doesn't work yet",
+                                style = MaterialTheme.typography.h5
+                            )
+                            Text(
+                                modifier = Modifier.padding(vertical = 8.dp),
+                                text = "* Any Drag/Drop"
+                            )
+                            Text(
+                                modifier = Modifier.padding(vertical = 8.dp),
+                                text = "* Deleting Individual Activity Items"
+                            )
+                            Text(
+                                modifier = Modifier.padding(vertical = 8.dp),
+                                text = "* audio beep plays from speakers and earbuds at the same time"
+                            )
                             Divider(modifier = Modifier.padding(vertical = 8.dp))
-                            ItemButton(modifier = Modifier.padding(vertical = 8.dp), icon = Icons.Rounded.Settings, text = "Settings") {
+                            ItemButton(
+                                modifier = Modifier.padding(vertical = 8.dp),
+                                icon = Icons.Rounded.Settings,
+                                text = "Settings"
+                            ) {
                                 coroutineScope.launch {
                                     scaffoldState.drawerState.close()
                                 }
