@@ -4,15 +4,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.material.*
+import androidx.compose.material.Card
+import androidx.compose.material.Divider
+import androidx.compose.material.Switch
+import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
@@ -21,21 +24,19 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.example.protosuite.ui.notes.NoteViewModel
 import com.example.protosuite.ui.timer.PreferenceManager
-import com.example.protosuite.ui.values.blue200
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
     val uriHandler = LocalUriHandler.current
     val context = LocalContext.current
     val showAdHiderPopup = rememberSaveable { mutableStateOf(false) }
-    Box(modifier = Modifier
-        .fillMaxSize()
-    ) {
-        Column(
-            Modifier
-                .fillMaxSize()
-        ) {
-            TopAppBar(
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
                 title = {
                     Text(text = "Settings")
                 },
@@ -46,16 +47,15 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Back",
-                            tint = Color.White
                         )
                     }
                 }
             )
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            )
+        }
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
             Text(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -63,14 +63,14 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
                     .clickable {
                         showAdHiderPopup.value = true
                     }
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(16.dp),
                 text = "Remove Ads",
-                style = MaterialTheme.typography.body1
+                style = MaterialTheme.typography.bodyLarge
             )
             Divider(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(horizontal = 16.dp)
             )
             Text(
                 modifier = Modifier
@@ -79,14 +79,14 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
                     .clickable {
                         uriHandler.openUri("https://github.com/august-byrne/ProtoSuite")
                     }
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(16.dp),
                 text = "Project Github",
-                style = MaterialTheme.typography.body1
+                style = MaterialTheme.typography.bodyLarge
             )
             Divider(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(horizontal = 16.dp)
             )
             Row(
                 modifier = Modifier
@@ -95,34 +95,35 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
                     .clickable {
                         myViewModel.isDarkTheme = !myViewModel.isDarkTheme
                     }
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "Dark Theme",
-                    style = MaterialTheme.typography.body1
+                    style = MaterialTheme.typography.bodyLarge
                 )
                 Switch(
                     checked = myViewModel.isDarkTheme,
                     onCheckedChange = {
-                    myViewModel.isDarkTheme = it
+                        myViewModel.isDarkTheme = it
                     }
                 )
             }
             Divider(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(horizontal = 16.dp)
             )
-        }
-        if (showAdHiderPopup.value) {
-            RemoveAdsPopupUI(
-                closeAdsPopup = { showAdHiderPopup.value = false },
-                setShowAdState = { newAdState ->
-                    PreferenceManager(context).showAds = newAdState
-                    myViewModel.adState = newAdState
-                }
-            )
+            if (showAdHiderPopup.value) {
+                RemoveAdsPopupUI(
+                    closeAdsPopup = { showAdHiderPopup.value = false },
+                    setShowAdState = { newAdState ->
+                        PreferenceManager(context).showAds = newAdState
+                        myViewModel.adState = newAdState
+                    }
+                )
+            }
         }
     }
 }
@@ -142,12 +143,11 @@ fun RemoveAdsPopupUI(closeAdsPopup: () -> Unit, setShowAdState: (Boolean) -> Uni
         )
     ) {
         Card(
-            shape = MaterialTheme.shapes.medium.copy(CornerSize(16.dp)),
+            shape = androidx.compose.material.MaterialTheme.shapes.medium.copy(CornerSize(16.dp)),
             modifier = Modifier
                 .wrapContentHeight()
                 .width(IntrinsicSize.Max),
-            elevation = 24.dp,
-            backgroundColor = Color.White
+            elevation = 24.dp
         ) {
             Column(
                 modifier = Modifier
@@ -158,10 +158,10 @@ fun RemoveAdsPopupUI(closeAdsPopup: () -> Unit, setShowAdState: (Boolean) -> Uni
                     modifier = Modifier
                         .fillMaxWidth()
                         .wrapContentHeight()
-                        .background(blue200)
+                        .background(MaterialTheme.colorScheme.primary)
                         .padding(8.dp),
                     textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.h6,
+                    style = MaterialTheme.typography.titleLarge,
                     text = "Speak friend and enter"
                 )
                 TextField(

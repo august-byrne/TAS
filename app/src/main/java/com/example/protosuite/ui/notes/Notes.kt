@@ -9,37 +9,35 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material.Card
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.runtime.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.example.protosuite.data.db.entities.NoteItem
 import com.example.protosuite.data.db.entities.NoteWithItems
 import com.example.protosuite.ui.MainAppBar
 import com.example.protosuite.ui.SortPopupUI
 import com.example.protosuite.ui.timer.TimerService
-import com.example.protosuite.ui.values.blue500
 import com.example.protosuite.ui.values.yellow100
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.math.roundToInt
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavigateTimerStart: () -> Unit, onDrawerOpen: () -> Unit, onNavSettings: () -> Unit) {
     val notes: List<NoteWithItems> by myViewModel.sortedAllNotesWithItems().observeAsState(listOf())
@@ -47,7 +45,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    // here we use LazyColumn that has build-in nested scroll, but we want to act like a
+/*    // here we use LazyColumn that has build-in nested scroll, but we want to act like a
     // parent for this LazyColumn and participate in its nested scroll.
     // Let's make a collapsing toolbar for LazyColumn
     val toolbarHeight = 56.dp
@@ -78,25 +76,53 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                 //return Offset.Zero
             }
         }
-    }
+    }*/
+    //val decayAnimationSpec = rememberSplineBasedDecay<Float>()
+    val scrollBehavior = remember { TopAppBarDefaults.enterAlwaysScrollBehavior() }
     // TODO: Fix listState re-scrolling when rotated or when miniTimerView is clicked
-    Box(
+    Scaffold(
         modifier = Modifier
             .fillMaxSize()
-            //.background(yellow50)
             // attach as a parent to the nested scroll system
-            .nestedScroll(nestedScrollConnection)
+            .nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            MainAppBar(
+                myViewModel = myViewModel,
+                scrollBehavior = scrollBehavior,
+                onDrawerOpen = onDrawerOpen,
+                onNavSettings = onNavSettings
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    coroutineScope.launch {
+                        onNavigate(
+                            myViewModel.upsert(
+                                NoteItem(0, Calendar.getInstance(), null, 0, "", "")
+                            ).toInt()
+                        )
+                        myViewModel.saveListPosition(LazyListState())
+                    }
+
+                },
+                shape = RoundedCornerShape(
+                    topStart = 16.dp
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Add,
+                    contentDescription = "New Note"
+                )
+            }
+        },
+        floatingActionButtonPosition = FabPosition.End
     ) {
         // our list with build in nested scroll support that will notify us about its scroll
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             state = listState,
-            contentPadding = PaddingValues(
-                start = 4.dp,
-                end = 4.dp,
-                bottom = 4.dp,
-                top = (56.dp + with(LocalDensity.current) {toolbarOffsetHeightPx.value.toDp()})
-            ),
+            contentPadding = PaddingValues(4.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             coroutineScope.launch {
@@ -137,42 +163,11 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                 Spacer(modifier = Modifier.size(80.dp))
             }
         }
-    }
-    MainAppBar(
-        Modifier
-            .height(toolbarHeight)
-            .offset { IntOffset(x = 0, y = toolbarOffsetHeightPx.value.roundToInt()) },
-        myViewModel,
-        onDrawerOpen,
-        onNavSettings
-    )
-    Box(modifier = Modifier.fillMaxSize()) {
-        FloatingActionButton(
-            modifier = Modifier
-                .padding(8.dp)
-                .align(Alignment.BottomEnd),
-            onClick = {
-                coroutineScope.launch {
-                    onNavigate(myViewModel.upsert(NoteItem(0, null, null, 0, "", "")).toInt())
-                    myViewModel.saveListPosition(LazyListState())
-                }
-
-            },
-            shape = RoundedCornerShape(
-                topStart = 16.dp
-            ),
-            backgroundColor = blue500
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Add,
-                contentDescription = "New Note"
-            )
-        }
-    }
-    Box(modifier = Modifier.fillMaxSize()) {
-        if (myViewModel.openSortPopup) {
-            myViewModel.saveListPosition(listState)
-            SortPopupUI(myViewModel)
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (myViewModel.openSortPopup) {
+                myViewModel.saveListPosition(listState)
+                SortPopupUI(myViewModel)
+            }
         }
     }
 }
@@ -187,12 +182,11 @@ fun NoteItemUI (
     val simpleDateFormat = remember { SimpleDateFormat.getDateInstance() }
     val creationDate = simpleDateFormat.format(note.creation_date!!.time)
     Card(
-        shape = MaterialTheme.shapes.small,
+        shape = androidx.compose.material.MaterialTheme.shapes.small,
         modifier = Modifier
             .padding(4.dp)
             .fillMaxWidth()
             .clickable(onClick = onClickItem),
-        elevation = 4.dp,
         backgroundColor = bgColor
     ) {
         Column(
@@ -216,7 +210,7 @@ fun NoteItemUI (
                     Text(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.h6,
+                        style = MaterialTheme.typography.titleLarge,
                         text = if (note.title.isNotBlank()) {
                             note.title
                         } else {
@@ -226,14 +220,14 @@ fun NoteItemUI (
                     Text(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.body1,
+                        style = MaterialTheme.typography.bodyLarge,
                         text = creationDate
                     )
                 }
                 TextButton(
                     modifier = Modifier.padding(start = 4.dp),
                     border = BorderStroke(1.dp, Color.Green),
-                    shape = MaterialTheme.shapes.small,
+                    shape = androidx.compose.material.MaterialTheme.shapes.small,
                     onClick = onClickStart
                 ) {
                     Text(
@@ -250,7 +244,7 @@ fun NoteItemUI (
             Text(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.body2,
+                style = MaterialTheme.typography.bodyMedium,
                 text = if (note.description.isNotBlank()) {
                     note.description
                 } else {

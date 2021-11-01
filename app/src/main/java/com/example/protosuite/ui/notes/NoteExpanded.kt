@@ -1,13 +1,8 @@
 package com.example.protosuite.ui.notes
 
 import android.annotation.SuppressLint
-import android.app.AlarmManager
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.app.PendingIntent.FLAG_UPDATE_CURRENT
-import android.content.Context
 import android.content.Intent
-import androidx.compose.animation.ExperimentalAnimationApi
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,11 +12,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
+import androidx.compose.material.Divider
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -34,13 +34,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.protosuite.data.db.entities.DataItem
 import com.example.protosuite.data.db.entities.NoteItem
-import com.example.protosuite.ui.timer.NoteBroadcastReceiver
 import com.example.protosuite.ui.timer.TimerService
-import com.example.protosuite.ui.values.blue100
-import com.example.protosuite.ui.values.blue500
-import com.example.protosuite.ui.values.yellow200
 import java.util.*
-import kotlin.math.pow
 
 @SuppressLint("UnrememberedMutableState")
 @Composable
@@ -49,33 +44,32 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
     val noteWithItems by myViewModel.getNoteWithItemsById(noteId).observeAsState()
     val listState = rememberLazyListState()
     if (!myViewModel.beginTyping) {
-        myViewModel.currentNote = noteWithItems?.note ?: NoteItem(0, null, null, 0, "", "")
-        myViewModel.currentNoteItems = noteWithItems?.dataItems?.toMutableStateList() ?: mutableStateListOf()
+        myViewModel.currentNote =
+            noteWithItems?.note ?: NoteItem(0, null, null, 0, "Title", "Description")
+        myViewModel.currentNoteItems =
+            noteWithItems?.dataItems?.toMutableStateList() ?: mutableStateListOf()
     }
     DisposableEffect(key1 = myViewModel) {
         onDispose {
             //Log.d("Side Effect Tracker", "navigating away from ExpandedNoteUI")
             myViewModel.apply {
-                if (beginTyping) {
-                    if (currentNote.title.isEmpty() && currentNote.description.isEmpty() && currentNoteItems.isNullOrEmpty()) {
-                        if (currentNote.id != 0) {
-                            deleteNote(currentNote.id)
-                        }
+                if (currentNote.title.isEmpty() && currentNote.description.isEmpty() && currentNoteItems.isNullOrEmpty()) {
+                    deleteNote(currentNote.id)
+                    Toast.makeText(context, "Removed Empty Note", Toast.LENGTH_SHORT).show()
+                } else {
+                    if (!noteDeleted) {
+                        upsertNoteAndData(
+                            currentNote.copy(
+                                last_edited_on = Calendar.getInstance()
+                            ),
+                            currentNoteItems
+                        )
+                        beginTyping = false
                     } else {
-                        if (!noteDeleted) {
-                            upsertNoteAndData(
-                                currentNote.copy(
-                                    last_edited_on = Calendar.getInstance(),
-                                    creation_date = Calendar.getInstance()
-                                ),
-                                currentNoteItems
-                            )
-                            beginTyping = false
-                        } else {
-                            noteDeleted = false
-                        }
+                        noteDeleted = false
                     }
                 }
+
             }
         }
     }
@@ -86,7 +80,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                //.background(yellow100)
+            //.background(yellow100)
         ) {
             NoteExpandedTopBar(myViewModel, onNavBack, onDeleteNote, onCloneNote)
             LazyColumn(
@@ -99,9 +93,9 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                     BasicTextField(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(yellow200)
+                            .background(MaterialTheme.colorScheme.primaryContainer)
                             .padding(8.dp),
-                        textStyle = MaterialTheme.typography.body1,
+                        textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onPrimaryContainer),
                         maxLines = 4,
                         value = myViewModel.currentNote.description,
                         onValueChange = { newValue ->
@@ -114,7 +108,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                                 Text(
                                     text = "Description",
                                     color = Color.Gray,
-                                    style = MaterialTheme.typography.body1
+                                    style = MaterialTheme.typography.bodyLarge
                                 )
                             }
                             innerTextField()
@@ -130,14 +124,13 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                         }",
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(yellow200)
+                            .background(MaterialTheme.colorScheme.primaryContainer)
                             .padding(4.dp),
                         textAlign = TextAlign.End,
-                        style = MaterialTheme.typography.body2
+                        style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onPrimaryContainer),
                     )
                     Divider()
                 }
-
                 itemsIndexed(myViewModel.currentNoteItems) { index: Int, item: DataItem ->
                     DataItemUI(
                         dataItem = item,
@@ -191,11 +184,12 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                 )
             },
             shape = CircleShape,
-            backgroundColor = blue500
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
         ) {
             Icon(
                 imageVector = Icons.Rounded.Add,
-                contentDescription = "New Item"
+                contentDescription = "New Item",
+                tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
         }
     }
@@ -203,21 +197,27 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
 
 @Composable
 fun NoteExpandedTopBar(myViewModel: NoteViewModel, onNavBack: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit) {
-    TopAppBar(
+    CenterAlignedTopAppBar(
+        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+            containerColor = MaterialTheme.colorScheme.background
+        ),
         title = {
             BasicTextField(
                 modifier = Modifier
-                    .background(blue100, MaterialTheme.shapes.small)
+                    .background(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = androidx.compose.material.MaterialTheme.shapes.small.copy(CornerSize(8.dp))
+                    )
                     .fillMaxWidth(0.9F)
                     .border(
                         border = BorderStroke(
                             width = 0.5.dp,
-                            color = Color.Black
+                            color = MaterialTheme.colorScheme.outline
                         ),
-                        shape = MaterialTheme.shapes.small
+                        shape = androidx.compose.material.MaterialTheme.shapes.small.copy(CornerSize(8.dp))
                     )
                     .padding(horizontal = 12.dp, vertical = 8.dp),
-                textStyle = MaterialTheme.typography.subtitle1,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onPrimaryContainer),
                 value = myViewModel.currentNote.title,
                 onValueChange = { newValue ->
                     myViewModel.beginTyping = true
@@ -231,7 +231,7 @@ fun NoteExpandedTopBar(myViewModel: NoteViewModel, onNavBack: () -> Unit, onDele
                         Text(
                             text = "Title",
                             color = Color.Gray,
-                            style = MaterialTheme.typography.subtitle1
+                            style = MaterialTheme.typography.bodyLarge
                         )
                     }
                     innerTextField()
@@ -244,8 +244,7 @@ fun NoteExpandedTopBar(myViewModel: NoteViewModel, onNavBack: () -> Unit, onDele
             ) {
                 Icon(
                     imageVector = Icons.Rounded.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.White
+                    contentDescription = "Back"
                 )
             }
         },
@@ -254,8 +253,7 @@ fun NoteExpandedTopBar(myViewModel: NoteViewModel, onNavBack: () -> Unit, onDele
             IconButton(onClick = { expanded = true }) {
                 Icon(
                     imageVector = Icons.Rounded.MoreVert,
-                    contentDescription = "Menu",
-                    tint = Color.White
+                    contentDescription = "Menu"
                 )
             }
             DropdownMenu(
@@ -296,18 +294,16 @@ fun DataItemUI (
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            //.background(yellow100)
             .padding(8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-
         OutlinedTextField(
             label = { Text("Activity") },
             modifier = Modifier
                 .weight(weight = 0.5F)
                 .padding(end = 8.dp, bottom = 8.dp),
-            textStyle = MaterialTheme.typography.body1,
+            textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
             singleLine = true,
             value = dataItem.activity,
             onValueChange = { newValue ->
@@ -319,7 +315,7 @@ fun DataItemUI (
             modifier = Modifier
                 .weight(weight = 0.25F)
                 .padding(bottom = 8.dp),
-            textStyle = MaterialTheme.typography.body1,
+            textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             value = if (dataItem.time == 0) "" else dataItem.time.toString(),
@@ -353,7 +349,11 @@ fun DataItemUI (
                     contentDescription = "time increment selector"
                 )
             }
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenu(
+                modifier = Modifier.background(MaterialTheme.colorScheme.background),
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
                 DropdownMenuItem(onClick = {
                     expanded = false
                     onDataItemChanged(dataItem.copy(unit = 0))
@@ -388,7 +388,7 @@ fun DataItemUI (
 }
 
 
-fun setNoteAlarm(context: Context, note: NoteItem, items: MutableList<DataItem>, itemIndex: Int = 0) {
+/*fun setNoteAlarm(context: Context, note: NoteItem, items: MutableList<DataItem>, itemIndex: Int = 0) {
     val secondsRemaining = items[itemIndex].time * 60F.pow(items[itemIndex].unit).toLong()
     val wakeUpTime = Calendar.getInstance().timeInMillis + (secondsRemaining * 1000)
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -428,7 +428,7 @@ fun removeNoteAlarm(context: Context) {
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     alarmManager.cancel(pendingIntent)
     //PrefUtil.setAlarmEndTime(0, context)
-}
+}*/
 
 
 @Preview

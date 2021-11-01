@@ -20,12 +20,18 @@ import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Undo
+import androidx.compose.material3.*
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ScaffoldState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -49,9 +55,8 @@ import com.example.protosuite.ui.timer.NoteTimer
 import com.example.protosuite.ui.timer.PreferenceManager
 import com.example.protosuite.ui.timer.TimerService
 import com.example.protosuite.ui.timer.orange
-import com.example.protosuite.ui.values.NotesTheme
-import com.example.protosuite.ui.values.blue100
-import com.example.protosuite.ui.values.blue200
+import com.example.protosuite.ui.values.AppTheme
+import com.example.protosuite.ui.values.yellow50
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
@@ -84,10 +89,11 @@ class MainActivity : AppCompatActivity() {
             return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, adWidth)
         }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        //DynamicColors.applyToActivitiesIfAvailable(application)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         //initialize the mobile ads sdk
         MobileAds.initialize(this) {}
@@ -102,9 +108,10 @@ class MainActivity : AppCompatActivity() {
             val navController = rememberNavController()
             val navBackStackEntry by navController.currentBackStackEntryAsState()
 
-            NotesTheme(myViewModel.isDarkTheme) {
+            AppTheme(myViewModel.isDarkTheme) {
                 // create a scaffold state, set it to close by default
-                val scaffoldState = rememberScaffoldState(rememberDrawerState(DrawerValue.Closed))
+                val scaffoldStateNewTemp = rememberScaffoldState(rememberDrawerState(DrawerValue.Closed))
+                val scaffoldState = rememberScaffoldState(rememberDrawerState(androidx.compose.material.DrawerValue.Closed))
                 // Create a coroutine scope. Opening of drawer and snackbar should happen in
                 // background thread without blocking main thread
                 val coroutineScope = rememberCoroutineScope()
@@ -119,49 +126,41 @@ class MainActivity : AppCompatActivity() {
                     navigateToTimerIfNeeded(intent, navController)
                 }
                 Scaffold(
-                    scaffoldState = scaffoldState,
-                    snackbarHost = {
-                        scaffoldState.snackbarHostState
-                    },
+                    scaffoldState = scaffoldStateNewTemp,
+                    //snackbarHost = {
+                    //    scaffoldState.snackbarHostState
+                    //},
                     drawerContent = {
                         // to close use -> scaffoldState.drawerState.close()
-                        Column(
-                            Modifier
-                                .padding(16.dp)
-                                .fillMaxHeight()
-                                .wrapContentWidth()
+                        Text(
+                            modifier = Modifier.padding(16.dp),
+                            text = "What doesn't work yet",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                        Text(
+                            modifier = Modifier.padding(8.dp),
+                            text = "* Any Drag/Drop"
+                        )
+                        Text(
+                            modifier = Modifier.padding(8.dp),
+                            text = "* Deleting Individual Activity Items"
+                        )
+                        Text(
+                            modifier = Modifier.padding(8.dp),
+                            text = "* audio beep plays from speakers and earbuds at the same time"
+                        )
+                        Divider(modifier = Modifier.padding(top = 8.dp))
+                        ItemButton(
+                            icon = Icons.Rounded.Settings,
+                            text = "Settings"
                         ) {
-                            Spacer(Modifier.height(16.dp))
-                            Text(
-                                modifier = Modifier.padding(vertical = 8.dp),
-                                text = "What doesn't work yet",
-                                style = MaterialTheme.typography.h5
-                            )
-                            Text(
-                                modifier = Modifier.padding(vertical = 8.dp),
-                                text = "* Any Drag/Drop"
-                            )
-                            Text(
-                                modifier = Modifier.padding(vertical = 8.dp),
-                                text = "* Deleting Individual Activity Items"
-                            )
-                            Text(
-                                modifier = Modifier.padding(vertical = 8.dp),
-                                text = "* audio beep plays from speakers and earbuds at the same time"
-                            )
-                            Divider(modifier = Modifier.padding(vertical = 8.dp))
-                            ItemButton(
-                                modifier = Modifier.padding(vertical = 8.dp),
-                                icon = Icons.Rounded.Settings,
-                                text = "Settings"
-                            ) {
-                                coroutineScope.launch {
-                                    scaffoldState.drawerState.close()
-                                }
-                                navController.navigate("settings")
+                            coroutineScope.launch {
+                                scaffoldStateNewTemp.drawerState.close()
                             }
+                            navController.navigate("settings")
                         }
                     },
+                    drawerContainerColor = yellow50,
                     drawerGesturesEnabled = drawerEnabled
                 ) {
                     Box(modifier = Modifier.fillMaxSize()) {
@@ -173,7 +172,7 @@ class MainActivity : AppCompatActivity() {
                                     .fillMaxWidth()
                                     .weight(1f)
                             ) {
-                                NavGraph(myViewModel, coroutineScope, navController, scaffoldState)
+                                NavGraph(myViewModel, coroutineScope, navController, scaffoldStateNewTemp)
                             }
                             val timerState: TimerState by TimerService.timerState.observeAsState(
                                 TimerState.Stopped
@@ -238,8 +237,10 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navController: NavHostController, scaffoldState: ScaffoldState) {
+    val scaffoldStateOldTemp = rememberScaffoldState(rememberDrawerState(androidx.compose.material.DrawerValue.Closed))
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             /*
@@ -294,7 +295,7 @@ fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navCont
                     }
                     navController.popBackStack()
                     coroutineScope.launch {
-                        scaffoldState.snackbarHostState.showSnackbar(
+                        scaffoldStateOldTemp.snackbarHostState.showSnackbar(
                             message = "Note deleted",
                             actionLabel = " Undo",
                             duration = SnackbarDuration.Short
@@ -342,7 +343,7 @@ fun CollapsedTimerUI(navController: NavController) {
         modifier = Modifier
             .wrapContentHeight()
             .fillMaxWidth()
-            .background(blue100)
+            .background(MaterialTheme.colorScheme.primaryContainer)
             .clickable {
                 navController.navigate("note_timer")
             },
@@ -361,7 +362,7 @@ fun CollapsedTimerUI(navController: NavController) {
         val icon =
             if (timerState == TimerState.Running) Icons.Default.Pause else Icons.Default.PlayArrow
 
-        val bgColor = MaterialTheme.colors.onSurface.copy(alpha = 0.2f)
+        val bgColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
         Canvas(
             Modifier
                 .wrapContentHeight()
@@ -402,13 +403,13 @@ fun CollapsedTimerUI(navController: NavController) {
             ) {
                 Text(
                     text = TimerService.currentNote.title,
-                    style = MaterialTheme.typography.h6,
+                    style = MaterialTheme.typography.titleLarge,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = TimerService.currentNoteItems[itemIndex].activity,
-                    style = MaterialTheme.typography.subtitle1,
+                    style = MaterialTheme.typography.bodyLarge,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -503,12 +504,12 @@ fun SortPopupUI(myViewModel: NoteViewModel) {
         )
     ) {
         Card(
-            shape = MaterialTheme.shapes.medium.copy(CornerSize(16.dp)),
+            shape = androidx.compose.material.MaterialTheme.shapes.medium.copy(CornerSize(16.dp)),
             modifier = Modifier
                 .wrapContentHeight()
                 .width(IntrinsicSize.Max),
             elevation = 24.dp,
-            backgroundColor = Color.White
+            backgroundColor = MaterialTheme.colorScheme.background
         ) {
             Column(
                 modifier = Modifier
@@ -519,10 +520,11 @@ fun SortPopupUI(myViewModel: NoteViewModel) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .wrapContentHeight()
-                        .background(blue200)
+                        .background(MaterialTheme.colorScheme.primary)
                         .padding(8.dp),
                     textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.h6,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     text = "Sort by"
                 )
                 Column(
@@ -535,23 +537,17 @@ fun SortPopupUI(myViewModel: NoteViewModel) {
                     Row(
                         modifier = Modifier
                             .wrapContentSize()
-                            .padding(8.dp)
                             .clickable {
                                 myViewModel.sortType = SortType.Creation
                                 myViewModel.openSortPopup = false
                             },
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text("Creation date")
                         RadioButton(
                             modifier = Modifier.padding(horizontal = 8.dp),
                             selected = myViewModel.sortType == SortType.Creation,
-                            /*
-                                colors = RadioButtonColors.radioColor(
-                                    enabled = blue200,
-                                    selected = yellow200
-                                ),
-                                 */
                             onClick = {
                                 myViewModel.sortType = SortType.Creation
                                 myViewModel.openSortPopup = false
@@ -561,12 +557,12 @@ fun SortPopupUI(myViewModel: NoteViewModel) {
                     Row(
                         modifier = Modifier
                             .wrapContentSize()
-                            .padding(8.dp)
                             .clickable {
                                 myViewModel.sortType = SortType.LastEdited
                                 myViewModel.openSortPopup = false
                             },
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text("Last edited")
                         RadioButton(
@@ -581,12 +577,12 @@ fun SortPopupUI(myViewModel: NoteViewModel) {
                     Row(
                         modifier = Modifier
                             .wrapContentSize()
-                            .padding(8.dp)
                             .clickable {
                                 myViewModel.sortType = SortType.Order
                                 myViewModel.openSortPopup = false
                             },
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text("Custom")
                         RadioButton(

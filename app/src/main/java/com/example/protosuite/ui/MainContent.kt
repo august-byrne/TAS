@@ -1,5 +1,6 @@
 package com.example.protosuite.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
@@ -7,6 +8,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Sort
+import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -87,12 +94,17 @@ fun MainUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavi
     }
 }
 
+@ExperimentalMaterial3Api
 @Composable
-fun MainAppBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, onDrawerOpen: () -> Unit, onNavSettings: () -> Unit) {
-    TopAppBar(
+fun MainAppBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, scrollBehavior: TopAppBarScrollBehavior, onDrawerOpen: () -> Unit, onNavSettings: () -> Unit) {
+    CenterAlignedTopAppBar(
         modifier = modifier,
+        scrollBehavior = scrollBehavior,
+        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+            containerColor = MaterialTheme.colorScheme.background
+        ),
         title = {
-            Text(text = "Timed Activity System (TAS)", color = Color.White)
+            Text("Timed Activity System")
         },
         navigationIcon = {
             IconButton(
@@ -100,8 +112,7 @@ fun MainAppBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, onDraw
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Menu,
-                    contentDescription = "Menu",
-                    tint = Color.White
+                    contentDescription = "Menu"
                 )
             }
         },
@@ -111,19 +122,18 @@ fun MainAppBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, onDraw
             }) {
                 Icon(
                     imageVector = Icons.Rounded.Sort,
-                    contentDescription = "Sort",
-                    tint = Color.White
+                    contentDescription = "Sort"
                 )
             }
             var expanded by remember { mutableStateOf(false) }
             IconButton(onClick = { expanded = true }) {
                 Icon(
                     imageVector = Icons.Rounded.MoreVert,
-                    contentDescription = "Menu",
-                    tint = Color.White
+                    contentDescription = "Menu"
                 )
             }
             DropdownMenu(
+                modifier = Modifier.background(MaterialTheme.colorScheme.background),
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
                 content = {
@@ -183,15 +193,19 @@ fun ItemButton(modifier: Modifier = Modifier, icon: ImageVector, text: String, o
         modifier = modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .clickable { onClick() }) {
+            .clickable { onClick() }
+            .padding(16.dp)
+    ) {
         Icon(
             imageVector = icon,
-            contentDescription = "item icon"
+            contentDescription = "item icon",
+            //tint = MaterialTheme.colorScheme.onBackground
         )
         Text(
             modifier = Modifier.padding(start = 16.dp),
             fontWeight = FontWeight.SemiBold,
-            text = text
+            text = text,
+            //color = MaterialTheme.colorScheme.onBackground
         )
     }
 }

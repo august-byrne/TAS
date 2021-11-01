@@ -45,11 +45,11 @@ class NoteBroadcastReceiver: BroadcastReceiver() {
             }
             val pendingIntent =
                 PendingIntent.getBroadcast(context, 0, newIntent, FLAG_UPDATE_CURRENT)
-            alarmManager.setExactAndAllowWhileIdle(
+/*            alarmManager.setExactAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,
                 wakeUpTime,
                 pendingIntent
-            )
+            )*/
             notificationManager.notify(
                 42,
                 notification(
@@ -133,7 +133,7 @@ class NotificationReceiver: BroadcastReceiver() {
         val currentIndex = intent.getIntExtra("com.example.protosuite.ItemListIndex", 0)
         when(intent.action) {
             "PREV_ITEM" -> {
-                TimerService.setActiveItemIndex(currentIndex.dec())
+                TimerService.modifyTimer(currentIndex.dec())
             }
             "PLAY" -> {
                 TimerService.startTimer(currentIndex)
@@ -142,7 +142,7 @@ class NotificationReceiver: BroadcastReceiver() {
                 TimerService.timerLengthMilli.value?.let { TimerService.pauseTimer(it) }
             }
             "NEXT_ITEM" -> {
-                TimerService.setActiveItemIndex(currentIndex.inc())
+                TimerService.modifyTimer(currentIndex.inc())
             }
         }
     }

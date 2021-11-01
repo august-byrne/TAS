@@ -270,6 +270,7 @@ class TimerService : LifecycleService() {
         }
 
         fun stopTimer(index: Int = 0) {
+            timer?.cancel()
             setTimerState(TimerState.Stopped)
             setActiveItemIndex(index)
             val firstItem = currentNoteItems[index]
@@ -277,7 +278,6 @@ class TimerService : LifecycleService() {
                 firstItem.time.times(1000L) * 60F.pow(firstItem.unit).toLong()
             setTotalTimerLengthMilli(firstTimeLengthMilli)
             setTimerLength(firstTimeLengthMilli)
-            timer?.cancel()
         }
 
         fun modifyTimer(index: Int) {
@@ -335,7 +335,7 @@ class TimerService : LifecycleService() {
         private var _itemIndex = MutableLiveData(0)
         val itemIndex: LiveData<Int> = _itemIndex
 
-        fun setActiveItemIndex(itemIndex: Int) {
+        private fun setActiveItemIndex(itemIndex: Int) {
             if (itemIndex >= 0) {
                 _itemIndex.value = itemIndex
             }
