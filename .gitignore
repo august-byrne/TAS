@@ -16,4 +16,4 @@
 /app/google-services.json
 /app/schemas
 /app/release
-keystore.properties
+/keystore.properties
