@@ -1,19 +1,14 @@
 package com.example.protosuite.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material.Tab
+import androidx.compose.material.TabRow
+import androidx.compose.material.TabRowDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Menu
-import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Sort
 import androidx.compose.material3.*
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -100,9 +95,6 @@ fun MainAppBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, scroll
     CenterAlignedTopAppBar(
         modifier = modifier,
         scrollBehavior = scrollBehavior,
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = MaterialTheme.colorScheme.background
-        ),
         title = {
             Text("Timed Activity System")
         },
@@ -125,7 +117,7 @@ fun MainAppBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, scroll
                     contentDescription = "Sort"
                 )
             }
-            var expanded by remember { mutableStateOf(false) }
+/*            var expanded by remember { mutableStateOf(false) }
             IconButton(onClick = { expanded = true }) {
                 Icon(
                     imageVector = Icons.Rounded.MoreVert,
@@ -138,7 +130,7 @@ fun MainAppBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, scroll
                 onDismissRequest = { expanded = false },
                 content = {
                     DropdownMenuItem(onClick = {
-                        /* Handle settings! */
+                        *//* Handle settings! *//*
                         expanded = false
                         onNavSettings()
                     }) {
@@ -146,13 +138,13 @@ fun MainAppBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, scroll
                     }
                     Divider()
                     DropdownMenuItem(onClick = {
-                        /* Handle donate or send feedback! */
+                        *//* Handle donate or send feedback! *//*
                         expanded = false
                     }) {
                         Text("Donate")
                     }
                 }
-            )
+            )*/
         }
     )
 }

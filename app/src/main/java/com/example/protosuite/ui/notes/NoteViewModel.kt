@@ -88,8 +88,6 @@ class NoteViewModel @Inject constructor(
             repo.updateNoteItems(noteListCopy)
         }
 
-    //var allNotes: LiveData<List<NoteItem>> = repo.allNotes.asLiveData()
-
     var allNotesWithItems: LiveData<List<NoteWithItems>> = repo.allNotesWithItems.asLiveData()
 
     fun sortedAllNotesWithItems(): LiveData<List<NoteWithItems>> {

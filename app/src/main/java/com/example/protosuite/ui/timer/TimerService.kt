@@ -59,11 +59,6 @@ class TimerService : LifecycleService() {
         return super.onStartCommand(intent, flags, startId)
     }
 
-/*    override fun onBind(p0: Intent?): IBinder? {
-        // we don't want to implement binding
-        return null
-    }*/
-
     private fun startForegroundService() {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE)
                 as NotificationManager

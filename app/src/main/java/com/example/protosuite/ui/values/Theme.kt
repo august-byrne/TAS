@@ -42,6 +42,7 @@ private val LightColorPalette = lightColors(
 
 private val LightColorScheme = lightColorScheme(
     primary = Blue40,
+    onPrimary = Color.White,
     primaryContainer = Blue90,
     onPrimaryContainer = Blue10,
     secondary = DarkBlue40,
@@ -52,6 +53,8 @@ private val LightColorScheme = lightColorScheme(
     onTertiary = Color.White,
     tertiaryContainer = Yellow90,
     onTertiaryContainer = Yellow10,
+    surface = yellow50,
+    surfaceVariant = yellow100,
     background = yellow50,
     outline = BlueGrey60
 /*    primary = Blue40,
@@ -72,7 +75,8 @@ private val DarkColorScheme = darkColorScheme(
     onTertiary = Yellow20,
     tertiaryContainer = Yellow30,
     onTertiaryContainer = Yellow90,
-    outline = BlueGrey60
+    outline = BlueGrey60,
+    surfaceVariant = Color.DarkGray,
     //background = Color.DarkGray
     // error, primaryContainer, onSecondary, etc.
 )

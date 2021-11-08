@@ -56,7 +56,6 @@ import com.example.protosuite.ui.timer.PreferenceManager
 import com.example.protosuite.ui.timer.TimerService
 import com.example.protosuite.ui.timer.orange
 import com.example.protosuite.ui.values.AppTheme
-import com.example.protosuite.ui.values.yellow50
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
@@ -160,7 +159,7 @@ class MainActivity : AppCompatActivity() {
                             navController.navigate("settings")
                         }
                     },
-                    drawerContainerColor = yellow50,
+                    drawerContainerColor = MaterialTheme.colorScheme.background,
                     drawerGesturesEnabled = drawerEnabled
                 ) {
                     Box(modifier = Modifier.fillMaxSize()) {

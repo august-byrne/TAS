@@ -6,9 +6,11 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.material.*
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -37,31 +39,17 @@ fun DeterminateProgressBar(
     modifier: Modifier = Modifier,
     progressInMilli: Long,
     progressColor: Color = blue500,
-    backgroundColor: Color = MaterialTheme.colors.onSurface.copy(alpha = 0.2f),
+    backgroundColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
     content: @Composable () -> Unit
 ) {
-
     val drawStyle = remember { Stroke(width = 24.dp.value, cap = StrokeCap.Round) }
-
     val brush = remember {
         Brush.sweepGradient(
             colorStops = arrayOf(Pair(0F, yellow200), Pair(1F, progressColor))
         )
     }
-
     val brushTip = remember { SolidColor(progressColor) }
-
     val brushBackground = remember { SolidColor(backgroundColor) }
-
-/*    val animateCurrentProgress by animateFloatAsState(
-            targetValue = progressInMilli.toFloat().div(1000F),
-            animationSpec = if(progressInMilli != 0L) {
-                tween(durationMillis = 1, easing = LinearEasing)
-            } else {
-                snap(delayMillis = 0)
-            }
-    )*/
-
     val progressDegrees = progressInMilli.toFloat().div(1000F) * PROGRESS_FULL_DEGREES
 
     Box {
@@ -163,14 +151,10 @@ fun NoteTimer(onNavBack: () -> Unit) {
         verticalArrangement = Arrangement.SpaceBetween
     ) {
 
-        TopAppBar(
+        CenterAlignedTopAppBar(
             title = {
                 AutoSizingText(
                     modifier = Modifier.fillMaxWidth(0.9F),
-                    textStyle = MaterialTheme.typography.h6.copy(
-                        textAlign = TextAlign.Center,
-                        color = Color.Black
-                    ),
                     text = TimerService.currentNote.title
                 )
                     },
@@ -180,8 +164,7 @@ fun NoteTimer(onNavBack: () -> Unit) {
                 ) {
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back",
-                        tint = Color.Black
+                        contentDescription = "Back"
                     )
                 }
             },
@@ -190,8 +173,7 @@ fun NoteTimer(onNavBack: () -> Unit) {
                 IconButton(onClick = { expanded = true }) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
-                        contentDescription = "Menu",
-                        tint = Color.Black
+                        contentDescription = "Menu"
                     )
                 }
                 DropdownMenu(
@@ -199,13 +181,17 @@ fun NoteTimer(onNavBack: () -> Unit) {
                     onDismissRequest = { expanded = false },
                     content = {
                         DropdownMenuItem(onClick = {  }) {
-                            Text("Settings")
+                            Text("Timer Settings")
                         }
                     }
                 )
             },
-            backgroundColor = Color.Transparent,
-            elevation = 0.dp
+            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                containerColor = Color.Transparent,
+                titleContentColor = Color.Black,
+                navigationIconContentColor = Color.Black,
+                actionIconContentColor = Color.Black
+            )
         )
 
         Column(
@@ -236,7 +222,7 @@ fun NoteTimer(onNavBack: () -> Unit) {
                             .fillMaxWidth()
                             .padding(32.dp)
                             .alpha(alpha),
-                        textStyle = MaterialTheme.typography.h1,
+                        textStyle = MaterialTheme.typography.displayLarge.copy(fontSize = 96.sp),
                         text = formattedTimerLength
                     )
                     //FlashingTimerText(formattedTimerLength)
@@ -245,7 +231,7 @@ fun NoteTimer(onNavBack: () -> Unit) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(32.dp),
-                        textStyle = MaterialTheme.typography.h1,
+                        textStyle = MaterialTheme.typography.displayLarge.copy(fontSize = 96.sp),
                         text = formattedTimerLength
                     )
                     //TimerText(Modifier, formattedTimerLength)
@@ -276,7 +262,7 @@ fun NoteTimer(onNavBack: () -> Unit) {
                     .wrapContentSize()
                     .padding(8.dp),
                 text = TimerService.currentNoteItems[itemIndex].activity,
-                style = MaterialTheme.typography.h5
+                style = MaterialTheme.typography.headlineSmall
             )
 
             Row(
@@ -287,7 +273,6 @@ fun NoteTimer(onNavBack: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 Icon(
                     modifier = Modifier
                         .clickable {
@@ -341,7 +326,6 @@ fun NoteTimer(onNavBack: () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun PlayPauseStopButtons(timerState: TimerState, onClickStartPause: () -> Unit, onClickStop: () -> Unit) {
     val icon =
@@ -360,8 +344,8 @@ private fun PlayPauseStopButtons(timerState: TimerState, onClickStartPause: () -
         Button(
             modifier = Modifier.padding(8.dp),
             onClick = onClickStartPause,
-            colors = ButtonDefaults.buttonColors(backgroundColor = tint),
-            shape = MaterialTheme.shapes.small.copy(CornerSize(12.dp))
+            colors = ButtonDefaults.buttonColors(containerColor = tint, contentColor = Color.Black),
+            shape = androidx.compose.material.MaterialTheme.shapes.small.copy(CornerSize(12.dp))
         ) {
             Icon(icon, contentDescription = "Start or Pause")
         }
@@ -373,8 +357,8 @@ private fun PlayPauseStopButtons(timerState: TimerState, onClickStartPause: () -
             Button(
                 modifier = Modifier.padding(8.dp),
                 onClick = onClickStop,
-                colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red),
-                shape = MaterialTheme.shapes.small.copy(CornerSize(12.dp))
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Red, contentColor = Color.Black),
+                shape = androidx.compose.material.MaterialTheme.shapes.small.copy(CornerSize(12.dp))
             ) {
                 Icon(Icons.Default.Stop, contentDescription = "Stop")
             }
@@ -406,7 +390,7 @@ fun TimerText(modifier: Modifier = Modifier, timerText: String) {
             .fillMaxWidth()
             .padding(8.dp),
         fontSize = 90.sp,
-        style = MaterialTheme.typography.h1,
+        style = MaterialTheme.typography.displayLarge,
         text = timerText,
         textAlign = TextAlign.Center
     )

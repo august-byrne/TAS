@@ -1,6 +1,5 @@
 package com.example.protosuite.ui.notes
 
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
@@ -27,6 +26,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -37,17 +37,18 @@ import com.example.protosuite.data.db.entities.NoteItem
 import com.example.protosuite.ui.timer.TimerService
 import java.util.*
 
-@SuppressLint("UnrememberedMutableState")
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStart: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit, onNavBack: () -> Unit) {
     val context = LocalContext.current
     val noteWithItems by myViewModel.getNoteWithItemsById(noteId).observeAsState()
     val listState = rememberLazyListState()
+    val scrollBehavior = remember { TopAppBarDefaults.pinnedScrollBehavior() }
     if (!myViewModel.beginTyping) {
         myViewModel.currentNote =
             noteWithItems?.note ?: NoteItem(0, null, null, 0, "Title", "Description")
         myViewModel.currentNoteItems =
-            noteWithItems?.dataItems?.toMutableStateList() ?: mutableStateListOf()
+            (noteWithItems?.dataItems ?: mutableListOf()).toMutableStateList()
     }
     DisposableEffect(key1 = myViewModel) {
         onDispose {
@@ -73,140 +74,136 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
             }
         }
     }
-
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-            //.background(yellow100)
-        ) {
-            NoteExpandedTopBar(myViewModel, onNavBack, onDeleteNote, onCloneNote)
-            LazyColumn(
-                state = listState,
-                contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
-                verticalArrangement = Arrangement.spacedBy(0.dp)
+    Scaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            // attach as a parent to the nested scroll system
+            .nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            NoteExpandedTopBar(myViewModel, scrollBehavior, onNavBack, onDeleteNote, onCloneNote)
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    myViewModel.beginTyping = true
+                    myViewModel.currentNoteItems.add(
+                        DataItem(
+                            0,
+                            noteId,
+                            0,
+                            "",
+                            0,
+                            myViewModel.prevTimeType
+                        )
+                    )
+                },
+                shape = CircleShape,
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer
             ) {
-                // Note Description Item
-                item {
-                    BasicTextField(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.primaryContainer)
-                            .padding(8.dp),
-                        textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onPrimaryContainer),
-                        maxLines = 4,
-                        value = myViewModel.currentNote.description,
-                        onValueChange = { newValue ->
-                            myViewModel.beginTyping = true
-                            myViewModel.currentNote =
-                                myViewModel.currentNote.copy(description = newValue)
-                        },
-                        decorationBox = { innerTextField ->
-                            if (myViewModel.currentNote.description.isEmpty()) {
-                                Text(
-                                    text = "Description",
-                                    color = Color.Gray,
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                            }
-                            innerTextField()
-                        }
-                    )
-                    Text(
-                        text = "last edited: ${
-                            if (myViewModel.currentNote.last_edited_on?.time != null) {
-                                myViewModel.simpleDateFormat.format(myViewModel.currentNote.last_edited_on!!.time)
-                            } else {
-                                "never"
-                            }
-                        }",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.primaryContainer)
-                            .padding(4.dp),
-                        textAlign = TextAlign.End,
-                        style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onPrimaryContainer),
-                    )
-                    Divider()
-                }
-                itemsIndexed(myViewModel.currentNoteItems) { index: Int, item: DataItem ->
-                    DataItemUI(
-                        dataItem = item,
-                        onDataItemChanged = { dataItem ->
-                            myViewModel.beginTyping = true
-                            if (myViewModel.currentNoteItems[index].unit != dataItem.unit) {
-                                myViewModel.setPrevTimeType(dataItem.unit)
-                            }
-                            myViewModel.currentNoteItems[index] = dataItem
-                        },
-                        onClickStart = {
-                            if (!myViewModel.currentNoteItems.isNullOrEmpty()) {
-                                TimerService.initTimerService(
-                                    myViewModel.currentNote,
-                                    myViewModel.currentNoteItems,
-                                    index
-                                )
-                                // Disable for now TODO
-                                //setNoteAlarm(context,myViewModel.currentNote,myViewModel.currentNoteItems,index)
-                                onNavigateTimerStart()
-                                Intent(context, TimerService::class.java).also {
-                                    it.action = "ACTION_START_OR_RESUME_SERVICE"
-                                    context.startService(it)
-                                }
-                            }
-                        }
-                    )
-                    Divider(modifier = Modifier.padding(horizontal = 8.dp))
-                }
-
-                item {
-                    Spacer(modifier = Modifier.size(80.dp))
-                }
-            }
-        }
-        FloatingActionButton(
-            modifier = Modifier
-                .padding(8.dp)
-                .align(Alignment.BottomCenter),
-            onClick = {
-                myViewModel.beginTyping = true
-                myViewModel.currentNoteItems.add(
-                    DataItem(
-                        0,
-                        noteId,
-                        0,
-                        "",
-                        0,
-                        myViewModel.prevTimeType
-                    )
+                Icon(
+                    imageVector = Icons.Rounded.Add,
+                    contentDescription = "New Item",
+                    tint = MaterialTheme.colorScheme.onTertiaryContainer
                 )
-            },
-            shape = CircleShape,
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+            }
+        },
+        floatingActionButtonPosition = FabPosition.Center
+    ) {
+        LazyColumn(
+            state = listState,
+            contentPadding = PaddingValues(bottom = 88.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
-            Icon(
-                imageVector = Icons.Rounded.Add,
-                contentDescription = "New Item",
-                tint = MaterialTheme.colorScheme.onTertiaryContainer
-            )
+            // Note Description Item
+            item {
+                BasicTextField(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .padding(8.dp),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onPrimaryContainer),
+                    maxLines = 4,
+                    value = myViewModel.currentNote.description,
+                    onValueChange = { newValue ->
+                        myViewModel.beginTyping = true
+                        myViewModel.currentNote =
+                            myViewModel.currentNote.copy(description = newValue)
+                    },
+                    decorationBox = { innerTextField ->
+                        if (myViewModel.currentNote.description.isEmpty()) {
+                            Text(
+                                text = "Description",
+                                color = Color.Gray,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                        innerTextField()
+                    }
+                )
+                Text(
+                    text = "last edited: ${
+                        if (myViewModel.currentNote.last_edited_on?.time != null) {
+                            myViewModel.simpleDateFormat.format(myViewModel.currentNote.last_edited_on!!.time)
+                        } else {
+                            "never"
+                        }
+                    }",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .padding(4.dp),
+                    textAlign = TextAlign.End,
+                    style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onPrimaryContainer),
+                )
+                Divider()
+            }
+            itemsIndexed(myViewModel.currentNoteItems) { index: Int, item: DataItem ->
+                DataItemUI(
+                    dataItem = item,
+                    onDataItemChanged = { dataItem ->
+                        myViewModel.beginTyping = true
+                        if (myViewModel.currentNoteItems[index].unit != dataItem.unit) {
+                            myViewModel.setPrevTimeType(dataItem.unit)
+                        }
+                        myViewModel.currentNoteItems[index] = dataItem
+                    },
+                    onClickStart = {
+                        if (!myViewModel.currentNoteItems.isNullOrEmpty()) {
+                            TimerService.initTimerService(
+                                myViewModel.currentNote,
+                                myViewModel.currentNoteItems,
+                                index
+                            )
+                            // Disable for now TODO
+                            //setNoteAlarm(context,myViewModel.currentNote,myViewModel.currentNoteItems,index)
+                            onNavigateTimerStart()
+                            Intent(context, TimerService::class.java).also {
+                                it.action = "ACTION_START_OR_RESUME_SERVICE"
+                                context.startService(it)
+                            }
+                        }
+                    }
+                )
+                Divider(modifier = Modifier.padding(horizontal = 8.dp))
+            }
         }
     }
 }
 
 @Composable
-fun NoteExpandedTopBar(myViewModel: NoteViewModel, onNavBack: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit) {
+fun NoteExpandedTopBar(myViewModel: NoteViewModel, scrollBehavior: TopAppBarScrollBehavior, onNavBack: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit) {
     CenterAlignedTopAppBar(
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = MaterialTheme.colorScheme.background
-        ),
+        scrollBehavior = scrollBehavior,
         title = {
             BasicTextField(
                 modifier = Modifier
                     .background(
                         color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = androidx.compose.material.MaterialTheme.shapes.small.copy(CornerSize(8.dp))
+                        shape = androidx.compose.material.MaterialTheme.shapes.small.copy(
+                            CornerSize(
+                                8.dp
+                            )
+                        )
                     )
                     .fillMaxWidth(0.9F)
                     .border(
@@ -214,7 +211,11 @@ fun NoteExpandedTopBar(myViewModel: NoteViewModel, onNavBack: () -> Unit, onDele
                             width = 0.5.dp,
                             color = MaterialTheme.colorScheme.outline
                         ),
-                        shape = androidx.compose.material.MaterialTheme.shapes.small.copy(CornerSize(8.dp))
+                        shape = androidx.compose.material.MaterialTheme.shapes.small.copy(
+                            CornerSize(
+                                8.dp
+                            )
+                        )
                     )
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onPrimaryContainer),
@@ -386,50 +387,6 @@ fun DataItemUI (
         }
     }
 }
-
-
-/*fun setNoteAlarm(context: Context, note: NoteItem, items: MutableList<DataItem>, itemIndex: Int = 0) {
-    val secondsRemaining = items[itemIndex].time * 60F.pow(items[itemIndex].unit).toLong()
-    val wakeUpTime = Calendar.getInstance().timeInMillis + (secondsRemaining * 1000)
-    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-    val intent = Intent(context, NoteBroadcastReceiver::class.java)
-        .apply {
-            putExtra("com.example.protosuite.NoteName", note.title)
-            putExtra("com.example.protosuite.NoteId", note.id)
-            putExtra(
-                "com.example.protosuite.ItemNameList",
-                items.map { it.activity }.toTypedArray()
-            )
-            putExtra(
-                "com.example.protosuite.ItemTimeList",
-                items.map { it.time.toLong() }.toLongArray()
-            )
-            putExtra(
-                "com.example.protosuite.ItemTimeTypeList",
-                items.map { it.unit }.toIntArray()
-            )
-            putExtra("com.example.protosuite.ItemListIndex", itemIndex)
-        }
-    val pendingIntent = PendingIntent.getBroadcast(context, 0, intent, FLAG_UPDATE_CURRENT)
-    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, wakeUpTime, pendingIntent)
-    val notificationManager: NotificationManager =
-        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-    notificationManager.notify(
-        42,
-    NoteBroadcastReceiver().notification(note.title, items[itemIndex].activity, wakeUpTime, context)
-    )
-    //PrefUtil.setAlarmEndTime(wakeUpTime, context)
-}
-
-@ExperimentalAnimationApi
-fun removeNoteAlarm(context: Context) {
-    val intent = Intent(context, NoteBroadcastReceiver::class.java)
-    val pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0)
-    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-    alarmManager.cancel(pendingIntent)
-    //PrefUtil.setAlarmEndTime(0, context)
-}*/
-
 
 @Preview
 @Composable

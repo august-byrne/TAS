@@ -34,9 +34,6 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                ),
                 title = {
                     Text(text = "Settings")
                 },

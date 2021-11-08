@@ -2,14 +2,14 @@ package com.example.protosuite.ui.notes
 
 import android.content.Intent
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.Card
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -32,7 +32,6 @@ import com.example.protosuite.data.db.entities.NoteWithItems
 import com.example.protosuite.ui.MainAppBar
 import com.example.protosuite.ui.SortPopupUI
 import com.example.protosuite.ui.timer.TimerService
-import com.example.protosuite.ui.values.yellow100
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -44,41 +43,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-
-/*    // here we use LazyColumn that has build-in nested scroll, but we want to act like a
-    // parent for this LazyColumn and participate in its nested scroll.
-    // Let's make a collapsing toolbar for LazyColumn
-    val toolbarHeight = 56.dp
-    val toolbarHeightPx = with(LocalDensity.current) { toolbarHeight.roundToPx().toFloat() }
-    // our offset to collapse toolbar
-    val toolbarOffsetHeightPx = remember { mutableStateOf(0f) }
-
-    // lambda to update state and return amount consumed
-    val onNewDelta: (Float) -> Float = { delta ->
-        val oldState = toolbarOffsetHeightPx.value
-        val newState = (toolbarOffsetHeightPx.value + delta).coerceIn(-toolbarHeightPx, 0f)
-        toolbarOffsetHeightPx.value = newState
-        newState - oldState
-    }
-    // now, let's create connection to the nested scroll system and listen to the scroll
-    // happening inside child LazyColumn
-    val nestedScrollConnection = remember {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                // try to consume before LazyColumn to collapse toolbar if needed, hence pre-scroll
-                val delta = available.y
-
-                // we want to consume when we are changing margin
-                // size, as it creates it's own scroll effect
-                return Offset(x = 0f, y = onNewDelta(delta))
-
-                // we consume 0 when we want LazyColumn to always scroll, watching scroll without taking it
-                //return Offset.Zero
-            }
-        }
-    }*/
-    //val decayAnimationSpec = rememberSplineBasedDecay<Float>()
-    val scrollBehavior = remember { TopAppBarDefaults.enterAlwaysScrollBehavior() }
+    val scrollBehavior = remember { TopAppBarDefaults.pinnedScrollBehavior() }
     // TODO: Fix listState re-scrolling when rotated or when miniTimerView is clicked
     Scaffold(
         modifier = Modifier
@@ -105,10 +70,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                         myViewModel.saveListPosition(LazyListState())
                     }
 
-                },
-                shape = RoundedCornerShape(
-                    topStart = 16.dp
-                )
+                }
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Add,
@@ -122,8 +84,13 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             state = listState,
-            contentPadding = PaddingValues(4.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            contentPadding = PaddingValues(
+                start = 8.dp,
+                end = 8.dp,
+                top = 8.dp,
+                bottom = 88.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             coroutineScope.launch {
                 myViewModel.loadListPosition().run {
@@ -136,31 +103,24 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
             items(notes) { notesWithData ->
                 NoteItemUI(
                     note = notesWithData.note,
-                    bgColor = if (!myViewModel.isDarkTheme) yellow100 else Color.DarkGray,
                     onClickItem = {
                         myViewModel.saveListPosition(listState)
                         onNavigate(notesWithData.note.id)
-                    },
-                    onClickStart = {
-                        if (!notesWithData.dataItems.isNullOrEmpty()) {
-                            myViewModel.saveListPosition(listState)
-                            TimerService.initTimerService(
-                                notesWithData.note,
-                                notesWithData.dataItems
-                            )
-                            onNavigateTimerStart()
-                            // Disable for now TODO
-                            // setNoteAlarm(context,myViewModel.currentNote,myViewModel.currentNoteItems)
-                            Intent(context, TimerService::class.java).also {
-                                it.action = "ACTION_START_OR_RESUME_SERVICE"
-                                context.startService(it)
-                            }
+                    }
+                ) {
+                    if (!notesWithData.dataItems.isNullOrEmpty()) {
+                        myViewModel.saveListPosition(listState)
+                        TimerService.initTimerService(
+                            notesWithData.note,
+                            notesWithData.dataItems
+                        )
+                        onNavigateTimerStart()
+                        Intent(context, TimerService::class.java).also {
+                            it.action = "ACTION_START_OR_RESUME_SERVICE"
+                            context.startService(it)
                         }
                     }
-                )
-            }
-            item {
-                Spacer(modifier = Modifier.size(80.dp))
+                }
             }
         }
         Box(modifier = Modifier.fillMaxSize()) {
@@ -172,27 +132,27 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
     }
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun NoteItemUI (
     note: NoteItem,
-    bgColor: Color,
     onClickItem: () -> Unit,
     onClickStart: () -> Unit
     ) {
     val simpleDateFormat = remember { SimpleDateFormat.getDateInstance() }
     val creationDate = simpleDateFormat.format(note.creation_date!!.time)
     Card(
-        shape = androidx.compose.material.MaterialTheme.shapes.small,
         modifier = Modifier
-            .padding(4.dp)
-            .fillMaxWidth()
-            .clickable(onClick = onClickItem),
-        backgroundColor = bgColor
+            .fillMaxWidth(),
+        onClick = onClickItem,
+        shape = androidx.compose.material.MaterialTheme.shapes.medium.copy(CornerSize(12.dp)),
+        backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+        elevation = 1.dp
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(top = 8.dp, bottom = 8.dp, start = 16.dp, end = 8.dp),
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
@@ -204,7 +164,8 @@ fun NoteItemUI (
                 Column(
                     modifier = Modifier
                         .wrapContentHeight()
-                        .fillMaxWidth(0.76F),
+                        .weight(1f)
+                        .padding(end = 8.dp),
                     verticalArrangement = Arrangement.Top
                 ) {
                     Text(
@@ -224,8 +185,30 @@ fun NoteItemUI (
                         text = creationDate
                     )
                 }
+                OutlinedButton(
+                    modifier = Modifier
+                        .wrapContentWidth()
+                        .height(40.dp),
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        end = 24.dp
+                    ),
+                    border = BorderStroke(1.dp, Color.Green),
+                    onClick = onClickStart
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.PlayArrow,
+                        tint = Color.Green,
+                        contentDescription = "Play"
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        color = Color.Green,
+                        text = "Start"
+                    )
+                }/*
                 TextButton(
-                    modifier = Modifier.padding(start = 4.dp),
+                    modifier = Modifier.padding(start = 4.dp, top = 8.dp),
                     border = BorderStroke(1.dp, Color.Green),
                     shape = androidx.compose.material.MaterialTheme.shapes.small,
                     onClick = onClickStart
@@ -239,7 +222,7 @@ fun NoteItemUI (
                         tint = Color.Green,
                         contentDescription = "Play"
                     )
-                }
+                }*/
             }
             Text(
                 maxLines = 2,
@@ -266,5 +249,5 @@ fun NoteItemUITest() {
         last_edited_on = Calendar.getInstance(),
         creation_date = Calendar.getInstance()
     )
-    NoteItemUI(note, yellow100,{},{})
+    NoteItemUI(note, {}) {}
 }
