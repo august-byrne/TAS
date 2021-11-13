@@ -57,10 +57,6 @@ private val LightColorScheme = lightColorScheme(
     surfaceVariant = yellow100,
     background = yellow50,
     outline = BlueGrey60
-/*    primary = Blue40,
-    secondary = DarkBlue40,
-    tertiary = Yellow40,*/
-    // error, primaryContainer, onSecondary, etc.
 )
 private val DarkColorScheme = darkColorScheme(
     primary = Blue80,
@@ -77,8 +73,6 @@ private val DarkColorScheme = darkColorScheme(
     onTertiaryContainer = Yellow90,
     outline = BlueGrey60,
     surfaceVariant = Color.DarkGray,
-    //background = Color.DarkGray
-    // error, primaryContainer, onSecondary, etc.
 )
 
 /*

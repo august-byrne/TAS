@@ -292,14 +292,10 @@ fun NoteTimer(onNavBack: () -> Unit) {
                     onClickStartPause = {
                         if (timerLengthMilli != 0L) {
                             if (timerState == TimerState.Running) {
-                                // Clicked Pause
+                                // Pause is Clicked
                                 TimerService.pauseTimer(timerLengthMilli)
                             } else {
-                                // Clicked Start
-                                if (timerState == TimerState.Stopped) {
-                                    PreferenceManager(context).timeInMillis =
-                                        TimerService.timerLengthMilli.value ?: 1L
-                                }
+                                // Start is Clicked
                                 TimerService.startTimer(itemIndex)
                             }
                         }

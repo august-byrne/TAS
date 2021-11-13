@@ -47,7 +47,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.window.layout.WindowMetricsCalculator
 import com.example.protosuite.R
 import com.example.protosuite.data.db.entities.NoteWithItems
 import com.example.protosuite.ui.notes.*
@@ -62,6 +61,7 @@ import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -77,8 +77,9 @@ class MainActivity : AppCompatActivity() {
 
     private val adaptiveAdSize: AdSize
         get() {
-            val adWidthPixels = WindowMetricsCalculator.getOrCreate()
-                .computeCurrentWindowMetrics(this).bounds.width().toFloat()
+            //val adWidthPixels = WindowMetricsCalculator.getOrCreate()
+              //  .computeCurrentWindowMetrics(this).bounds.width().toFloat()
+            val adWidthPixels = this.resources.displayMetrics.widthPixels
             //removed from window API: WindowManager(this).getCurrentWindowMetrics().bounds.width().toFloat()
             //requires android API 30: windowManager.currentWindowMetrics.bounds.width().toFloat()
 
@@ -98,16 +99,22 @@ class MainActivity : AppCompatActivity() {
         MobileAds.initialize(this) {}
 
         //Initialize ViewModel Values
-        myViewModel.setPrevTimeType(preferences.lastUsedTimeUnit)
-        myViewModel.sortType = preferences.sortType
-        myViewModel.adState = preferences.showAds
-        myViewModel.isDarkTheme = preferences.isDarkTheme
+        //myViewModel.setPrevTimeType(preferences.lastUsedTimeUnit)
+        //myViewModel.sortType = preferences.sortTypeFlow
+        //myViewModel.adState = preferences.showAds
+        //myViewModel.isDarkTheme = preferences.isDarkTheme
 
         setContent {
+            val adState by preferences.showAdsFlow.collectAsState(initial = true)
+            val darkModeState by preferences.isDarkThemeFlow.collectAsState(initial = false)
+            val sortTypeState by preferences.sortTypeFlow.collectAsState(initial = 0)
+            myViewModel.sortType = SortType.values()[sortTypeState]
+            val prevTimeTypeState by preferences.lastUsedTimeUnitFlow.collectAsState(initial = 0)
+            myViewModel.setPrevTimeType(prevTimeTypeState)
             val navController = rememberNavController()
             val navBackStackEntry by navController.currentBackStackEntryAsState()
 
-            AppTheme(myViewModel.isDarkTheme) {
+            AppTheme(darkModeState) {
                 // create a scaffold state, set it to close by default
                 val scaffoldStateNewTemp = rememberScaffoldState(rememberDrawerState(DrawerValue.Closed))
                 val scaffoldState = rememberScaffoldState(rememberDrawerState(androidx.compose.material.DrawerValue.Closed))
@@ -182,7 +189,7 @@ class MainActivity : AppCompatActivity() {
                             ) {
                                 CollapsedTimerUI(navController)
                             }
-                            if (myViewModel.adState) {
+                            if (adState) {
                                 AndroidView(
                                     modifier = Modifier.fillMaxWidth(),
                                     factory = { context ->
@@ -223,9 +230,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onStop() {
-        preferences.lastUsedTimeUnit = myViewModel.prevTimeType
-        preferences.sortType = myViewModel.sortType
-        preferences.isDarkTheme = myViewModel.isDarkTheme
+        //preferences.lastUsedTimeUnit = myViewModel.prevTimeType
+        //preferences.sortType = myViewModel.sortType
+        CoroutineScope(Dispatchers.Default).launch {
+            preferences.setSortType(myViewModel.sortType.ordinal)
+            preferences.setLastUsedTimeUnit(myViewModel.prevTimeType)
+        }
+        //preferences.isDarkTheme = myViewModel.isDarkTheme
         super.onStop()
     }
 
