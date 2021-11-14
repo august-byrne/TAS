@@ -59,6 +59,12 @@ val BlueGrey60 = Color(0xFF90909A)
 val BlueGrey80 = Color(0xFFC6C5D0)
 val BlueGrey90 = Color(0xFFE2E1EC)
 
+// not actually based on MD3 scheme
+val Green10 = Color(0xFF002402)
+val Green40 = Color(0xFF66BB6A)
+val Green90 = Color(0xFFD0FFD3)
+
+
 val purple200 = Color(0xFFBB86FC)
 val purple500 = Color(0xFF6200EE)
 val purple700 = Color(0xFF3700B3)

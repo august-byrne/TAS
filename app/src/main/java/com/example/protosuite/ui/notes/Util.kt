@@ -19,3 +19,7 @@ enum class TimerState {
 enum class SortType {
     Creation, LastEdited, Order, Default
 }
+
+enum class EditDialogType {
+    Title, Description, DialogClosed
+}

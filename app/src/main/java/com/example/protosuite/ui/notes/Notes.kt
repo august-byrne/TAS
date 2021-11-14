@@ -1,7 +1,7 @@
 package com.example.protosuite.ui.notes
 
 import android.content.Intent
-import androidx.compose.foundation.BorderStroke
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -12,25 +12,19 @@ import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.protosuite.data.db.entities.NoteItem
-import com.example.protosuite.data.db.entities.NoteWithItems
 import com.example.protosuite.ui.MainAppBar
-import com.example.protosuite.ui.SortPopupUI
+import com.example.protosuite.ui.timer.PreferenceManager
 import com.example.protosuite.ui.timer.TimerService
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -39,11 +33,14 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavigateTimerStart: () -> Unit, onDrawerOpen: () -> Unit, onNavSettings: () -> Unit) {
-    val notes: List<NoteWithItems> by myViewModel.sortedAllNotesWithItems().observeAsState(listOf())
+    //val notes: List<NoteWithItems> by myViewModel.sortedAllNotesWithItems().observeAsState(listOf())
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val scrollBehavior = remember { TopAppBarDefaults.pinnedScrollBehavior() }
+    val sortType by PreferenceManager(context).sortTypeFlow.collectAsState(initial = SortType.Default.ordinal)
+    val sortedNotes by myViewModel.sortedAllNotesWithItems(SortType.values()[sortType]).observeAsState(initial = listOf())
+
     // TODO: Fix listState re-scrolling when rotated or when miniTimerView is clicked
     Scaffold(
         modifier = Modifier
@@ -100,7 +97,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                     )
                 }
             }
-            items(notes) { notesWithData ->
+            items(sortedNotes) { notesWithData ->
                 NoteItemUI(
                     note = notesWithData.note,
                     onClickItem = {
@@ -119,6 +116,8 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                             it.action = "ACTION_START_OR_RESUME_SERVICE"
                             context.startService(it)
                         }
+                    } else {
+                        Toast.makeText(context, "Empty Activity", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -126,7 +125,14 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
         Box(modifier = Modifier.fillMaxSize()) {
             if (myViewModel.openSortPopup) {
                 myViewModel.saveListPosition(listState)
-                SortPopupUI(myViewModel)
+                SortPopupUI(currentSortType = SortType.values()[sortType]) {
+                    if (it != null) {
+                        coroutineScope.launch {
+                            PreferenceManager(context).setSortType(it.ordinal)
+                        }
+                    }
+                    myViewModel.openSortPopup = false
+                }
             }
         }
     }
@@ -152,9 +158,8 @@ fun NoteItemUI (
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp, bottom = 8.dp, start = 16.dp, end = 8.dp),
-            horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.SpaceBetween
+                .padding(16.dp),
+            horizontalAlignment = Alignment.Start
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -178,52 +183,40 @@ fun NoteItemUI (
                             "Title"
                         }
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.bodyMedium,
                         text = creationDate
                     )
                 }
-                OutlinedButton(
+                FilledTonalButton(
                     modifier = Modifier
                         .wrapContentWidth()
                         .height(40.dp),
                     contentPadding = PaddingValues(
-                        start = 16.dp,
+                        start = 24.dp,
                         end = 24.dp
                     ),
-                    border = BorderStroke(1.dp, Color.Green),
+                    //colors = ButtonDefaults.filledTonalButtonColors(),
+                    //border = BorderStroke(1.dp, Color.Green),
                     onClick = onClickStart
                 ) {
-                    Icon(
+/*                    Icon(
                         imageVector = Icons.Rounded.PlayArrow,
-                        tint = Color.Green,
+                        //tint = Color.Green,
                         contentDescription = "Play"
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    )*/
+                    /*Spacer(modifier = Modifier.width(8.dp))*/
                     Text(
-                        color = Color.Green,
-                        text = "Start"
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        text = "Start",
+                        style = MaterialTheme.typography.labelLarge
                     )
-                }/*
-                TextButton(
-                    modifier = Modifier.padding(start = 4.dp, top = 8.dp),
-                    border = BorderStroke(1.dp, Color.Green),
-                    shape = androidx.compose.material.MaterialTheme.shapes.small,
-                    onClick = onClickStart
-                ) {
-                    Text(
-                        color = Color.Green,
-                        text = "Start"
-                    )
-                    Icon(
-                        imageVector = Icons.Rounded.PlayArrow,
-                        tint = Color.Green,
-                        contentDescription = "Play"
-                    )
-                }*/
+                }
             }
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,

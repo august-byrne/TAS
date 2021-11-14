@@ -12,6 +12,7 @@ import com.example.protosuite.data.db.entities.DataItem
 import com.example.protosuite.data.db.entities.NoteItem
 import com.example.protosuite.data.db.entities.NoteWithItems
 import com.example.protosuite.data.repositories.NoteRepository
+import com.example.protosuite.ui.timer.PreferenceManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,9 +22,11 @@ import java.text.DateFormat
 import java.text.SimpleDateFormat
 import javax.inject.Inject
 
+
 @HiltViewModel
 class NoteViewModel @Inject constructor(
-    private val repo: NoteRepository
+    private val repo: NoteRepository,
+    private val preferences: PreferenceManager
 ): ViewModel() {
 
 
@@ -88,9 +91,9 @@ class NoteViewModel @Inject constructor(
             repo.updateNoteItems(noteListCopy)
         }
 
-    var allNotesWithItems: LiveData<List<NoteWithItems>> = repo.allNotesWithItems.asLiveData()
+    //var allNotesWithItems: LiveData<List<NoteWithItems>> = repo.allNotesWithItems.asLiveData()
 
-    fun sortedAllNotesWithItems(): LiveData<List<NoteWithItems>> {
+    fun sortedAllNotesWithItems(sortType: SortType): LiveData<List<NoteWithItems>> {
         return repo.allNotesWithItems.map { list ->
             when (sortType) {
                 SortType.Creation -> {
@@ -112,7 +115,7 @@ class NoteViewModel @Inject constructor(
     fun getNoteWithItemsById(id: Int): LiveData<NoteWithItems> =
         repo.getNoteWithItemsById(id).asLiveData()
 
-    var isDarkTheme by mutableStateOf(false)
+    //var isDarkTheme by mutableStateOf(false)
     var noteDeleted: Boolean = false
     var beginTyping by mutableStateOf(false)
     var currentNote by mutableStateOf(NoteItem(0, null, null, 0, "", ""))
@@ -120,9 +123,9 @@ class NoteViewModel @Inject constructor(
     var tempSavedNote: NoteWithItems? = null
 
     var openSortPopup by mutableStateOf(false)
-    var sortType by mutableStateOf(SortType.Default)
-
-    var adState by mutableStateOf(true)
+    var openEditDialog by mutableStateOf(EditDialogType.DialogClosed)
+    //var sortType by mutableStateOf(SortType.Default)
+    //val sortType = preferences.sortTypeFlow
 
     val simpleDateFormat: DateFormat = SimpleDateFormat.getDateInstance()
 

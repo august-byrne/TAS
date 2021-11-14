@@ -11,7 +11,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
@@ -33,12 +32,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -49,7 +45,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.protosuite.R
 import com.example.protosuite.data.db.entities.NoteWithItems
-import com.example.protosuite.ui.notes.*
+import com.example.protosuite.ui.notes.ExpandedNoteUI
+import com.example.protosuite.ui.notes.NoteListUI
+import com.example.protosuite.ui.notes.NoteViewModel
+import com.example.protosuite.ui.notes.TimerState
 import com.example.protosuite.ui.timer.NoteTimer
 import com.example.protosuite.ui.timer.PreferenceManager
 import com.example.protosuite.ui.timer.TimerService
@@ -98,17 +97,9 @@ class MainActivity : AppCompatActivity() {
         //initialize the mobile ads sdk
         MobileAds.initialize(this) {}
 
-        //Initialize ViewModel Values
-        //myViewModel.setPrevTimeType(preferences.lastUsedTimeUnit)
-        //myViewModel.sortType = preferences.sortTypeFlow
-        //myViewModel.adState = preferences.showAds
-        //myViewModel.isDarkTheme = preferences.isDarkTheme
-
         setContent {
             val adState by preferences.showAdsFlow.collectAsState(initial = true)
             val darkModeState by preferences.isDarkThemeFlow.collectAsState(initial = false)
-            val sortTypeState by preferences.sortTypeFlow.collectAsState(initial = 0)
-            myViewModel.sortType = SortType.values()[sortTypeState]
             val prevTimeTypeState by preferences.lastUsedTimeUnitFlow.collectAsState(initial = 0)
             myViewModel.setPrevTimeType(prevTimeTypeState)
             val navController = rememberNavController()
@@ -230,13 +221,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onStop() {
-        //preferences.lastUsedTimeUnit = myViewModel.prevTimeType
-        //preferences.sortType = myViewModel.sortType
         CoroutineScope(Dispatchers.Default).launch {
-            preferences.setSortType(myViewModel.sortType.ordinal)
             preferences.setLastUsedTimeUnit(myViewModel.prevTimeType)
         }
-        //preferences.isDarkTheme = myViewModel.isDarkTheme
         super.onStop()
     }
 
@@ -340,7 +327,7 @@ fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navCont
             }
         }
         composable("settings") {
-            SettingsUI(myViewModel) {
+            SettingsUI {
                 navController.popBackStack()
             }
         }
@@ -448,10 +435,8 @@ fun CollapsedTimerUI(navController: NavController) {
                                     TimerService.pauseTimer(
                                         timerLengthMilli
                                     )
-                                    //removeAlarm(context)
                                 } else {
                                     // Clicked Start
-                                    //setAlarm(context,timerLengthMilli)
                                     TimerService.startTimer(itemIndex)
                                 }
                             }
@@ -500,113 +485,4 @@ fun DefaultSnackbar(
     }
 }
 
-@Composable
-fun SortPopupUI(myViewModel: NoteViewModel) {
-    Popup(
-        alignment = Alignment.Center,
-        onDismissRequest = {
-            myViewModel.openSortPopup = false
-        },
-        properties = PopupProperties(
-            focusable = true,
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true
-        )
-    ) {
-        Card(
-            shape = androidx.compose.material.MaterialTheme.shapes.medium.copy(CornerSize(16.dp)),
-            modifier = Modifier
-                .wrapContentHeight()
-                .width(IntrinsicSize.Max),
-            elevation = 24.dp,
-            backgroundColor = MaterialTheme.colorScheme.background
-        ) {
-            Column(
-                modifier = Modifier
-                    .wrapContentSize(),
-                verticalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Text(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        .background(MaterialTheme.colorScheme.primary)
-                        .padding(8.dp),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    text = "Sort by"
-                )
-                Column(
-                    modifier = Modifier
-                        .wrapContentSize()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.SpaceEvenly,
-                    horizontalAlignment = Alignment.End
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .wrapContentSize()
-                            .clickable {
-                                myViewModel.sortType = SortType.Creation
-                                myViewModel.openSortPopup = false
-                            },
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Creation date")
-                        RadioButton(
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                            selected = myViewModel.sortType == SortType.Creation,
-                            onClick = {
-                                myViewModel.sortType = SortType.Creation
-                                myViewModel.openSortPopup = false
-                            }
-                        )
-                    }
-                    Row(
-                        modifier = Modifier
-                            .wrapContentSize()
-                            .clickable {
-                                myViewModel.sortType = SortType.LastEdited
-                                myViewModel.openSortPopup = false
-                            },
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Last edited")
-                        RadioButton(
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                            selected = myViewModel.sortType == SortType.LastEdited,
-                            onClick = {
-                                myViewModel.sortType = SortType.LastEdited
-                                myViewModel.openSortPopup = false
-                            }
-                        )
-                    }
-                    Row(
-                        modifier = Modifier
-                            .wrapContentSize()
-                            .clickable {
-                                myViewModel.sortType = SortType.Order
-                                myViewModel.openSortPopup = false
-                            },
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Custom")
-                        RadioButton(
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                            selected = myViewModel.sortType == SortType.Order,
-                            onClick = {
-                                myViewModel.sortType = SortType.Order
-                                myViewModel.openSortPopup = false
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
 

@@ -2,25 +2,24 @@ package com.example.protosuite.ui.notes
 
 import android.content.Intent
 import android.widget.Toast
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.Divider
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -35,12 +34,14 @@ import androidx.compose.ui.unit.dp
 import com.example.protosuite.data.db.entities.DataItem
 import com.example.protosuite.data.db.entities.NoteItem
 import com.example.protosuite.ui.timer.TimerService
+import kotlinx.coroutines.launch
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStart: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit, onNavBack: () -> Unit) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val noteWithItems by myViewModel.getNoteWithItemsById(noteId).observeAsState()
     val listState = rememberLazyListState()
     val scrollBehavior = remember { TopAppBarDefaults.pinnedScrollBehavior() }
@@ -114,48 +115,8 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
             contentPadding = PaddingValues(bottom = 88.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
-            // Note Description Item
             item {
-                BasicTextField(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.primaryContainer)
-                        .padding(8.dp),
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onPrimaryContainer),
-                    maxLines = 4,
-                    value = myViewModel.currentNote.description,
-                    onValueChange = { newValue ->
-                        myViewModel.beginTyping = true
-                        myViewModel.currentNote =
-                            myViewModel.currentNote.copy(description = newValue)
-                    },
-                    decorationBox = { innerTextField ->
-                        if (myViewModel.currentNote.description.isEmpty()) {
-                            Text(
-                                text = "Description",
-                                color = Color.Gray,
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
-                        innerTextField()
-                    }
-                )
-                Text(
-                    text = "last edited: ${
-                        if (myViewModel.currentNote.last_edited_on?.time != null) {
-                            myViewModel.simpleDateFormat.format(myViewModel.currentNote.last_edited_on!!.time)
-                        } else {
-                            "never"
-                        }
-                    }",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.primaryContainer)
-                        .padding(4.dp),
-                    textAlign = TextAlign.End,
-                    style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onPrimaryContainer),
-                )
-                Divider()
+                DescriptionItemUI(myViewModel)
             }
             itemsIndexed(myViewModel.currentNoteItems) { index: Int, item: DataItem ->
                 DataItemUI(
@@ -174,8 +135,6 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                                 myViewModel.currentNoteItems,
                                 index
                             )
-                            // Disable for now TODO
-                            //setNoteAlarm(context,myViewModel.currentNote,myViewModel.currentNoteItems,index)
                             onNavigateTimerStart()
                             Intent(context, TimerService::class.java).also {
                                 it.action = "ACTION_START_OR_RESUME_SERVICE"
@@ -187,56 +146,41 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                 Divider(modifier = Modifier.padding(horizontal = 8.dp))
             }
         }
+        Box(modifier = Modifier.fillMaxSize()) {
+            myViewModel.apply {
+                if (openEditDialog != EditDialogType.DialogClosed) {
+                    EditOneFieldDialog(
+                        headerName = "Edit ${openEditDialog.name}",
+                        fieldName = openEditDialog.name,
+                        initialValue = if (openEditDialog == EditDialogType.Title) currentNote.title else currentNote.description,
+                        onDismissRequest = { openEditDialog = EditDialogType.DialogClosed }
+                    ) { returnedValue ->
+                        coroutineScope.launch {
+                            upsertNoteAndData(
+                                if (openEditDialog == EditDialogType.Title) {
+                                    currentNote.copy(title = returnedValue)
+                                } else {
+                                    currentNote.copy(description = returnedValue)
+                                },
+                                currentNoteItems
+                            )
+                            openEditDialog = EditDialogType.DialogClosed
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
 @Composable
 fun NoteExpandedTopBar(myViewModel: NoteViewModel, scrollBehavior: TopAppBarScrollBehavior, onNavBack: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit) {
-    CenterAlignedTopAppBar(
+    SmallTopAppBar(
         scrollBehavior = scrollBehavior,
         title = {
-            BasicTextField(
-                modifier = Modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = androidx.compose.material.MaterialTheme.shapes.small.copy(
-                            CornerSize(
-                                8.dp
-                            )
-                        )
-                    )
-                    .fillMaxWidth(0.9F)
-                    .border(
-                        border = BorderStroke(
-                            width = 0.5.dp,
-                            color = MaterialTheme.colorScheme.outline
-                        ),
-                        shape = androidx.compose.material.MaterialTheme.shapes.small.copy(
-                            CornerSize(
-                                8.dp
-                            )
-                        )
-                    )
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onPrimaryContainer),
-                value = myViewModel.currentNote.title,
-                onValueChange = { newValue ->
-                    myViewModel.beginTyping = true
-                    myViewModel.currentNote =
-                        myViewModel.currentNote.copy(title = newValue)
-                },
-                //placeholder = { Text("Title", color = Color.White) },
-                singleLine = true,
-                decorationBox = { innerTextField ->
-                    if (myViewModel.currentNote.title.isEmpty()) {
-                        Text(
-                            text = "Title",
-                            color = Color.Gray,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-                    innerTextField()
-                }
+            Text(
+                modifier = Modifier.clickable { myViewModel.openEditDialog = EditDialogType.Title },
+                text = if (myViewModel.currentNote.title.isNotEmpty()) myViewModel.currentNote.title else "Title"
             )
         },
         navigationIcon = {
@@ -383,6 +327,47 @@ fun DataItemUI (
                 imageVector = Icons.Rounded.PlayArrow,
                 tint = Color.Green,
                 contentDescription = "Play"
+            )
+        }
+    }
+}
+
+@Composable
+fun DescriptionItemUI(myViewModel: NoteViewModel) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomStart = 12.dp, bottomEnd = 12.dp),
+        backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+        elevation = 1.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .wrapContentHeight()
+                .fillMaxWidth()
+                .padding(8.dp)
+        ) {
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { myViewModel.openEditDialog = EditDialogType.Description },
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 4,
+                text = myViewModel.currentNote.description
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "last edited: ${
+                    if (myViewModel.currentNote.last_edited_on?.time != null) {
+                        myViewModel.simpleDateFormat.format(myViewModel.currentNote.last_edited_on!!.time)
+                    } else {
+                        "never"
+                    }
+                }",
+                modifier = Modifier
+                    .fillMaxWidth(),
+                textAlign = TextAlign.End,
+                style = MaterialTheme.typography.bodyMedium,
             )
         }
     }
