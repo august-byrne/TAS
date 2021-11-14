@@ -12,7 +12,6 @@ import com.example.protosuite.data.db.entities.DataItem
 import com.example.protosuite.data.db.entities.NoteItem
 import com.example.protosuite.data.db.entities.NoteWithItems
 import com.example.protosuite.data.repositories.NoteRepository
-import com.example.protosuite.ui.timer.PreferenceManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,12 +24,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NoteViewModel @Inject constructor(
-    private val repo: NoteRepository,
-    private val preferences: PreferenceManager
+    private val repo: NoteRepository
 ): ViewModel() {
 
-
-    //var noteDataId: Long = 0
+    // returns noteId
     suspend fun upsert(item: NoteItem?): Long {
         return if (item != null) {
             repo.upsert(item)
@@ -38,19 +35,6 @@ class NoteViewModel @Inject constructor(
             0
         }
     }
-/*    fun upsert(item: NoteItem?): Long = CoroutineScope(Dispatchers.Main).launch {
-        if (item != null) {
-            return repo.upsert(item)
-            //noteDataId = repo.upsert(item)
-        } else {
-            Log.d("DB Interactions", "upsert failed: item was null")
-        }
-    }*/
-
-    fun upsertData(items: List<DataItem>) = CoroutineScope(Dispatchers.Main).launch {
-        repo.upsertData(items)
-    }
-
 
     fun upsertNoteAndData(noteItem: NoteItem, dataItems: MutableList<DataItem>) =
         CoroutineScope(Dispatchers.Main).launch {
@@ -76,23 +60,6 @@ class NoteViewModel @Inject constructor(
         repo.deleteNote(id)
     }
 
-    fun updateNoteItemOrderInDatabase(noteListCopy: MutableList<NoteItem>) =
-        CoroutineScope(Dispatchers.Main).launch {
-            noteListCopy.replaceAll { noteItem ->
-                noteItem.copy(
-                    id = noteItem.id,
-                    creation_date = noteItem.creation_date,
-                    last_edited_on = noteItem.last_edited_on,
-                    order = noteListCopy.lastIndex - noteListCopy.indexOf(noteItem),
-                    title = noteItem.title,
-                    description = noteItem.description
-                )
-            }
-            repo.updateNoteItems(noteListCopy)
-        }
-
-    //var allNotesWithItems: LiveData<List<NoteWithItems>> = repo.allNotesWithItems.asLiveData()
-
     fun sortedAllNotesWithItems(sortType: SortType): LiveData<List<NoteWithItems>> {
         return repo.allNotesWithItems.map { list ->
             when (sortType) {
@@ -115,17 +82,13 @@ class NoteViewModel @Inject constructor(
     fun getNoteWithItemsById(id: Int): LiveData<NoteWithItems> =
         repo.getNoteWithItemsById(id).asLiveData()
 
-    //var isDarkTheme by mutableStateOf(false)
     var noteDeleted: Boolean = false
     var beginTyping by mutableStateOf(false)
     var currentNote by mutableStateOf(NoteItem(0, null, null, 0, "", ""))
     var currentNoteItems = mutableStateListOf<DataItem>()
     var tempSavedNote: NoteWithItems? = null
-
     var openSortPopup by mutableStateOf(false)
     var openEditDialog by mutableStateOf(EditDialogType.DialogClosed)
-    //var sortType by mutableStateOf(SortType.Default)
-    //val sortType = preferences.sortTypeFlow
 
     val simpleDateFormat: DateFormat = SimpleDateFormat.getDateInstance()
 
