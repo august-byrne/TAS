@@ -20,41 +20,5 @@ import com.example.protosuite.ui.notes.Converters
 )
 @TypeConverters(Converters::class)
 abstract class NotesDatabase : RoomDatabase() {
-
     abstract fun noteDao(): NoteDao
-    /*
-    companion object {
-        // Singleton prevents multiple instances of database opening at the
-        // same time.
-        @Volatile
-        private var INSTANCE: NotesDatabase? = null
-
-        fun getInstance(context: Context): NotesDatabase {
-            synchronized(this) {
-                // Copy the current value of INSTANCE to a local variable so Kotlin can smart cast.
-                // Smart cast is only available to local variables.
-                var instance = INSTANCE
-                // If instance is `null` make a new database instance.
-                if (instance == null) {
-                    instance = Room.databaseBuilder(
-                        context.applicationContext,
-                        NotesDatabase::class.java,
-                        "notes_database"
-                    )
-                        // Wipes and rebuilds instead of migrating if no Migration object.
-                        // Migration is not part of this lesson. You can learn more about
-                        // migration with Room in this blog post:
-                        // https://medium.com/androiddevelopers/understanding-migrations-with-room-f01e04b07929
-                        .fallbackToDestructiveMigration()
-                        .build()
-                    // Assign INSTANCE to the newly created database.
-                    INSTANCE = instance
-                }
-
-                // Return instance; smart cast to be non-null.
-                return instance
-            }
-        }
-    }
-    */
 }

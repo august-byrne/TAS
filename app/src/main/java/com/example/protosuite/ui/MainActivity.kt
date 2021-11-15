@@ -44,7 +44,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.protosuite.R
-import com.example.protosuite.data.db.entities.NoteWithItems
 import com.example.protosuite.ui.notes.ExpandedNoteUI
 import com.example.protosuite.ui.notes.NoteListUI
 import com.example.protosuite.ui.notes.NoteViewModel
@@ -62,7 +61,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.*
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -285,11 +283,6 @@ fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navCont
                     navController.navigate("note_timer")
                 },
                 {
-                    myViewModel.apply {
-                        tempSavedNote = NoteWithItems(currentNote, currentNoteItems)
-                        deleteNote(noteId)
-                        noteDeleted = true
-                    }
                     navController.popBackStack()
                     coroutineScope.launch {
                         scaffoldStateOldTemp.snackbarHostState.showSnackbar(
@@ -298,23 +291,6 @@ fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navCont
                             duration = SnackbarDuration.Short
                         )
                     }
-                },
-                {
-                    myViewModel.apply {
-                        upsertNoteAndData(
-                            currentNote.copy(
-                                id = 0,
-                                title = currentNote.title.plus(" - Copy"),
-                                last_edited_on = Calendar.getInstance(),
-                                creation_date = currentNote.creation_date
-                                    ?: Calendar.getInstance()
-                            ),
-                            currentNoteItems.mapTo(mutableListOf()) { dataItem ->
-                                dataItem.copy(id = 0)
-                            }
-                        )
-                    }
-                    navController.popBackStack()
                 },
                 {
                     navController.popBackStack()

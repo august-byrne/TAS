@@ -11,12 +11,10 @@ class NoteRepository @Inject constructor(private val noteDao: NoteDao) {
 
     suspend fun upsert(item: NoteItem): Long = noteDao.upsert(item)
     suspend fun upsertData(items: List<DataItem>) = noteDao.upsertData(items)
-    @Deprecated("Replaced with deleteNote(Int): Unit using cascading deletion in sql",ReplaceWith("deleteNote(id)"))
+    suspend fun updateNote(note: NoteItem) = noteDao.updateNote(note)
     suspend fun deleteNoteWithData(id: Int) = noteDao.deleteNoteAndData(id)
-    suspend fun deleteNote(id: Int) = noteDao.deleteNote(id)
     val allNotes: Flow<List<NoteItem>> = noteDao.getAllNotes()
     val allNotesWithItems: Flow<List<NoteWithItems>> = noteDao.getAllNotesWithItems()
     fun getNoteWithItemsById(noteId: Int): Flow<NoteWithItems> = noteDao.getNoteWithItems(noteId)
-    suspend fun updateNoteItems(noteItems: List<NoteItem>) = noteDao.updateNoteItems(noteItems)
 
 }

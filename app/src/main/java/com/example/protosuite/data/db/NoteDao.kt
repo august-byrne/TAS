@@ -22,8 +22,8 @@ interface NoteDao {
     @Update
     suspend fun updateNoteItems(noteItems: List<NoteItem>)
 
-    //@Delete
-    //suspend fun delete(item: NoteItem)
+    @Update
+    suspend fun updateNote(note: NoteItem)
 
     @Query("DELETE FROM note_table WHERE id = :key")
     suspend fun deleteNote(key: Int)
@@ -32,7 +32,7 @@ interface NoteDao {
     suspend fun deleteData(key: Int)
 
     @Transaction
-    suspend fun deleteNoteAndData(key: Int){
+    suspend fun deleteNoteAndData(key: Int) {
         deleteNote(key)
         deleteData(key)
     }

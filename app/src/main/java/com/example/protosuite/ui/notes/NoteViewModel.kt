@@ -17,8 +17,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import java.text.DateFormat
-import java.text.SimpleDateFormat
 import javax.inject.Inject
 
 
@@ -27,13 +25,17 @@ class NoteViewModel @Inject constructor(
     private val repo: NoteRepository
 ): ViewModel() {
 
-    // returns noteId
+    // returns noteId. Be aware this does not update nicely with one to many relations
     suspend fun upsert(item: NoteItem?): Long {
         return if (item != null) {
             repo.upsert(item)
         } else {
             0
         }
+    }
+
+    suspend fun updateNote(item: NoteItem) {
+        repo.updateNote(item)
     }
 
     fun upsertNoteAndData(noteItem: NoteItem, dataItems: MutableList<DataItem>) =
@@ -57,7 +59,7 @@ class NoteViewModel @Inject constructor(
         }
 
     fun deleteNote(id: Int) = CoroutineScope(Dispatchers.Main).launch {
-        repo.deleteNote(id)
+        repo.deleteNoteWithData(id)
     }
 
     fun sortedAllNotesWithItems(sortType: SortType): LiveData<List<NoteWithItems>> {
@@ -84,13 +86,13 @@ class NoteViewModel @Inject constructor(
 
     var noteDeleted: Boolean = false
     var beginTyping by mutableStateOf(false)
-    var currentNote by mutableStateOf(NoteItem(0, null, null, 0, "", ""))
+    //var currentNote by mutableStateOf(NoteItem(0, null, null, 0, "", ""))
     var currentNoteItems = mutableStateListOf<DataItem>()
     var tempSavedNote: NoteWithItems? = null
     var openSortPopup by mutableStateOf(false)
     var openEditDialog by mutableStateOf(EditDialogType.DialogClosed)
 
-    val simpleDateFormat: DateFormat = SimpleDateFormat.getDateInstance()
+    //val simpleDateFormat: DateFormat = SimpleDateFormat.getDateInstance()
 
     private var _prevTimeType = 0
     val prevTimeType: Int

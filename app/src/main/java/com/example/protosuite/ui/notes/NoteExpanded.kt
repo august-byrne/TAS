@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,49 +30,50 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.protosuite.data.db.entities.DataItem
 import com.example.protosuite.data.db.entities.NoteItem
+import com.example.protosuite.data.db.entities.NoteWithItems
 import com.example.protosuite.ui.timer.TimerService
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStart: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit, onNavBack: () -> Unit) {
+fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStart: () -> Unit, onDeleteNote: () -> Unit, onNavBack: () -> Unit) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val noteWithItems by myViewModel.getNoteWithItemsById(noteId).observeAsState()
+    val noteWithItems by myViewModel.getNoteWithItemsById(noteId).observeAsState(NoteWithItems(NoteItem(0, null, null, 0, "", ""), listOf()))
     val listState = rememberLazyListState()
     val scrollBehavior = remember { TopAppBarDefaults.pinnedScrollBehavior() }
     if (!myViewModel.beginTyping) {
-        myViewModel.currentNote =
-            noteWithItems?.note ?: NoteItem(0, null, null, 0, "Title", "Description")
-        myViewModel.currentNoteItems =
-            (noteWithItems?.dataItems ?: mutableListOf()).toMutableStateList()
+        //myViewModel.currentNote = noteWithItems.note
+        myViewModel.currentNoteItems = noteWithItems.dataItems.toMutableStateList()
     }
     DisposableEffect(key1 = myViewModel) {
         onDispose {
-            //Log.d("Side Effect Tracker", "navigating away from ExpandedNoteUI")
             myViewModel.apply {
-                if (currentNote.title.isEmpty() && currentNote.description.isEmpty() && currentNoteItems.isNullOrEmpty()) {
-                    deleteNote(currentNote.id)
+                if (noteWithItems.note.title.isEmpty() && noteWithItems.note.description.isEmpty() && currentNoteItems.isNullOrEmpty()) {
+                    deleteNote(noteWithItems.note.id)
                     Toast.makeText(context, "Removed Empty Note", Toast.LENGTH_SHORT).show()
                 } else {
                     if (!noteDeleted) {
-                        upsertNoteAndData(
-                            currentNote.copy(
-                                last_edited_on = Calendar.getInstance()
-                            ),
-                            currentNoteItems
-                        )
+                        if (currentNoteItems.toList() != noteWithItems.dataItems) {
+                            upsertNoteAndData(
+                                noteWithItems.note.copy(
+                                    last_edited_on = Calendar.getInstance()
+                                ),
+                                currentNoteItems
+                            )
+                        }
                         beginTyping = false
                     } else {
                         noteDeleted = false
                     }
                 }
-
             }
         }
     }
@@ -81,7 +83,38 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
             // attach as a parent to the nested scroll system
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            NoteExpandedTopBar(myViewModel, scrollBehavior, onNavBack, onDeleteNote, onCloneNote)
+            NoteExpandedTopBar(
+                note = noteWithItems.note,
+                scrollBehavior = scrollBehavior,
+                onNavBack = onNavBack,
+                onDeleteNote = {
+                    myViewModel.apply {
+                        tempSavedNote = NoteWithItems(noteWithItems.note, currentNoteItems)
+                        deleteNote(noteId)
+                        noteDeleted = true
+                    }
+                    onDeleteNote()
+                },
+                onCloneNote = {
+                    myViewModel.upsertNoteAndData(
+                        noteWithItems.note.run {
+                            copy(
+                                title = title.plus(" - Copy"),
+                                last_edited_on = Calendar.getInstance(),
+                                creation_date = creation_date
+                                    ?: Calendar.getInstance()
+                            )
+                        },
+                        myViewModel.currentNoteItems.mapTo(mutableListOf()) { dataItem ->
+                            dataItem.copy(id = 0)
+                        }
+                    )
+                    onNavBack()
+                },
+                onClickTitle = {
+                    myViewModel.openEditDialog = EditDialogType.Title
+                }
+            )
         },
         floatingActionButton = {
             FloatingActionButton(
@@ -116,7 +149,9 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             item {
-                DescriptionItemUI(myViewModel)
+                DescriptionItemUI(noteWithItems.note) {
+                    myViewModel.openEditDialog = EditDialogType.Description
+                }
             }
             itemsIndexed(myViewModel.currentNoteItems) { index: Int, item: DataItem ->
                 DataItemUI(
@@ -131,7 +166,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                     onClickStart = {
                         if (!myViewModel.currentNoteItems.isNullOrEmpty()) {
                             TimerService.initTimerService(
-                                myViewModel.currentNote,
+                                noteWithItems.note,
                                 myViewModel.currentNoteItems,
                                 index
                             )
@@ -152,17 +187,23 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                     EditOneFieldDialog(
                         headerName = "Edit ${openEditDialog.name}",
                         fieldName = openEditDialog.name,
-                        initialValue = if (openEditDialog == EditDialogType.Title) currentNote.title else currentNote.description,
+                        singleLine = false,
+                        initialValue = if (openEditDialog == EditDialogType.Title) noteWithItems.note.title else noteWithItems.note.description,
                         onDismissRequest = { openEditDialog = EditDialogType.DialogClosed }
                     ) { returnedValue ->
                         coroutineScope.launch {
-                            upsertNoteAndData(
+                            updateNote(
                                 if (openEditDialog == EditDialogType.Title) {
-                                    currentNote.copy(title = returnedValue)
+                                    noteWithItems.note.copy(
+                                        title = returnedValue,
+                                        last_edited_on = Calendar.getInstance()
+                                    )
                                 } else {
-                                    currentNote.copy(description = returnedValue)
-                                },
-                                currentNoteItems
+                                    noteWithItems.note.copy(
+                                        description = returnedValue,
+                                        last_edited_on = Calendar.getInstance()
+                                    )
+                                }
                             )
                             openEditDialog = EditDialogType.DialogClosed
                         }
@@ -174,13 +215,15 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
 }
 
 @Composable
-fun NoteExpandedTopBar(myViewModel: NoteViewModel, scrollBehavior: TopAppBarScrollBehavior, onNavBack: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit) {
+fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, onClickTitle: () -> Unit, onNavBack: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit) {
     SmallTopAppBar(
         scrollBehavior = scrollBehavior,
         title = {
             Text(
-                modifier = Modifier.clickable { myViewModel.openEditDialog = EditDialogType.Title },
-                text = if (myViewModel.currentNote.title.isNotEmpty()) myViewModel.currentNote.title else "Title"
+                modifier = Modifier.clickable { onClickTitle() },
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                text = if (note.title.isNotEmpty()) note.title else "Title"
             )
         },
         navigationIcon = {
@@ -333,7 +376,8 @@ fun DataItemUI (
 }
 
 @Composable
-fun DescriptionItemUI(myViewModel: NoteViewModel) {
+fun DescriptionItemUI(note: NoteItem, onDescriptionClick: () -> Unit) {
+    val dateFormatter = rememberSaveable { SimpleDateFormat.getDateTimeInstance() }
     Card(
         modifier = Modifier
             .fillMaxWidth(),
@@ -350,16 +394,16 @@ fun DescriptionItemUI(myViewModel: NoteViewModel) {
             Text(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { myViewModel.openEditDialog = EditDialogType.Description },
+                    .clickable { onDescriptionClick() },
                 style = MaterialTheme.typography.bodyLarge,
                 maxLines = 4,
-                text = myViewModel.currentNote.description
+                text = if (note.description.isNotEmpty()) note.description else "Description"
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "last edited: ${
-                    if (myViewModel.currentNote.last_edited_on?.time != null) {
-                        myViewModel.simpleDateFormat.format(myViewModel.currentNote.last_edited_on!!.time)
+                    if (note.last_edited_on?.time != null) {
+                        dateFormatter.format(note.last_edited_on.time)
                     } else {
                         "never"
                     }

@@ -9,6 +9,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Card
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.RadioButton
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -26,9 +27,18 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 
-
+/**
+ * A reusable Dialog with a single text entry field that follows Material Design 3 specifications
+ * @param headerName the string used for the header of the dialog box.
+ * @param fieldName the optional label to be displayed inside the text field container.
+ * @param initialValue the starting value inside the text field container.
+ * @param singleLine the singleLine parameter of a TextField. When set to true, this text field becomes a single horizontally scrolling text field instead of wrapping onto multiple lines.
+ * @param inputType the keyboard type to be used in the text field. This also transforms the visual representation of the input value (obscures passwords when KeyboardType.Password is chosen, for example).
+ * @param onDismissRequest the action to take when a dismiss is requested (back press or cancel button is clicked).
+ * @param onAccepted the action to take when the ok button is clicked. The value of the text field container is returned, to be acted upon.
+ */
 @Composable
-fun EditOneFieldDialog(headerName: String, fieldName: String, initialValue: String, inputType: KeyboardType = KeyboardType.Text, onDismissRequest: () -> Unit, onAccepted: (returnedValue: String) -> Unit) {
+fun EditOneFieldDialog(headerName: String, fieldName: String? = null, initialValue: String, singleLine: Boolean = true, inputType: KeyboardType = KeyboardType.Text, onDismissRequest: () -> Unit, onAccepted: (returnedValue: String) -> Unit) {
     var fieldValue by remember {
         mutableStateOf(
             TextFieldValue(
@@ -71,12 +81,13 @@ fun EditOneFieldDialog(headerName: String, fieldName: String, initialValue: Stri
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     modifier = Modifier.focusRequester(focusRequester = focusRequester),
-                    label = { Text(fieldName) },
+                    label = { if (fieldName != null) Text(fieldName) },
                     value = fieldValue,
                     onValueChange = {
                         fieldValue = it
                     },
-                    singleLine = true,
+                    maxLines = 4,
+                    singleLine = singleLine,
                     visualTransformation = if (inputType == KeyboardType.Password) PasswordVisualTransformation(
                         '●'
                     ) else VisualTransformation.None,
@@ -89,6 +100,9 @@ fun EditOneFieldDialog(headerName: String, fieldName: String, initialValue: Stri
                             onAccepted(fieldValue.text)
                             focusManager.clearFocus()
                         }
+                    ),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = MaterialTheme.colorScheme.outline
                     )
                 )
                 Spacer(modifier = Modifier.height(24.dp))
