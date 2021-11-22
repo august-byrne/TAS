@@ -120,7 +120,6 @@ private const val PROGRESS_FULL_DEGREES = 360f
 // on TimerState.Stopped, nothing, Paused, return value to timer, running, create time left value and start countdown timer
 @Composable
 fun NoteTimer(onNavBack: () -> Unit) {
-    val context = LocalContext.current
     val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     val itemIndex: Int by TimerService.itemIndex.observeAsState(0)

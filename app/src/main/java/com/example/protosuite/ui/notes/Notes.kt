@@ -33,7 +33,6 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavigateTimerStart: () -> Unit, onDrawerOpen: () -> Unit, onNavSettings: () -> Unit) {
-    //val notes: List<NoteWithItems> by myViewModel.sortedAllNotesWithItems().observeAsState(listOf())
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -199,16 +198,8 @@ fun NoteItemUI (
                         start = 24.dp,
                         end = 24.dp
                     ),
-                    //colors = ButtonDefaults.filledTonalButtonColors(),
-                    //border = BorderStroke(1.dp, Color.Green),
                     onClick = onClickStart
                 ) {
-/*                    Icon(
-                        imageVector = Icons.Rounded.PlayArrow,
-                        //tint = Color.Green,
-                        contentDescription = "Play"
-                    )*/
-                    /*Spacer(modifier = Modifier.width(8.dp))*/
                     Text(
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
                         text = "Start",

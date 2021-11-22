@@ -63,21 +63,21 @@ android {
         jvmTarget = "11"
     }
     composeOptions {
-        kotlinCompilerExtensionVersion "1.1.0-beta02"
+        kotlinCompilerExtensionVersion "1.1.0-beta03"
     }
 }
 
 dependencies {
-    def room_version = "2.4.0-beta01"
+    def room_version = "2.4.0-beta02"
     def lifecycle_version = "2.4.0"
-    def hilt_version = "2.40"
-    def compose_version = "1.1.0-beta02"
+    def hilt_version = '2.40.1'
+    def compose_version = "1.1.0-beta03"
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     //implementation("com.google.devtools.ksp:symbol-processing-api:1.5.31-1.0.0")
     //implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     implementation 'androidx.core:core-ktx:1.7.0'
-    implementation "androidx.appcompat:appcompat:1.4.0-rc01"
+    implementation "androidx.appcompat:appcompat:1.4.0"
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 
     // Activity for Kotlin
@@ -85,9 +85,6 @@ dependencies {
 
     // Google Ads
     implementation 'com.google.android.gms:play-services-ads:20.4.0'
-
-    // I use this for screen size and shape metrics
-    //implementation "androidx.window:window:1.0.0-beta03"
 
     // Lifecycle Components
     // ViewModel
@@ -113,13 +110,10 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2'
 
     // New Material Design
-    implementation "com.google.android.material:material:1.5.0-alpha05"
+    implementation 'com.google.android.material:material:1.5.0-beta01'
 
     // Material 3 You Design
     implementation "androidx.compose.material3:material3:1.0.0-alpha01"
-
-    // Androidx Preferences
-    //implementation "androidx.preference:preference-ktx:1.2.0-alpha02"
 
     // Compose Compiler
     implementation "androidx.compose.compiler:compiler:$compose_version"
@@ -143,7 +137,6 @@ dependencies {
     // Integration with observables
     implementation "androidx.compose.runtime:runtime:$compose_version"
     implementation "androidx.compose.runtime:runtime-livedata:$compose_version"
-    //implementation "androidx.compose.runtime:runtime-rxjava2:$compose_version"
     // Compose Navigation Integration
     implementation "androidx.navigation:navigation-compose:2.4.0-beta02"
     implementation "androidx.navigation:navigation-common:2.4.0-beta02"
@@ -160,7 +153,7 @@ dependencies {
     kapt "com.google.dagger:hilt-compiler:$hilt_version"
     kapt "com.google.dagger:hilt-android-compiler:$hilt_version"
     //implementation 'androidx.hilt:hilt-navigation-fragment:1.0.0'
-    implementation 'androidx.hilt:hilt-navigation-compose:1.0.0-alpha03'
+    implementation 'androidx.hilt:hilt-navigation-compose:1.0.0-beta01'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'

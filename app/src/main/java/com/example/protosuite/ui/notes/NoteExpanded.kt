@@ -2,7 +2,6 @@ package com.example.protosuite.ui.notes
 
 import android.content.Intent
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,25 +9,23 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
+import androidx.compose.material.Card
+import androidx.compose.material.Divider
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.*
-import androidx.compose.material3.FabPosition
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -46,33 +43,17 @@ import java.util.*
 fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStart: () -> Unit, onDeleteNote: () -> Unit, onNavBack: () -> Unit) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val noteWithItems by myViewModel.getNoteWithItemsById(noteId).observeAsState(NoteWithItems(NoteItem(0, null, null, 0, "", ""), listOf()))
+    val noteWithItems by myViewModel.getNoteWithItemsById(noteId)
+        .observeAsState(NoteWithItems(NoteItem(0, null, null, 0, "", ""), listOf()))
     val listState = rememberLazyListState()
     val scrollBehavior = remember { TopAppBarDefaults.pinnedScrollBehavior() }
-    if (!myViewModel.beginTyping) {
-        //myViewModel.currentNote = noteWithItems.note
-        myViewModel.currentNoteItems = noteWithItems.dataItems.toMutableStateList()
-    }
+
     DisposableEffect(key1 = myViewModel) {
         onDispose {
-            myViewModel.apply {
-                if (noteWithItems.note.title.isEmpty() && noteWithItems.note.description.isEmpty() && currentNoteItems.isNullOrEmpty()) {
-                    deleteNote(noteWithItems.note.id)
+            noteWithItems.apply {
+                if (note.title.isEmpty() && note.description.isEmpty() && dataItems.isNullOrEmpty()) {
+                    myViewModel.deleteNote(note.id)
                     Toast.makeText(context, "Removed Empty Note", Toast.LENGTH_SHORT).show()
-                } else {
-                    if (!noteDeleted) {
-                        if (currentNoteItems.toList() != noteWithItems.dataItems) {
-                            upsertNoteAndData(
-                                noteWithItems.note.copy(
-                                    last_edited_on = Calendar.getInstance()
-                                ),
-                                currentNoteItems
-                            )
-                        }
-                        beginTyping = false
-                    } else {
-                        noteDeleted = false
-                    }
                 }
             }
         }
@@ -89,9 +70,8 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                 onNavBack = onNavBack,
                 onDeleteNote = {
                     myViewModel.apply {
-                        tempSavedNote = NoteWithItems(noteWithItems.note, currentNoteItems)
+                        tempSavedNote = noteWithItems
                         deleteNote(noteId)
-                        noteDeleted = true
                     }
                     onDeleteNote()
                 },
@@ -99,13 +79,13 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                     myViewModel.upsertNoteAndData(
                         noteWithItems.note.run {
                             copy(
+                                id = 0,
                                 title = title.plus(" - Copy"),
                                 last_edited_on = Calendar.getInstance(),
-                                creation_date = creation_date
-                                    ?: Calendar.getInstance()
+                                creation_date = Calendar.getInstance()
                             )
                         },
-                        myViewModel.currentNoteItems.mapTo(mutableListOf()) { dataItem ->
+                        noteWithItems.dataItems.mapTo(mutableListOf()) { dataItem ->
                             dataItem.copy(id = 0)
                         }
                     )
@@ -119,16 +99,13 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    myViewModel.beginTyping = true
-                    myViewModel.currentNoteItems.add(
-                        DataItem(
-                            0,
-                            noteId,
-                            0,
-                            "",
-                            0,
-                            myViewModel.prevTimeType
-                        )
+                    myViewModel.initialDialogDataItem = DataItem(
+                        id = 0,
+                        parent_id = noteId,
+                        order = 0,
+                        activity = "",
+                        time = 0,
+                        unit = myViewModel.prevTimeType
                     )
                 },
                 shape = CircleShape,
@@ -153,31 +130,24 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                     myViewModel.openEditDialog = EditDialogType.Description
                 }
             }
-            itemsIndexed(myViewModel.currentNoteItems) { index: Int, item: DataItem ->
+            itemsIndexed(noteWithItems.dataItems) { index: Int, item: DataItem ->
                 DataItemUI(
                     dataItem = item,
-                    onDataItemChanged = { dataItem ->
-                        myViewModel.beginTyping = true
-                        if (myViewModel.currentNoteItems[index].unit != dataItem.unit) {
-                            myViewModel.setPrevTimeType(dataItem.unit)
-                        }
-                        myViewModel.currentNoteItems[index] = dataItem
-                    },
-                    onClickStart = {
-                        if (!myViewModel.currentNoteItems.isNullOrEmpty()) {
-                            TimerService.initTimerService(
-                                noteWithItems.note,
-                                myViewModel.currentNoteItems,
-                                index
-                            )
-                            onNavigateTimerStart()
-                            Intent(context, TimerService::class.java).also {
-                                it.action = "ACTION_START_OR_RESUME_SERVICE"
-                                context.startService(it)
-                            }
+                    onClickToEdit = { myViewModel.initialDialogDataItem = item },
+                ) {
+                    if (!noteWithItems.dataItems.isNullOrEmpty()) {
+                        TimerService.initTimerService(
+                            noteWithItems.note,
+                            noteWithItems.dataItems,
+                            index
+                        )
+                        onNavigateTimerStart()
+                        Intent(context, TimerService::class.java).also {
+                            it.action = "ACTION_START_OR_RESUME_SERVICE"
+                            context.startService(it)
                         }
                     }
-                )
+                }
                 Divider(modifier = Modifier.padding(horizontal = 8.dp))
             }
         }
@@ -206,6 +176,20 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                                 }
                             )
                             openEditDialog = EditDialogType.DialogClosed
+                        }
+                    }
+                }
+                if (initialDialogDataItem != null) {
+                    initialDialogDataItem?.let { initialDataItem ->
+                        EditDataItemDialog(
+                            initialDataItem = initialDataItem,
+                            onDismissRequest = { initialDialogDataItem = null }
+                        ) { returnedValue ->
+                            initialDialogDataItem = null
+                            myViewModel.setPrevTimeType(returnedValue.unit)
+                            coroutineScope.launch {
+                                upsertDataItem(returnedValue)
+                            }
                         }
                     }
                 }
@@ -263,112 +247,66 @@ fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, 
 @Composable
 fun DataItemUI (
     dataItem: DataItem,
-    onDataItemChanged: (DataItem) -> Unit,
+    onClickToEdit: () -> Unit,
     onClickStart: () -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    val iconResource = if (expanded) {
-        Icons.Rounded.ArrowDropUp
-    } else {
-        Icons.Rounded.ArrowDropDown
-    }
-    val timeTypeName: String =
-        when (dataItem.unit) {
-            0 -> "sec"
-            1 -> "min"
-            2 -> "hr"
-            else -> "unit"
-        }
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .clickable { onClickToEdit() }
+            .padding(16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        OutlinedTextField(
-            label = { Text("Activity") },
-            modifier = Modifier
-                .weight(weight = 0.5F)
-                .padding(end = 8.dp, bottom = 8.dp),
-            textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
-            singleLine = true,
-            value = dataItem.activity,
-            onValueChange = { newValue ->
-                onDataItemChanged(dataItem.copy(activity = newValue))
-            }
-        )
-        OutlinedTextField(
-            label = { Text("Time") },
-            modifier = Modifier
-                .weight(weight = 0.25F)
-                .padding(bottom = 8.dp),
-            textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            value = if (dataItem.time == 0) "" else dataItem.time.toString(),
-            onValueChange = { newValue ->
-                if (newValue.isEmpty()) {
-                    onDataItemChanged(dataItem.copy(time = 0))
-                } else {
-                    newValue.toIntOrNull()?.let {
-                        onDataItemChanged(dataItem.copy(time = it))
-                    }
-                }
-            }
-        )
-        Box(
-            modifier = Modifier
-                //.weight(weight = 0.14F)
-                .clickable(onClick = { expanded = true })
-        ) {
-            Row(
-                modifier = Modifier.padding(start = 8.dp, top = 4.dp, bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Text(
-                    text = timeTypeName,
-                    textAlign = TextAlign.Center
-                )
-                Icon(
-                    modifier = Modifier.padding(start = 1.dp, top = 3.dp),
-                    imageVector = iconResource,
-                    contentDescription = "time increment selector"
-                )
-            }
-            DropdownMenu(
-                modifier = Modifier.background(MaterialTheme.colorScheme.background),
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                DropdownMenuItem(onClick = {
-                    expanded = false
-                    onDataItemChanged(dataItem.copy(unit = 0))
-                }) {
-                    Text(text = "seconds")
-                }
-                DropdownMenuItem(onClick = {
-                    expanded = false
-                    onDataItemChanged(dataItem.copy(unit = 1))
-                }) {
-                    Text(text = "minutes")
-                }
-                DropdownMenuItem(onClick = {
-                    expanded = false
-                    onDataItemChanged(dataItem.copy(unit = 2))
-                }) {
-                    Text(text = "hours")
-                }
-            }
+        Column {
+            Text(text = "Activity:")
+            Text(text = dataItem.activity)
         }
-        IconButton(
-            //modifier = Modifier.weight(weight = 0.1F),
+        Column {
+            Text(text = "Time:")
+            Text(
+                text = dataItem.time.toString() +
+                        when (dataItem.unit) {
+                            0 -> {
+                                if (dataItem.time == 1) {
+                                    " second"
+                                } else {
+                                    " seconds"
+                                }
+                            }
+                            1 -> {
+                                if (dataItem.time == 1) {
+                                    " minute"
+                                } else {
+                                    " minutes"
+                                }
+                            }
+                            2 -> {
+                                if (dataItem.time == 1) {
+                                    " hour"
+                                } else {
+                                    " hours"
+                                }
+                            }
+                            else -> {
+                                " unit"
+                            }
+                        }
+            )
+        }
+        FilledTonalButton(
+            modifier = Modifier
+                .wrapContentWidth()
+                .height(40.dp),
+            contentPadding = PaddingValues(
+                start = 24.dp,
+                end = 24.dp
+            ),
             onClick = onClickStart
         ) {
             Icon(
                 imageVector = Icons.Rounded.PlayArrow,
-                tint = Color.Green,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
                 contentDescription = "Play"
             )
         }

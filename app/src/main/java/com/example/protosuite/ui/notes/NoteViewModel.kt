@@ -2,7 +2,6 @@ package com.example.protosuite.ui.notes
 
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.LiveData
@@ -36,6 +35,10 @@ class NoteViewModel @Inject constructor(
 
     suspend fun updateNote(item: NoteItem) {
         repo.updateNote(item)
+    }
+
+    suspend fun upsertDataItem(item: DataItem) {
+        repo.upsertDataItem(item)
     }
 
     fun upsertNoteAndData(noteItem: NoteItem, dataItems: MutableList<DataItem>) =
@@ -84,15 +87,10 @@ class NoteViewModel @Inject constructor(
     fun getNoteWithItemsById(id: Int): LiveData<NoteWithItems> =
         repo.getNoteWithItemsById(id).asLiveData()
 
-    var noteDeleted: Boolean = false
-    var beginTyping by mutableStateOf(false)
-    //var currentNote by mutableStateOf(NoteItem(0, null, null, 0, "", ""))
-    var currentNoteItems = mutableStateListOf<DataItem>()
+    var initialDialogDataItem: DataItem? by mutableStateOf(null)
     var tempSavedNote: NoteWithItems? = null
     var openSortPopup by mutableStateOf(false)
     var openEditDialog by mutableStateOf(EditDialogType.DialogClosed)
-
-    //val simpleDateFormat: DateFormat = SimpleDateFormat.getDateInstance()
 
     private var _prevTimeType = 0
     val prevTimeType: Int
