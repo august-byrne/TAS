@@ -3,11 +3,12 @@ package com.example.protosuite.ui.notes
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.Divider
@@ -18,12 +19,14 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
@@ -97,7 +100,18 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
+            ExtendedFloatingActionButton(
+                text = {
+                    Text(text = "Add Activity")
+                       },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Rounded.Add,
+                        contentDescription = "New Item",
+                        tint = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                },
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                 onClick = {
                     myViewModel.initialDialogDataItem = DataItem(
                         id = 0,
@@ -107,18 +121,9 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                         time = 0,
                         unit = myViewModel.prevTimeType
                     )
-                },
-                shape = CircleShape,
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Add,
-                    contentDescription = "New Item",
-                    tint = MaterialTheme.colorScheme.onTertiaryContainer
-                )
-            }
-        },
-        floatingActionButtonPosition = FabPosition.Center
+                }
+            )
+        }
     ) {
         LazyColumn(
             state = listState,
@@ -189,6 +194,11 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                             myViewModel.setPrevTimeType(returnedValue.unit)
                             coroutineScope.launch {
                                 upsertDataItem(returnedValue)
+                                updateNote(
+                                    noteWithItems.note.copy(
+                                        last_edited_on = Calendar.getInstance()
+                                    )
+                                )
                             }
                         }
                     }
@@ -204,10 +214,18 @@ fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, 
         scrollBehavior = scrollBehavior,
         title = {
             Text(
-                modifier = Modifier.clickable { onClickTitle() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(CornerSize(30.dp)))
+                    .clickable(
+                        onClick = { onClickTitle() },
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple()
+                    )
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                text = if (note.title.isNotEmpty()) note.title else "Title"
+                text = if (note.title.isNotEmpty()) note.title else "Title Here"
             )
         },
         navigationIcon = {
@@ -253,7 +271,12 @@ fun DataItemUI (
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClickToEdit() }
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(
+                onClick = { onClickToEdit() },
+                interactionSource = remember { MutableInteractionSource() },
+                indication = rememberRipple()
+            )
             .padding(16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -318,10 +341,16 @@ fun DescriptionItemUI(note: NoteItem, onDescriptionClick: () -> Unit) {
     val dateFormatter = rememberSaveable { SimpleDateFormat.getDateTimeInstance() }
     Card(
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomStart = 12.dp, bottomEnd = 12.dp))
+            .clickable(
+                onClick = { onDescriptionClick() },
+                interactionSource = remember { MutableInteractionSource() },
+                indication = rememberRipple()
+            ),
         shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomStart = 12.dp, bottomEnd = 12.dp),
         backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-        elevation = 1.dp
+        elevation = 12.dp
     ) {
         Column(
             modifier = Modifier
@@ -331,11 +360,10 @@ fun DescriptionItemUI(note: NoteItem, onDescriptionClick: () -> Unit) {
         ) {
             Text(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onDescriptionClick() },
+                    .fillMaxWidth(),
                 style = MaterialTheme.typography.bodyLarge,
                 maxLines = 4,
-                text = if (note.description.isNotEmpty()) note.description else "Description"
+                text = if (note.description.isNotEmpty()) note.description else "Description Here"
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(

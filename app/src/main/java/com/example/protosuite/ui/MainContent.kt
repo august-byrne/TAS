@@ -1,16 +1,21 @@
 package com.example.protosuite.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Tab
 import androidx.compose.material.TabRow
 import androidx.compose.material.TabRowDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.Sort
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -185,7 +190,12 @@ fun ItemButton(modifier: Modifier = Modifier, icon: ImageVector, text: String, o
         modifier = modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .clickable { onClick() }
+            .clip(RoundedCornerShape(CornerSize(30.dp)))
+            .clickable(
+                onClick = { onClick() },
+                interactionSource = remember { MutableInteractionSource() },
+                indication = rememberRipple()
+            )
             .padding(16.dp)
     ) {
         Icon(

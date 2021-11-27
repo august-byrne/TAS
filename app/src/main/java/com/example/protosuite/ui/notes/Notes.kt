@@ -12,6 +12,7 @@ import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -124,14 +125,17 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
         Box(modifier = Modifier.fillMaxSize()) {
             if (myViewModel.openSortPopup) {
                 myViewModel.saveListPosition(listState)
-                SortPopupUI(currentSortType = SortType.values()[sortType]) {
-                    if (it != null) {
-                        coroutineScope.launch {
-                            PreferenceManager(context).setSortType(it.ordinal)
+                SortNotesByDialog(
+                    currentSortType = SortType.values()[sortType],
+                    onValueSelected = {
+                        if (it != null) {
+                            coroutineScope.launch {
+                                PreferenceManager(context).setSortType(it.ordinal)
+                            }
                         }
+                        myViewModel.openSortPopup = false
                     }
-                    myViewModel.openSortPopup = false
-                }
+                )
             }
         }
     }
@@ -150,6 +154,7 @@ fun NoteItemUI (
         modifier = Modifier
             .fillMaxWidth(),
         onClick = onClickItem,
+        indication = rememberRipple(),
         shape = androidx.compose.material.MaterialTheme.shapes.medium.copy(CornerSize(12.dp)),
         backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
         elevation = 1.dp

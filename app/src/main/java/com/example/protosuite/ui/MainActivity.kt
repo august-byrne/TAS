@@ -128,7 +128,7 @@ class MainActivity : AppCompatActivity() {
                     drawerContent = {
                         // to close use -> scaffoldState.drawerState.close()
                         Text(
-                            modifier = Modifier.padding(16.dp),
+                            modifier = Modifier.padding(vertical = 16.dp, horizontal = 24.dp),
                             text = "What doesn't work yet",
                             style = MaterialTheme.typography.titleLarge
                         )
@@ -146,6 +146,7 @@ class MainActivity : AppCompatActivity() {
                         )
                         Divider(modifier = Modifier.padding(top = 8.dp))
                         ItemButton(
+                            modifier = Modifier.padding(horizontal = 8.dp),
                             icon = Icons.Rounded.Settings,
                             text = "Settings"
                         ) {

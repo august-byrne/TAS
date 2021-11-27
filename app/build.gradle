@@ -70,7 +70,7 @@ android {
 dependencies {
     def room_version = "2.4.0-beta02"
     def lifecycle_version = "2.4.0"
-    def hilt_version = '2.40.1'
+    def hilt_version = '2.40.2'
     def compose_version = "1.1.0-beta03"
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     //implementation("com.google.devtools.ksp:symbol-processing-api:1.5.31-1.0.0")
@@ -84,9 +84,11 @@ dependencies {
     implementation "androidx.activity:activity-ktx:1.4.0"
 
     // Google Ads
-    implementation 'com.google.android.gms:play-services-ads:20.4.0'
+    implementation 'com.google.android.gms:play-services-ads:20.5.0'
 
     // Lifecycle Components
+    // Service
+    implementation "androidx.lifecycle:lifecycle-service:$lifecycle_version"
     // ViewModel
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
     // LiveData

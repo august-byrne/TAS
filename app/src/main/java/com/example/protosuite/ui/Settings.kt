@@ -1,16 +1,21 @@
 package com.example.protosuite.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.Switch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.input.KeyboardType
@@ -54,9 +59,14 @@ fun SettingsUI(onNavBack: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight()
-                    .clickable {
-                        showAdHiderPopup = true
-                    }
+                    .clip(RoundedCornerShape(CornerSize(30.dp)))
+                    .clickable(
+                        onClick = {
+                            showAdHiderPopup = true
+                        },
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple()
+                    )
                     .padding(16.dp),
                 text = "Remove Ads",
                 style = MaterialTheme.typography.bodyLarge
@@ -70,9 +80,14 @@ fun SettingsUI(onNavBack: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight()
-                    .clickable {
-                        uriHandler.openUri("https://github.com/august-byrne/ProtoSuite")
-                    }
+                    .clip(RoundedCornerShape(CornerSize(30.dp)))
+                    .clickable(
+                        onClick = {
+                            uriHandler.openUri("https://github.com/august-byrne/ProtoSuite")
+                        },
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple()
+                    )
                     .padding(16.dp),
                 text = "Project Github",
                 style = MaterialTheme.typography.bodyLarge
@@ -86,11 +101,16 @@ fun SettingsUI(onNavBack: () -> Unit) {
                 modifier = Modifier
                     .wrapContentHeight()
                     .fillMaxWidth()
-                    .clickable {
-                        localCoroutineScope.launch {
-                            PreferenceManager(context).setIsDarkTheme(!darkModeState)
-                        }
-                    }
+                    .clip(RoundedCornerShape(CornerSize(30.dp)))
+                    .clickable(
+                        onClick = {
+                            localCoroutineScope.launch {
+                                PreferenceManager(context).setIsDarkTheme(!darkModeState)
+                            }
+                        },
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple()
+                    )
                     .padding(horizontal = 16.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically

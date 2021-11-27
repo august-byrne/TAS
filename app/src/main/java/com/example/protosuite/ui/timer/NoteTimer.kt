@@ -3,9 +3,7 @@ package com.example.protosuite.ui.timer
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.icons.Icons
@@ -23,14 +21,10 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.protosuite.ui.AutoSizingText
 import com.example.protosuite.ui.notes.TimerState
-import com.example.protosuite.ui.values.NotesTheme
 import com.example.protosuite.ui.values.blue500
 import com.example.protosuite.ui.values.yellow200
 
@@ -92,28 +86,7 @@ fun DeterminateProgressBar(
         }
     }
 }
-
-@Preview
-@Composable
-fun PreviewProgressBar() {
-    NotesTheme(false) {
-        //BackgroundGradient()
-        DeterminateProgressBar(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight(),
-            progressInMilli = 911L
-        ) {
-            TimerText(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp), "00:12:05")
-        }
-    }
-}
-
 private const val PROGRESS_FULL_DEGREES = 360f
-
 // play: run parsed time on clock, pause, stop alarm and leave time on clock (and save time in preferences
 // stop: remove alarm and reset time to 0
 // on a button press save TimerState to preferences
@@ -124,7 +97,6 @@ fun NoteTimer(onNavBack: () -> Unit) {
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     val itemIndex: Int by TimerService.itemIndex.observeAsState(0)
     val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(1L)
-
     val timerLengthAdjusted = if (timerState == TimerState.Stopped) {
         totalTimerLengthMilli.div(1000)
     } else {
@@ -134,29 +106,25 @@ fun NoteTimer(onNavBack: () -> Unit) {
     val min = timerLengthAdjusted.div(60).mod(60)
     val sec = timerLengthAdjusted.mod(60)
     val formattedTimerLength: String = String.format("%02d:%02d:%02d", hour, min, sec)
-
     val progressInMilli: Long = if (timerState != TimerState.Stopped) {
         1000L - (timerLengthMilli.times(1000L) / totalTimerLengthMilli)
     } else {
         0L
     }
-
     BackgroundGradient()
-
     Column(
         modifier = Modifier
             .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-
         CenterAlignedTopAppBar(
             title = {
                 AutoSizingText(
                     modifier = Modifier.fillMaxWidth(0.9F),
                     text = TimerService.currentNote.title
                 )
-                    },
+            },
             navigationIcon = {
                 IconButton(
                     onClick = onNavBack
@@ -179,7 +147,7 @@ fun NoteTimer(onNavBack: () -> Unit) {
                     expanded = expanded,
                     onDismissRequest = { expanded = false },
                     content = {
-                        DropdownMenuItem(onClick = {  }) {
+                        DropdownMenuItem(onClick = { expanded = false }) {
                             Text("Timer Settings")
                         }
                     }
@@ -192,7 +160,6 @@ fun NoteTimer(onNavBack: () -> Unit) {
                 actionIconContentColor = Color.Black
             )
         )
-
         Column(
             modifier = Modifier
                 .padding(8.dp)
@@ -207,6 +174,7 @@ fun NoteTimer(onNavBack: () -> Unit) {
                 progressInMilli = progressInMilli
             ) {
                 if (timerState == TimerState.Running && timerLengthMilli <= 5000) {
+                    // Flashing Timer Text
                     val infiniteTransition = rememberInfiniteTransition()
                     val alpha by infiniteTransition.animateFloat(
                         initialValue = 1.0f,
@@ -224,8 +192,8 @@ fun NoteTimer(onNavBack: () -> Unit) {
                         textStyle = MaterialTheme.typography.displayLarge.copy(fontSize = 96.sp),
                         text = formattedTimerLength
                     )
-                    //FlashingTimerText(formattedTimerLength)
                 } else {
+                    // Normal Resized Text
                     AutoSizingText(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -233,10 +201,8 @@ fun NoteTimer(onNavBack: () -> Unit) {
                         textStyle = MaterialTheme.typography.displayLarge.copy(fontSize = 96.sp),
                         text = formattedTimerLength
                     )
-                    //TimerText(Modifier, formattedTimerLength)
                 }
             }
-
             Row(
                 modifier = Modifier
                     .padding(8.dp)
@@ -255,7 +221,6 @@ fun NoteTimer(onNavBack: () -> Unit) {
                     )
                 }
             }
-
             Text(
                 modifier = Modifier
                     .wrapContentSize()
@@ -263,7 +228,6 @@ fun NoteTimer(onNavBack: () -> Unit) {
                 text = TimerService.currentNoteItems[itemIndex].activity,
                 style = MaterialTheme.typography.headlineSmall
             )
-
             Row(
                 modifier = Modifier
                     .padding(8.dp)
@@ -272,20 +236,24 @@ fun NoteTimer(onNavBack: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    modifier = Modifier
-                        .clickable {
-                            if (timerLengthMilli > totalTimerLengthMilli - 5000L) {
-                                TimerService.modifyTimer(itemIndex - 1)
-                            } else {
-                                TimerService.modifyTimer(itemIndex)
-                            }
+                TextButton(
+                    onClick = {
+                        if (timerLengthMilli > totalTimerLengthMilli - 5000L) {
+                            TimerService.modifyTimer(itemIndex - 1)
+                        } else {
+                            TimerService.modifyTimer(itemIndex)
                         }
-                        .scale(1.5f)
-                        .padding(8.dp),
-                    imageVector = Icons.Default.SkipPrevious,
-                    contentDescription = "back to previous item")
-
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
+                ) {
+                    Icon(
+                        modifier = Modifier
+                            .scale(1.5f)
+                            .padding(8.dp),
+                        imageVector = Icons.Default.SkipPrevious,
+                        contentDescription = "back to previous item"
+                    )
+                }
                 PlayPauseStopButtons(
                     timerState = timerState,
                     onClickStartPause = {
@@ -305,17 +273,20 @@ fun NoteTimer(onNavBack: () -> Unit) {
                         }
                     }
                 )
-
-                Icon(
-                    modifier = Modifier
-                        .clickable {
-                            TimerService.modifyTimer(itemIndex + 1)
-                        }
-                        .scale(1.5f)
-                        .padding(8.dp),
-                    imageVector = Icons.Default.SkipNext,
-                    contentDescription = "skip to next item"
-                )
+                TextButton(
+                    onClick = {
+                        TimerService.modifyTimer(itemIndex + 1)
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
+                ) {
+                    Icon(
+                        modifier = Modifier
+                            .scale(1.5f)
+                            .padding(8.dp),
+                        imageVector = Icons.Default.SkipNext,
+                        contentDescription = "skip to next item"
+                    )
+                }
             }
         }
     }
@@ -339,8 +310,7 @@ private fun PlayPauseStopButtons(timerState: TimerState, onClickStartPause: () -
         Button(
             modifier = Modifier.padding(8.dp),
             onClick = onClickStartPause,
-            colors = ButtonDefaults.buttonColors(containerColor = tint, contentColor = Color.Black),
-            shape = androidx.compose.material.MaterialTheme.shapes.small.copy(CornerSize(12.dp))
+            colors = ButtonDefaults.buttonColors(containerColor = tint, contentColor = Color.Black)
         ) {
             Icon(icon, contentDescription = "Start or Pause")
         }
@@ -352,41 +322,10 @@ private fun PlayPauseStopButtons(timerState: TimerState, onClickStartPause: () -
             Button(
                 modifier = Modifier.padding(8.dp),
                 onClick = onClickStop,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Red, contentColor = Color.Black),
-                shape = androidx.compose.material.MaterialTheme.shapes.small.copy(CornerSize(12.dp))
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Red, contentColor = Color.Black)
             ) {
                 Icon(Icons.Default.Stop, contentDescription = "Stop")
             }
         }
     }
-}
-
-@Composable
-fun FlashingTimerText(timerText: String) {
-    val infiniteTransition = rememberInfiniteTransition()
-    val alpha by infiniteTransition.animateFloat(
-        initialValue = 1.0f,
-        targetValue = 0.0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(400, easing = FastOutLinearInEasing),
-            repeatMode = RepeatMode.Reverse
-        )
-    )
-    TimerText(
-        modifier = Modifier.alpha(alpha),
-        timerText = timerText
-    )
-}
-
-@Composable
-fun TimerText(modifier: Modifier = Modifier, timerText: String) {
-    Text(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        fontSize = 90.sp,
-        style = MaterialTheme.typography.displayLarge,
-        text = timerText,
-        textAlign = TextAlign.Center
-    )
 }
