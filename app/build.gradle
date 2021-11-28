@@ -28,12 +28,12 @@ android {
         compose true
     }
     defaultConfig {
-        applicationId "com.purin.tas"
+        applicationId "com.augustbyrne.tas"
         minSdkVersion 24
         targetSdkVersion 31
         vectorDrawables.useSupportLibrary = true
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.3"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
