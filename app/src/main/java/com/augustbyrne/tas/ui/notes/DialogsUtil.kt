@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.*
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.augustbyrne.tas.data.db.entities.DataItem
@@ -41,13 +42,14 @@ import com.augustbyrne.tas.data.db.entities.DataItem
  * @param headerName the string used for the header of the dialog box.
  * @param fieldName the optional label to be displayed inside the text field container.
  * @param initialValue the starting value inside the text field container.
+ * @param maxChars the maximum number of character you can input in the text field.
  * @param singleLine the singleLine parameter of a TextField. When set to true, this text field becomes a single horizontally scrolling text field instead of wrapping onto multiple lines.
  * @param inputType the keyboard type to be used in the text field. This also transforms the visual representation of the input value (obscures passwords when KeyboardType.Password is chosen, for example).
  * @param onDismissRequest the action to take when a dismiss is requested (back press or cancel button is clicked).
  * @param onAccepted the action to take when the ok button is clicked. The value of the text field container is returned, to be acted upon.
  */
 @Composable
-fun EditOneFieldDialog(headerName: String, fieldName: String? = null, initialValue: String, singleLine: Boolean = true, inputType: KeyboardType = KeyboardType.Text, onDismissRequest: () -> Unit, onAccepted: (returnedValue: String) -> Unit) {
+fun EditOneFieldDialog(headerName: String, fieldName: String? = null, initialValue: String, maxChars: Int? = null, singleLine: Boolean = true, inputType: KeyboardType = KeyboardType.Text, onDismissRequest: () -> Unit, onAccepted: (returnedValue: String) -> Unit) {
     var fieldValue by remember {
         mutableStateOf(
             TextFieldValue(
@@ -68,57 +70,63 @@ fun EditOneFieldDialog(headerName: String, fieldName: String? = null, initialVal
             dismissOnClickOutside = false
         ),
         title = {
-            Text(
-                text = headerName,
-                style = MaterialTheme.typography.headlineSmall
-            )
+            Text(headerName)
         },
         text = {
-            OutlinedTextField(
-                modifier = Modifier.focusRequester(focusRequester = focusRequester),
-                label = { if (fieldName != null) Text(fieldName) },
-                value = fieldValue,
-                onValueChange = {
-                    fieldValue = it
-                },
-                maxLines = 4,
-                singleLine = singleLine,
-                visualTransformation = if (inputType == KeyboardType.Password) PasswordVisualTransformation(
-                    '●'
-                ) else VisualTransformation.None,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = inputType,
-                    imeAction = ImeAction.Done
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        onAccepted(fieldValue.text)
-                        focusManager.clearFocus()
-                    }
-                ),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = MaterialTheme.colorScheme.outline
+            Column(modifier = Modifier.fillMaxWidth().wrapContentHeight()) {
+                OutlinedTextField(
+                    modifier = Modifier.focusRequester(focusRequester = focusRequester),
+                    label = { if (fieldName != null) Text(fieldName) },
+                    value = fieldValue,
+                    onValueChange = {
+                        if (maxChars == null) {
+                            fieldValue = it
+                        } else {
+                            if (it.text.length <= maxChars) {
+                                fieldValue = it
+                            }
+                        }
+                    },
+                    maxLines = 4,
+                    singleLine = singleLine,
+                    visualTransformation = if (inputType == KeyboardType.Password) PasswordVisualTransformation(
+                        '●'
+                    ) else VisualTransformation.None,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = inputType,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            onAccepted(fieldValue.text)
+                            focusManager.clearFocus()
+                        }
+                    ),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = MaterialTheme.colorScheme.outline
+                    )
                 )
-            )
+                if (maxChars != null) {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
+                        text = "${fieldValue.text.length}/$maxChars"
+                    )
+                }
+            }
         },
         dismissButton = {
             TextButton(
                 onClick = onDismissRequest
             ) {
-                Text(
-                    text = "Cancel",
-                    style = MaterialTheme.typography.labelLarge
-                )
+                Text("Cancel")
             }
         },
         confirmButton = {
             TextButton(
                 onClick = { onAccepted(fieldValue.text) }
             ) {
-                Text(
-                    text = "Ok",
-                    style = MaterialTheme.typography.labelLarge
-                )
+                Text("Ok")
             }
         }
     )
@@ -169,8 +177,7 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
                     } else {
                         "Edit"
                     }
-                } Activity",
-                style = MaterialTheme.typography.headlineSmall
+                } Activity"
             )
         },
         text = {
@@ -286,17 +293,16 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
             TextButton(
                 onClick = onDismissRequest
             ) {
-                Text(
-                    text = "Cancel",
-                    style = MaterialTheme.typography.labelLarge
-                )
+                Text("Cancel")
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
                     activityError = activityFieldValue.text.isEmpty()
-                    timeError = timeFieldValue.text.toIntOrNull() == null
+                    timeFieldValue.text.toIntOrNull().let {
+                        timeError = it == null || it == 0
+                    }
                     if (!activityError && !timeError) {
                         onAccepted(
                             initialDataItem.copy(
@@ -308,10 +314,7 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
                     }
                 }
             ) {
-                Text(
-                    text = "Ok",
-                    style = MaterialTheme.typography.labelLarge
-                )
+                Text("Ok")
             }
         }
     )
@@ -329,14 +332,7 @@ fun SortNotesByDialog(currentSortType: SortType, onValueSelected: (SortType?) ->
             dismissOnClickOutside = true
         ),
         title = {
-            Text(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 8.dp),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                text = "Sort By"
-            )
+            Text("Sort By")
         },
         text = {
             Column(

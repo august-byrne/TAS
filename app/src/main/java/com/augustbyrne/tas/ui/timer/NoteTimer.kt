@@ -3,17 +3,22 @@ package com.augustbyrne.tas.ui.timer
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -27,6 +32,10 @@ import com.augustbyrne.tas.ui.AutoSizingText
 import com.augustbyrne.tas.ui.notes.TimerState
 import com.augustbyrne.tas.ui.values.blue500
 import com.augustbyrne.tas.ui.values.yellow200
+import com.google.accompanist.flowlayout.FlowCrossAxisAlignment
+import com.google.accompanist.flowlayout.FlowMainAxisAlignment
+import com.google.accompanist.flowlayout.FlowRow
+import com.google.accompanist.flowlayout.SizeMode
 
 @Composable
 fun DeterminateProgressBar(
@@ -203,21 +212,28 @@ fun NoteTimer(onNavBack: () -> Unit) {
                     )
                 }
             }
-            Row(
-                modifier = Modifier
-                    .padding(8.dp)
-                    .fillMaxWidth()
-                    .wrapContentHeight(),
-                horizontalArrangement = Arrangement.Center
+            FlowRow(
+                mainAxisSize = SizeMode.Expand,
+                mainAxisAlignment = FlowMainAxisAlignment.Center,
+                mainAxisSpacing = 0.dp,
+                crossAxisAlignment = FlowCrossAxisAlignment.Start,
+                crossAxisSpacing = 8.dp
             ) {
-                for (item in TimerService.currentNoteItems) {
+                for (dataItemIndex in TimerService.currentNoteItems.indices) {
                     Icon(
                         modifier = Modifier
-                            .padding(2.dp)
-                            .scale(0.5f),
-                        imageVector = Icons.Default.FiberManualRecord,
-                        tint = if (TimerService.currentNoteItems[itemIndex] == item) Color.Green else Color.DarkGray,
-                        contentDescription = "dot"
+                            .wrapContentSize()
+                            .scale(0.65f)
+                            .clip(CircleShape)
+                            .clickable(
+                                onClick = { TimerService.modifyTimer(dataItemIndex) },
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = rememberRipple()
+                            )
+                            .padding(4.dp),
+                        imageVector = Icons.Default.Circle,
+                        contentDescription = "item marker",
+                        tint = if (itemIndex == dataItemIndex) Color.Green else Color.DarkGray
                     )
                 }
             }

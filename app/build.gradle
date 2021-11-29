@@ -143,9 +143,10 @@ dependencies {
     implementation "androidx.navigation:navigation-compose:2.4.0-beta02"
     implementation "androidx.navigation:navigation-common:2.4.0-beta02"
 
-    // Accompanist to add pager similar to viewpager for my tab layout
-    implementation 'com.google.accompanist:accompanist-pager:0.20.0'
-    implementation 'com.google.accompanist:accompanist-pager-indicators:0.20.0'
+    // Accompanist Components (temp)
+    implementation 'com.google.accompanist:accompanist-pager:0.21.3-beta'
+    implementation 'com.google.accompanist:accompanist-pager-indicators:0.21.3-beta'
+    implementation "com.google.accompanist:accompanist-flowlayout:0.21.3-beta"
 
     // UI Tests
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"

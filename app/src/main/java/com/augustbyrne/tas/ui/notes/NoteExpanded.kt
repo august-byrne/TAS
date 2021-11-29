@@ -162,6 +162,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                     EditOneFieldDialog(
                         headerName = "Edit ${openEditDialog.name}",
                         fieldName = openEditDialog.name,
+                        maxChars = if (openEditDialog == EditDialogType.Title) 30 else 100,
                         singleLine = false,
                         initialValue = if (openEditDialog == EditDialogType.Title) noteWithItems.note.title else noteWithItems.note.description,
                         onDismissRequest = { openEditDialog = EditDialogType.DialogClosed }
@@ -225,7 +226,7 @@ fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, 
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                text = if (note.title.isNotEmpty()) note.title else "Title Here"
+                text = if (note.title.isNotEmpty()) note.title else "Add Title Here"
             )
         },
         navigationIcon = {
@@ -271,7 +272,6 @@ fun DataItemUI (
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
             .clickable(
                 onClick = { onClickToEdit() },
                 interactionSource = remember { MutableInteractionSource() },
@@ -363,7 +363,7 @@ fun DescriptionItemUI(note: NoteItem, onDescriptionClick: () -> Unit) {
                     .fillMaxWidth(),
                 style = MaterialTheme.typography.bodyLarge,
                 maxLines = 4,
-                text = if (note.description.isNotEmpty()) note.description else "Description Here"
+                text = if (note.description.isNotEmpty()) note.description else "Add Description Here"
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(

@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -39,7 +40,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
     val context = LocalContext.current
     val scrollBehavior = remember { TopAppBarDefaults.pinnedScrollBehavior() }
     val sortType by PreferenceManager(context).sortTypeFlow.collectAsState(initial = SortType.Default.ordinal)
-    val sortedNotes by myViewModel.sortedAllNotesWithItems(SortType.values()[sortType]).observeAsState(initial = listOf())
+    val sortedNotes by myViewModel.sortedAllNotesWithItems(SortType.values()[sortType]).observeAsState()
 
     // TODO: Fix listState re-scrolling when rotated or when miniTimerView is clicked
     Scaffold(
@@ -97,7 +98,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                     )
                 }
             }
-            items(sortedNotes) { notesWithData ->
+            items(sortedNotes?:listOf()) { notesWithData ->
                 NoteItemUI(
                     note = notesWithData.note,
                     onClickItem = {
@@ -119,6 +120,15 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                     } else {
                         Toast.makeText(context, "Empty Activity", Toast.LENGTH_SHORT).show()
                     }
+                }
+            }
+            if (sortedNotes?.isEmpty() == true) {
+                item {
+                    Text(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        text = "You have no routines.\nClick the + below to make one.",
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
         }
