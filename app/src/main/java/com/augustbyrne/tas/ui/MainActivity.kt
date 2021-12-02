@@ -11,21 +11,17 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material.Snackbar
+import androidx.compose.material.SnackbarDuration
+import androidx.compose.material.SnackbarHost
+import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Undo
 import androidx.compose.material3.*
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ScaffoldState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -104,108 +100,64 @@ class MainActivity : AppCompatActivity() {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
 
             AppTheme(darkModeState) {
-                // create a scaffold state, set it to close by default
-                val scaffoldStateNewTemp = rememberScaffoldState(rememberDrawerState(DrawerValue.Closed))
-                val scaffoldState = rememberScaffoldState(rememberDrawerState(androidx.compose.material.DrawerValue.Closed))
-                // Create a coroutine scope. Opening of drawer and snackbar should happen in
-                // background thread without blocking main thread
+                val snackbarHostState = remember { SnackbarHostState() }
                 val coroutineScope = rememberCoroutineScope()
-                val drawerEnabled by remember {
-                    derivedStateOf {
-                        navBackStackEntry?.destination?.id == navController.findDestination(
-                            "home"
-                        )!!.id
-                    }
-                }
+
                 LaunchedEffect(key1 = true) {
                     navigateToTimerIfNeeded(intent, navController)
                 }
-                Scaffold(
-                    scaffoldState = scaffoldStateNewTemp,
-                    //snackbarHost = {
-                    //    scaffoldState.snackbarHostState
-                    //},
-                    drawerContent = {
-                        // to close use -> scaffoldState.drawerState.close()
-                        Text(
-                            modifier = Modifier.padding(vertical = 16.dp, horizontal = 24.dp),
-                            text = "What doesn't work yet",
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                        Text(
-                            modifier = Modifier.padding(8.dp),
-                            text = "* Any Drag/Drop"
-                        )
-                        Text(
-                            modifier = Modifier.padding(8.dp),
-                            text = "* Deleting Individual Activity Items"
-                        )
-                        Text(
-                            modifier = Modifier.padding(8.dp),
-                            text = "* audio beep plays from speakers and earbuds at the same time"
-                        )
-                        Divider(modifier = Modifier.padding(top = 8.dp))
-                        ItemButton(
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                            icon = Icons.Rounded.Settings,
-                            text = "Settings"
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Column(
+                        verticalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
                         ) {
-                            coroutineScope.launch {
-                                scaffoldStateNewTemp.drawerState.close()
-                            }
-                            navController.navigate("settings")
-                        }
-                    },
-                    drawerContainerColor = MaterialTheme.colorScheme.background,
-                    drawerGesturesEnabled = drawerEnabled
-                ) {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        Column(
-                            verticalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f)
-                            ) {
-                                NavGraph(myViewModel, coroutineScope, navController, scaffoldStateNewTemp)
-                            }
-                            val timerState: TimerState by TimerService.timerState.observeAsState(
-                                TimerState.Stopped
+                            NavGraph(
+                                myViewModel,
+                                coroutineScope,
+                                navController,
+                                snackbarHostState
                             )
-                            if (timerState != TimerState.Stopped && navBackStackEntry?.destination?.id != navController.findDestination(
-                                    "note_timer"
-                                )!!.id
-                            ) {
-                                CollapsedTimerUI(navController)
-                            }
-                            if (adState) {
-                                AndroidView(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    factory = { context ->
-                                        AdView(context).apply {
-                                            adSize = adaptiveAdSize // AdSize.BANNER
-                                            adUnitId = context.getString(R.string.banner_ad_unit_id)
-                                            loadAd(AdRequest.Builder().build())
-                                        }
-                                    }
-                                )
-                            }
                         }
-                        DefaultSnackbar(
-                            snackbarHostState = scaffoldState.snackbarHostState,
-                            onDismiss = {
-                                scaffoldState.snackbarHostState.currentSnackbarData?.dismiss()
-                                myViewModel.apply {
-                                    tempSavedNote?.let {
-                                        upsertNoteAndData(it.note, it.dataItems.toMutableList())
-                                        tempSavedNote = null
+                        val timerState: TimerState by TimerService.timerState.observeAsState(
+                            TimerState.Stopped
+                        )
+                        if (timerState != TimerState.Stopped && navBackStackEntry?.destination?.id != navController.findDestination(
+                                "note_timer"
+                            )!!.id
+                        ) {
+                            CollapsedTimerUI(navController)
+                        }
+                        if (adState) {
+                            AndroidView(
+                                modifier = Modifier.fillMaxWidth(),
+                                factory = { context ->
+                                    AdView(context).apply {
+                                        adSize = adaptiveAdSize // AdSize.BANNER
+                                        adUnitId = context.getString(R.string.banner_ad_unit_id)
+                                        loadAd(AdRequest.Builder().build())
                                     }
                                 }
-                            },
-                            modifier = Modifier.align(Alignment.BottomCenter)
-                        )
+                            )
+                        }
                     }
+                    DefaultSnackbar(
+                        snackbarHostState = snackbarHostState,//scaffoldState.snackbarHostState,
+                        onDismiss = {
+                            //scaffoldState.snackbarHostState.currentSnackbarData?.dismiss()
+                            snackbarHostState.currentSnackbarData?.dismiss()
+                            myViewModel.apply {
+                                tempSavedNote?.let {
+                                    upsertNoteAndData(it.note, it.dataItems.toMutableList())
+                                    tempSavedNote = null
+                                }
+                            }
+                        },
+                        modifier = Modifier.align(Alignment.BottomCenter)
+                    )
                 }
             }
         }
@@ -235,8 +187,7 @@ class MainActivity : AppCompatActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navController: NavHostController, scaffoldState: ScaffoldState) {
-    val scaffoldStateOldTemp = rememberScaffoldState(rememberDrawerState(androidx.compose.material.DrawerValue.Closed))
+fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navController: NavHostController, snackbarHostState: SnackbarHostState) {
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             /*
@@ -256,11 +207,6 @@ fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navCont
                 },
                 {
                     navController.navigate("note_timer")
-                },
-                {
-                    coroutineScope.launch {
-                        scaffoldState.drawerState.open()
-                    }
                 },
                 {
                     navController.navigate("settings")
@@ -286,7 +232,7 @@ fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navCont
                 {
                     navController.popBackStack()
                     coroutineScope.launch {
-                        scaffoldStateOldTemp.snackbarHostState.showSnackbar(
+                        snackbarHostState.showSnackbar(
                             message = "Note deleted",
                             actionLabel = " Undo",
                             duration = SnackbarDuration.Short

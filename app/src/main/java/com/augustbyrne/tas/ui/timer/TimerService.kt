@@ -200,7 +200,7 @@ class TimerService : LifecycleService() {
             .also {
                 it.action = clickAction
                 if (index != null) {
-                    it.putExtra("com.example.protosuite.ItemListIndex", index)
+                    it.putExtra("com.augustbyrne.tas.ItemListIndex", index)
                 }
             },
         FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE
@@ -230,7 +230,7 @@ class TimerService : LifecycleService() {
         var currentNoteItems = mutableStateListOf<DataItem>()
 
         private var finalBeep: MutableLiveData<Boolean> = MutableLiveData(false)
-        private val beeper: ToneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
+        private val beeper: ToneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
         private var timer: CountDownTimer? = null
 
         //takes care of all time unit (and some timer state) manipulation

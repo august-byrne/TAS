@@ -31,7 +31,6 @@ android {
         applicationId "com.augustbyrne.tas"
         minSdkVersion 24
         targetSdkVersion 31
-        vectorDrawables.useSupportLibrary = true
         versionCode 1
         versionName "1.0.3"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -63,21 +62,23 @@ android {
         jvmTarget = "11"
     }
     composeOptions {
-        kotlinCompilerExtensionVersion "1.1.0-beta03"
+        kotlinCompilerExtensionVersion "1.1.0-beta04"
     }
 }
 
 dependencies {
-    def room_version = "2.4.0-beta02"
+    def room_version = "2.4.0-rc01"
     def lifecycle_version = "2.4.0"
-    def hilt_version = '2.40.2'
-    def compose_version = "1.1.0-beta03"
+    def hilt_version = '2.40.3'
+    def compose_version = "1.1.0-beta04"
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     //implementation("com.google.devtools.ksp:symbol-processing-api:1.5.31-1.0.0")
     //implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     implementation 'androidx.core:core-ktx:1.7.0'
-    implementation "androidx.appcompat:appcompat:1.4.0"
+    //implementation "androidx.appcompat:appcompat:1.4.0"
+
+    // Needed for MediaCompat and NotificationCompat
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 
     // Activity for Kotlin
@@ -108,14 +109,14 @@ dependencies {
     implementation "androidx.datastore:datastore-preferences:1.0.0"
 
     // Coroutines
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0-RC'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0-RC'
 
     // New Material Design
-    implementation 'com.google.android.material:material:1.5.0-beta01'
+    implementation 'com.google.android.material:material:1.6.0-alpha01'
 
     // Material 3 You Design
-    implementation "androidx.compose.material3:material3:1.0.0-alpha01"
+    implementation "androidx.compose.material3:material3:1.0.0-alpha02"
 
     // Compose Compiler
     implementation "androidx.compose.compiler:compiler:$compose_version"
@@ -144,8 +145,8 @@ dependencies {
     implementation "androidx.navigation:navigation-common:2.4.0-beta02"
 
     // Accompanist Components (temp)
-    implementation 'com.google.accompanist:accompanist-pager:0.21.3-beta'
-    implementation 'com.google.accompanist:accompanist-pager-indicators:0.21.3-beta'
+    //implementation 'com.google.accompanist:accompanist-pager:0.21.3-beta'
+    //implementation 'com.google.accompanist:accompanist-pager-indicators:0.21.3-beta'
     implementation "com.google.accompanist:accompanist-flowlayout:0.21.3-beta"
 
     // UI Tests
@@ -163,7 +164,8 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 
     // debugImplementation because LeakCanary should only run in debug builds.
-    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.7'
+    // Requires Jetifier
+    //debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.7'
 
 }
 

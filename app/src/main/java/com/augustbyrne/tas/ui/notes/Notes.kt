@@ -26,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.augustbyrne.tas.data.db.entities.NoteItem
 import com.augustbyrne.tas.ui.MainAppBar
+import com.augustbyrne.tas.ui.MainNavDrawer
 import com.augustbyrne.tas.ui.timer.PreferenceManager
 import com.augustbyrne.tas.ui.timer.TimerService
 import kotlinx.coroutines.launch
@@ -34,118 +35,132 @@ import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavigateTimerStart: () -> Unit, onDrawerOpen: () -> Unit, onNavSettings: () -> Unit) {
+fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavigateTimerStart: () -> Unit, onNavSettings: () -> Unit) {
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val scrollBehavior = remember { TopAppBarDefaults.pinnedScrollBehavior() }
     val sortType by PreferenceManager(context).sortTypeFlow.collectAsState(initial = SortType.Default.ordinal)
-    val sortedNotes by myViewModel.sortedAllNotesWithItems(SortType.values()[sortType]).observeAsState()
-
-    // TODO: Fix listState re-scrolling when rotated or when miniTimerView is clicked
-    Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            // attach as a parent to the nested scroll system
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            MainAppBar(
-                myViewModel = myViewModel,
-                scrollBehavior = scrollBehavior,
-                onDrawerOpen = onDrawerOpen,
-                onNavSettings = onNavSettings
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    coroutineScope.launch {
-                        onNavigate(
-                            myViewModel.upsert(
-                                NoteItem(0, Calendar.getInstance(), null, 0, "", "")
-                            ).toInt()
-                        )
-                        myViewModel.saveListPosition(LazyListState())
-                    }
-
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Add,
-                    contentDescription = "New Note"
-                )
-            }
-        },
-        floatingActionButtonPosition = FabPosition.End
-    ) {
-        // our list with build in nested scroll support that will notify us about its scroll
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            state = listState,
-            contentPadding = PaddingValues(
-                start = 8.dp,
-                end = 8.dp,
-                top = 8.dp,
-                bottom = 88.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+    val sortedNotes by myViewModel.sortedAllNotesWithItems(SortType.values()[sortType])
+        .observeAsState()
+    MainNavDrawer(
+        drawerState = drawerState,
+        onNavSettings = {
             coroutineScope.launch {
-                myViewModel.loadListPosition().run {
-                    listState.scrollToItem(
-                        firstVisibleItemIndex,
-                        firstVisibleItemScrollOffset
-                    )
-                }
+                drawerState.close()
             }
-            items(sortedNotes?:listOf()) { notesWithData ->
-                NoteItemUI(
-                    note = notesWithData.note,
-                    onClickItem = {
-                        myViewModel.saveListPosition(listState)
-                        onNavigate(notesWithData.note.id)
+            onNavSettings()
+        }
+    ) {
+        Scaffold(
+            modifier = Modifier
+                .fillMaxSize()
+                // attach as a parent to the nested scroll system
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
+            topBar = {
+                MainAppBar(
+                    myViewModel = myViewModel,
+                    scrollBehavior = scrollBehavior,
+                    onDrawerOpen = {
+                        coroutineScope.launch {
+                            drawerState.open()
+                        }
+                    },
+                    onNavSettings = onNavSettings
+                )
+            },
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            onNavigate(
+                                myViewModel.upsert(
+                                    NoteItem(0, Calendar.getInstance(), null, 0, "", "")
+                                ).toInt()
+                            )
+                            myViewModel.saveListPosition(LazyListState())
+                        }
+
                     }
                 ) {
-                    if (!notesWithData.dataItems.isNullOrEmpty()) {
-                        myViewModel.saveListPosition(listState)
-                        TimerService.initTimerService(
-                            notesWithData.note,
-                            notesWithData.dataItems
-                        )
-                        onNavigateTimerStart()
-                        Intent(context, TimerService::class.java).also {
-                            it.action = "ACTION_START_OR_RESUME_SERVICE"
-                            context.startService(it)
-                        }
-                    } else {
-                        Toast.makeText(context, "Empty Activity", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-            if (sortedNotes?.isEmpty() == true) {
-                item {
-                    Text(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        text = "You have no routines.\nClick the + below to make one.",
-                        textAlign = TextAlign.Center
+                    Icon(
+                        imageVector = Icons.Rounded.Add,
+                        contentDescription = "New Note"
                     )
                 }
-            }
-        }
-        Box(modifier = Modifier.fillMaxSize()) {
-            if (myViewModel.openSortPopup) {
-                myViewModel.saveListPosition(listState)
-                SortNotesByDialog(
-                    currentSortType = SortType.values()[sortType],
-                    onValueSelected = {
-                        if (it != null) {
-                            coroutineScope.launch {
-                                PreferenceManager(context).setSortType(it.ordinal)
-                            }
-                        }
-                        myViewModel.openSortPopup = false
+            },
+            floatingActionButtonPosition = FabPosition.End
+        ) {
+            // our list with build in nested scroll support that will notify us about its scroll
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                state = listState,
+                contentPadding = PaddingValues(
+                    start = 8.dp,
+                    end = 8.dp,
+                    top = 8.dp,
+                    bottom = 88.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                coroutineScope.launch {
+                    myViewModel.loadListPosition().run {
+                        listState.scrollToItem(
+                            firstVisibleItemIndex,
+                            firstVisibleItemScrollOffset
+                        )
                     }
-                )
+                }
+                items(sortedNotes ?: listOf()) { notesWithData ->
+                    NoteItemUI(
+                        note = notesWithData.note,
+                        onClickItem = {
+                            myViewModel.saveListPosition(listState)
+                            onNavigate(notesWithData.note.id)
+                        }
+                    ) {
+                        if (!notesWithData.dataItems.isNullOrEmpty()) {
+                            myViewModel.saveListPosition(listState)
+                            TimerService.initTimerService(
+                                notesWithData.note,
+                                notesWithData.dataItems
+                            )
+                            onNavigateTimerStart()
+                            Intent(context, TimerService::class.java).also {
+                                it.action = "ACTION_START_OR_RESUME_SERVICE"
+                                context.startService(it)
+                            }
+                        } else {
+                            Toast.makeText(context, "Empty Activity", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+                if (sortedNotes?.isEmpty() == true) {
+                    item {
+                        Text(
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            text = "You have no routines.\nClick the + below to make one.",
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+            Box(modifier = Modifier.fillMaxSize()) {
+                if (myViewModel.openSortPopup) {
+                    myViewModel.saveListPosition(listState)
+                    SortNotesByDialog(
+                        currentSortType = SortType.values()[sortType],
+                        onValueSelected = {
+                            if (it != null) {
+                                coroutineScope.launch {
+                                    PreferenceManager(context).setSortType(it.ordinal)
+                                }
+                            }
+                            myViewModel.openSortPopup = false
+                        }
+                    )
+                }
             }
         }
     }

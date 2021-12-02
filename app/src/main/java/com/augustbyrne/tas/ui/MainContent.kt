@@ -2,14 +2,16 @@ package com.augustbyrne.tas.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Tab
-import androidx.compose.material.TabRow
-import androidx.compose.material.TabRowDefaults
+import androidx.compose.material.Divider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Menu
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Sort
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
@@ -26,14 +28,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.augustbyrne.tas.ui.notes.NoteListUI
 import com.augustbyrne.tas.ui.notes.NoteViewModel
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.pagerTabIndicatorOffset
-import com.google.accompanist.pager.rememberPagerState
-import kotlinx.coroutines.launch
 
+/*
 @ExperimentalPagerApi
 @Composable
 fun MainUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavigateStart: () -> Unit) {
@@ -93,6 +90,7 @@ fun MainUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavi
         }
     }
 }
+*/
 
 @ExperimentalMaterial3Api
 @Composable
@@ -154,6 +152,38 @@ fun MainAppBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, scroll
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainNavDrawer(drawerState: DrawerState, onNavSettings: () -> Unit, content: @Composable () -> Unit) {
+    NavigationDrawer(
+        drawerState = drawerState,
+        gesturesEnabled = true,
+        drawerContent = {
+            Text(
+                modifier = Modifier.padding(vertical = 16.dp, horizontal = 24.dp),
+                text = "What doesn't work yet",
+                style = MaterialTheme.typography.titleLarge
+            )
+            Text(
+                modifier = Modifier.padding(8.dp),
+                text = "* Any Drag/Drop (for whole notes or activity items)"
+            )
+            Text(
+                modifier = Modifier.padding(8.dp),
+                text = "* Deleting Individual Activity Items"
+            )
+            Divider(modifier = Modifier.padding(top = 8.dp))
+            ItemButton(
+                modifier = Modifier.padding(horizontal = 8.dp),
+                icon = Icons.Rounded.Settings,
+                text = "Settings",
+                onClick = onNavSettings
+            )
+        },
+        content = content
+    )
+}
+
 @Composable
 fun AutoSizingText(modifier: Modifier = Modifier, textStyle: TextStyle = LocalTextStyle.current, text: String) {
     var readyToDraw by remember { mutableStateOf(false) }
@@ -200,14 +230,12 @@ fun ItemButton(modifier: Modifier = Modifier, icon: ImageVector, text: String, o
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = "item icon",
-            //tint = MaterialTheme.colorScheme.onBackground
+            contentDescription = "item icon"
         )
         Text(
             modifier = Modifier.padding(start = 16.dp),
             fontWeight = FontWeight.SemiBold,
-            text = text,
-            //color = MaterialTheme.colorScheme.onBackground
+            text = text
         )
     }
 }
