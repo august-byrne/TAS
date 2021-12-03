@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import com.augustbyrne.tas.data.db.entities.DataItem
 import com.augustbyrne.tas.data.db.entities.NoteItem
 import com.augustbyrne.tas.data.db.entities.NoteWithItems
+import com.augustbyrne.tas.ui.timer.PreferenceManager
 import com.augustbyrne.tas.ui.timer.TimerService
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -48,6 +49,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
     val coroutineScope = rememberCoroutineScope()
     val noteWithItems by myViewModel.getNoteWithItemsById(noteId)
         .observeAsState(NoteWithItems(NoteItem(0, null, null, 0, "", ""), listOf()))
+    val prevTimeType by PreferenceManager(context).lastUsedTimeUnitFlow.collectAsState(initial = 0)
     val listState = rememberLazyListState()
     val scrollBehavior = remember { TopAppBarDefaults.pinnedScrollBehavior() }
 
@@ -119,7 +121,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                         order = 0,
                         activity = "",
                         time = 0,
-                        unit = myViewModel.prevTimeType
+                        unit = prevTimeType
                     )
                 }
             )
@@ -156,7 +158,10 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                 Divider(modifier = Modifier.padding(horizontal = 8.dp))
             }
         }
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier.wrapContentSize(),
+            contentAlignment = Alignment.Center
+        ) {
             myViewModel.apply {
                 if (openEditDialog != EditDialogType.DialogClosed) {
                     EditOneFieldDialog(
@@ -192,8 +197,8 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                             onDismissRequest = { initialDialogDataItem = null }
                         ) { returnedValue ->
                             initialDialogDataItem = null
-                            myViewModel.setPrevTimeType(returnedValue.unit)
                             coroutineScope.launch {
+                                PreferenceManager(context).setLastUsedTimeUnit(returnedValue.unit)
                                 upsertDataItem(returnedValue)
                                 updateNote(
                                     noteWithItems.note.copy(

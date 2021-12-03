@@ -41,15 +41,15 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val scrollBehavior = remember { TopAppBarDefaults.pinnedScrollBehavior() }
-    val sortType by PreferenceManager(context).sortTypeFlow.collectAsState(initial = SortType.Default.ordinal)
-    val sortedNotes by myViewModel.sortedAllNotesWithItems(SortType.values()[sortType])
+    val sortTypeOrdinal by PreferenceManager(context).sortTypeFlow.collectAsState(initial = SortType.Default.ordinal)
+    val sortedNotes by myViewModel.sortedAllNotesWithItems(SortType.values()[sortTypeOrdinal])
         .observeAsState()
+    LaunchedEffect(Unit) {
+        drawerState.snapTo(DrawerValue.Closed)
+    }
     MainNavDrawer(
         drawerState = drawerState,
         onNavSettings = {
-            coroutineScope.launch {
-                drawerState.close()
-            }
             onNavSettings()
         }
     ) {
@@ -66,8 +66,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                         coroutineScope.launch {
                             drawerState.open()
                         }
-                    },
-                    onNavSettings = onNavSettings
+                    }
                 )
             },
             floatingActionButton = {
@@ -139,7 +138,9 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                 if (sortedNotes?.isEmpty() == true) {
                     item {
                         Text(
-                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
                             text = "You have no routines.\nClick the + below to make one.",
                             textAlign = TextAlign.Center
                         )
@@ -150,7 +151,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                 if (myViewModel.openSortPopup) {
                     myViewModel.saveListPosition(listState)
                     SortNotesByDialog(
-                        currentSortType = SortType.values()[sortType],
+                        currentSortType = SortType.values()[sortTypeOrdinal],
                         onValueSelected = {
                             if (it != null) {
                                 coroutineScope.launch {

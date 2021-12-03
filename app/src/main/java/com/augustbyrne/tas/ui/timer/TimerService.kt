@@ -8,7 +8,8 @@ import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.content.Context
 import android.content.Intent
-import android.media.*
+import android.media.AudioManager
+import android.media.ToneGenerator
 import android.os.Build
 import android.os.CountDownTimer
 import android.support.v4.media.session.MediaSessionCompat
@@ -26,11 +27,7 @@ import com.augustbyrne.tas.data.db.entities.NoteItem
 import com.augustbyrne.tas.ui.MainActivity
 import com.augustbyrne.tas.ui.notes.TimerState
 import com.augustbyrne.tas.ui.values.yellow100
-import kotlin.math.ln
 import kotlin.math.pow
-
-
-
 
 // if lifecycle interaction with the service or lifecycleScope is needed, instead implement lifecycleService()
 class TimerService : LifecycleService() {
@@ -44,9 +41,9 @@ class TimerService : LifecycleService() {
                     if (isFirstRun) {
                         startForegroundService()
                         isFirstRun = false
-                    } else {
+                    } //else {
                         //Timber.d("Resuming service...")
-                    }
+                    //}
                 }
                 ACTION_PAUSE_SERVICE -> {
                     //Timber.d("Paused service")
@@ -99,9 +96,6 @@ class TimerService : LifecycleService() {
         finalBeep.observe(this, {
             if (it) {
                 Toast.makeText(this, "Timed Activity Complete", Toast.LENGTH_SHORT).show()
-                //Beeper(this).play(100)
-            } else {
-                //Beeper(this).play(75)
             }
         })
 
@@ -306,74 +300,41 @@ class TimerService : LifecycleService() {
 
         // LiveData holds state which is observed by the UI
         // (state flows down from ViewModel)
-        private var _timerLengthMilli: MutableLiveData<Long> = MutableLiveData(1L)
-        val timerLengthMilli: LiveData<Long> = _timerLengthMilli
+        private var serviceTimerLength: MutableLiveData<Long> = MutableLiveData(1L)
+        val timerLengthMilli: LiveData<Long> = serviceTimerLength
 
         // setTimerLength is an event we're defining that the UI can invoke
         // (events flow up from UI)
         fun setTimerLength(timerLength: Long) {
             if (timerLength >= 0L) {
-                _timerLengthMilli.value = timerLength
+                serviceTimerLength.value = timerLength
             } else {
-                _timerLengthMilli.value = 0L
+                serviceTimerLength.value = 0L
             }
         }
 
-        private var _timerState = MutableLiveData(TimerState.Stopped)
-        val timerState: LiveData<TimerState> = _timerState
+        private var serviceTimerState = MutableLiveData(TimerState.Stopped)
+        val timerState: LiveData<TimerState> = serviceTimerState
 
         private fun setTimerState(timerState: TimerState) {
-            _timerState.value = timerState
+            serviceTimerState.value = timerState
             internalTimerState = timerState
         }
 
-        private var _itemIndex = MutableLiveData(0)
-        val itemIndex: LiveData<Int> = _itemIndex
+        private var serviceItemIndex = MutableLiveData(0)
+        val itemIndex: LiveData<Int> = serviceItemIndex
 
         private fun setActiveItemIndex(itemIndex: Int) {
             if (itemIndex >= 0) {
-                _itemIndex.value = itemIndex
+                serviceItemIndex.value = itemIndex
             }
         }
 
-        private var _totalTimerLengthMilli: MutableLiveData<Long> = MutableLiveData(1L)
-        val totalTimerLengthMilli: LiveData<Long> = _totalTimerLengthMilli
+        private var serviceTotalTimerLength: MutableLiveData<Long> = MutableLiveData(1L)
+        val totalTimerLengthMilli: LiveData<Long> = serviceTotalTimerLength
 
         private fun setTotalTimerLengthMilli(timeInMilli: Long) {
-            _totalTimerLengthMilli.value = timeInMilli
-        }
-    }
-}
-
-class Beeper(val context: Context) {
-
-    private val maxVolume = 100f
-    private val mediaPlayer = MediaPlayer()
-
-    init {
-
-        //val beep = Uri.parse("android.resource://" + context.packageName + "/" + R.raw.beep)
-        val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-
-
-        val audioAttributes = AudioAttributes.Builder()
-            .setFlags(AudioAttributes.FLAG_AUDIBILITY_ENFORCED)
-            .setLegacyStreamType(AudioManager.STREAM_ALARM)
-            .setUsage(AudioAttributes.USAGE_ALARM)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-            .build()
-
-        mediaPlayer.setDataSource(context, soundUri)
-        mediaPlayer.setAudioAttributes(audioAttributes)
-
-        mediaPlayer.prepare()
-    }
-
-    fun play(volume: Int){
-        if (!mediaPlayer.isPlaying) {
-            val calculatedVolume = 1 - (ln(maxVolume - volume.toFloat()) / ln(maxVolume))
-            mediaPlayer.setVolume(calculatedVolume, calculatedVolume)
-            mediaPlayer.start()
+            serviceTotalTimerLength.value = timeInMilli
         }
     }
 }

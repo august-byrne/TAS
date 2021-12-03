@@ -94,7 +94,7 @@ fun MainUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavi
 
 @ExperimentalMaterial3Api
 @Composable
-fun MainAppBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, scrollBehavior: TopAppBarScrollBehavior, onDrawerOpen: () -> Unit, onNavSettings: () -> Unit) {
+fun MainAppBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, scrollBehavior: TopAppBarScrollBehavior, onDrawerOpen: () -> Unit) {
     CenterAlignedTopAppBar(
         modifier = modifier,
         scrollBehavior = scrollBehavior,
@@ -133,7 +133,6 @@ fun MainAppBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, scroll
                 onDismissRequest = { expanded = false },
                 content = {
                     DropdownMenuItem(onClick = {
-                        *//* Handle settings! *//*
                         expanded = false
                         onNavSettings()
                     }) {
@@ -141,7 +140,6 @@ fun MainAppBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, scroll
                     }
                     Divider()
                     DropdownMenuItem(onClick = {
-                        *//* Handle donate or send feedback! *//*
                         expanded = false
                     }) {
                         Text("Donate")

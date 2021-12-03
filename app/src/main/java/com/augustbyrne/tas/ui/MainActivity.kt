@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Snackbar
 import androidx.compose.material.SnackbarDuration
@@ -21,7 +22,11 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.rounded.Undo
-import androidx.compose.material3.*
+import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -55,14 +60,12 @@ import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-    // Lazy Inject ViewModel
     private val myViewModel: NoteViewModel by viewModels()
 
     @Inject
@@ -70,19 +73,15 @@ class MainActivity : AppCompatActivity() {
 
     private val adaptiveAdSize: AdSize
         get() {
-            //val adWidthPixels = WindowMetricsCalculator.getOrCreate()
-              //  .computeCurrentWindowMetrics(this).bounds.width().toFloat()
             val adWidthPixels = this.resources.displayMetrics.widthPixels
             //removed from window API: WindowManager(this).getCurrentWindowMetrics().bounds.width().toFloat()
             //requires android API 30: windowManager.currentWindowMetrics.bounds.width().toFloat()
-
             val density = this.resources.displayMetrics.density
             val adWidth = (adWidthPixels.div(density)).toInt()
             //return the optimal size depends on your orientation (landscape or portrait)
             return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, adWidth)
         }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -94,8 +93,6 @@ class MainActivity : AppCompatActivity() {
         setContent {
             val adState by preferences.showAdsFlow.collectAsState(initial = true)
             val darkModeState by preferences.isDarkThemeFlow.collectAsState(initial = false)
-            val prevTimeTypeState by preferences.lastUsedTimeUnitFlow.collectAsState(initial = 0)
-            myViewModel.setPrevTimeType(prevTimeTypeState)
             val navController = rememberNavController()
             val navBackStackEntry by navController.currentBackStackEntryAsState()
 
@@ -136,7 +133,7 @@ class MainActivity : AppCompatActivity() {
                                 modifier = Modifier.fillMaxWidth(),
                                 factory = { context ->
                                     AdView(context).apply {
-                                        adSize = adaptiveAdSize // AdSize.BANNER
+                                        adSize = adaptiveAdSize
                                         adUnitId = context.getString(R.string.banner_ad_unit_id)
                                         loadAd(AdRequest.Builder().build())
                                     }
@@ -145,9 +142,8 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                     DefaultSnackbar(
-                        snackbarHostState = snackbarHostState,//scaffoldState.snackbarHostState,
+                        snackbarHostState = snackbarHostState,
                         onDismiss = {
-                            //scaffoldState.snackbarHostState.currentSnackbarData?.dismiss()
                             snackbarHostState.currentSnackbarData?.dismiss()
                             myViewModel.apply {
                                 tempSavedNote?.let {
@@ -171,13 +167,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onStop() {
-        CoroutineScope(Dispatchers.Default).launch {
-            preferences.setLastUsedTimeUnit(myViewModel.prevTimeType)
-        }
-        super.onStop()
-    }
-
     private fun navigateToTimerIfNeeded(intent: Intent?, navController: NavController) {
         if (intent?.action == TimerService.ACTION_SHOW_TRACKING_FRAGMENT) {
             navController.navigate("note_timer")
@@ -185,21 +174,10 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navController: NavHostController, snackbarHostState: SnackbarHostState) {
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
-            /*
-            MainUI(
-                myViewModel,
-                { noteId: Int ->
-                    navController.navigate("note_expanded/$noteId")
-                },
-                { noteId: Int ->
-                    navController.navigate("note_timer/$noteId/0")
-                })
-            */
             NoteListUI(
                 myViewModel,
                 { noteId: Int ->
@@ -264,24 +242,19 @@ fun CollapsedTimerUI(navController: NavController) {
             .wrapContentHeight()
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.primaryContainer)
-            .clickable {
-                navController.navigate("note_timer")
-            },
+            .clickable(
+                onClick = { navController.navigate("note_timer") },
+                interactionSource = remember { MutableInteractionSource() },
+                indication = rememberRipple()
+            ),
         verticalArrangement = Arrangement.SpaceEvenly
     ) {
-        val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(
-            1L
-        )
-        val timerState: TimerState by TimerService.timerState.observeAsState(
-            TimerState.Stopped
-        )
+        val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
+        val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
         val itemIndex: Int by TimerService.itemIndex.observeAsState(0)
-        val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(
-            1L
-        )
+        val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(1L)
         val icon =
             if (timerState == TimerState.Running) Icons.Default.Pause else Icons.Default.PlayArrow
-
         val bgColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
         Canvas(
             Modifier
@@ -325,58 +298,63 @@ fun CollapsedTimerUI(navController: NavController) {
                     text = TimerService.currentNote.title,
                     style = MaterialTheme.typography.titleLarge,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
                     text = TimerService.currentNoteItems[itemIndex].activity,
                     style = MaterialTheme.typography.bodyLarge,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
             Row(
                 modifier = Modifier.wrapContentSize()
             ) {
-                Icon(
-                    modifier = Modifier
-                        .clickable {
-                            if (timerLengthMilli > totalTimerLengthMilli - 5000L) {
-                                TimerService.modifyTimer(itemIndex - 1)
-                            } else {
-                                TimerService.modifyTimer(itemIndex)
+                TextButton(
+                    onClick = {
+                        if (timerLengthMilli > totalTimerLengthMilli - 5000L) {
+                            TimerService.modifyTimer(itemIndex - 1)
+                        } else {
+                            TimerService.modifyTimer(itemIndex)
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.SkipPrevious,
+                        contentDescription = "back to previous item",
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+                TextButton(
+                    onClick = {
+                        if (timerLengthMilli != 0L) {
+                            if (timerState == TimerState.Running) { // Clicked Pause
+                                TimerService.pauseTimer(timerLengthMilli)
+                            } else { // Clicked Start
+                                TimerService.startTimer(itemIndex)
                             }
                         }
-                        .padding(8.dp),
-                    imageVector = Icons.Default.SkipPrevious,
-                    contentDescription = "back to previous item")
-                Icon(
-                    modifier = Modifier
-                        .clickable {
-                            if (timerLengthMilli != 0L) {
-                                if (timerState == TimerState.Running) {
-                                    // Clicked Pause
-                                    TimerService.pauseTimer(
-                                        timerLengthMilli
-                                    )
-                                } else {
-                                    // Clicked Start
-                                    TimerService.startTimer(itemIndex)
-                                }
-                            }
-                        }
-                        .padding(8.dp),
-                    imageVector = icon,
-                    contentDescription = "Start or Pause"
-                )
-                Icon(
-                    modifier = Modifier
-                        .clickable {
-                            TimerService.modifyTimer(itemIndex + 1)
-                        }
-                        .padding(8.dp),
-                    imageVector = Icons.Default.SkipNext,
-                    contentDescription = "skip to next item"
-                )
+                    }
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = "Start or Pause",
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+                TextButton(
+                    onClick = {
+                        TimerService.modifyTimer(itemIndex + 1)
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.SkipNext,
+                        contentDescription = "skip to next item",
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
             }
         }
     }

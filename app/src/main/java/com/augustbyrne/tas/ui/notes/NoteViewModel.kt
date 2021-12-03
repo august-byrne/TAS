@@ -92,18 +92,6 @@ class NoteViewModel @Inject constructor(
     var openSortPopup by mutableStateOf(false)
     var openEditDialog by mutableStateOf(EditDialogType.DialogClosed)
 
-    private var _prevTimeType = 0
-    val prevTimeType: Int
-        get() = _prevTimeType
-
-    fun setPrevTimeType(timeType: Int) {
-        _prevTimeType = if (timeType in 0..2) {
-            timeType
-        } else {
-            0
-        }
-    }
-
     private var listState: LazyListState = LazyListState()
     fun saveListPosition(newListState: LazyListState) {
         listState = newListState

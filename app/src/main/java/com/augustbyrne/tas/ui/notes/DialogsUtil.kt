@@ -71,7 +71,9 @@ fun EditOneFieldDialog(headerName: String, fieldName: String? = null, initialVal
             Text(headerName)
         },
         text = {
-            Column(modifier = Modifier.fillMaxWidth().wrapContentHeight()) {
+            Column(modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()) {
                 OutlinedTextField(
                     modifier = Modifier.focusRequester(focusRequester = focusRequester),
                     label = { if (fieldName != null) Text(fieldName) },
