@@ -11,6 +11,7 @@ import com.augustbyrne.tas.data.db.entities.DataItem
 import com.augustbyrne.tas.data.db.entities.NoteItem
 import com.augustbyrne.tas.data.db.entities.NoteWithItems
 import com.augustbyrne.tas.data.repositories.NoteRepository
+import com.augustbyrne.tas.ui.timer.PreferenceManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,9 +22,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NoteViewModel @Inject constructor(
-    private val repo: NoteRepository
+    private val repo: NoteRepository,
+    private val preferences: PreferenceManager
 ): ViewModel() {
 
+    /**
+     * Room Local Database Here, LiveData for view access, since Flow gives me lifecycle bugs
+     */
     // returns noteId. Be aware this does not update nicely with one to many relations
     suspend fun upsert(item: NoteItem?): Long {
         return if (item != null) {
@@ -33,13 +38,9 @@ class NoteViewModel @Inject constructor(
         }
     }
 
-    suspend fun updateNote(item: NoteItem) {
-        repo.updateNote(item)
-    }
+    suspend fun updateNote(item: NoteItem) = repo.updateNote(item)
 
-    suspend fun upsertDataItem(item: DataItem) {
-        repo.upsertDataItem(item)
-    }
+    suspend fun upsertDataItem(item: DataItem) = repo.upsertDataItem(item)
 
     fun upsertNoteAndData(noteItem: NoteItem, dataItems: MutableList<DataItem>) =
         CoroutineScope(Dispatchers.Main).launch {
@@ -87,6 +88,24 @@ class NoteViewModel @Inject constructor(
     fun getNoteWithItemsById(id: Int): LiveData<NoteWithItems> =
         repo.getNoteWithItemsById(id).asLiveData()
 
+    /**
+     * PreferenceManager DataStore Preferences Here
+     */
+    val showAdsFlow: LiveData<Boolean> = preferences.showAdsFlow.asLiveData()
+    suspend fun setShowAds(value: Boolean) = preferences.setShowAds(value)
+
+    val isDarkThemeFlow: LiveData<Boolean> = preferences.isDarkThemeFlow.asLiveData()
+    suspend fun setIsDarkTheme(value: Boolean) = preferences.setIsDarkTheme(value)
+
+    val sortTypeFlow: LiveData<Int> = preferences.sortTypeFlow.asLiveData()
+    suspend fun setSortType(value: Int) = preferences.setSortType(value)
+
+    val lastUsedTimeUnitFlow: LiveData<Int> = preferences.lastUsedTimeUnitFlow.asLiveData()
+    suspend fun setLastUsedTimeUnit(value: Int) = preferences.setLastUsedTimeUnit(value)
+
+    /**
+     * Other Cross-Composable Variables Here
+     */
     var initialDialogDataItem: DataItem? by mutableStateOf(null)
     var tempSavedNote: NoteWithItems? = null
     var openSortPopup by mutableStateOf(false)
@@ -97,7 +116,5 @@ class NoteViewModel @Inject constructor(
         listState = newListState
     }
 
-    fun loadListPosition(): LazyListState {
-        return listState
-    }
+    fun loadListPosition(): LazyListState = listState
 }

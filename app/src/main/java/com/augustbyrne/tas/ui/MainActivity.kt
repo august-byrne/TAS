@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material.icons.rounded.Undo
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -36,24 +35,22 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.navigation.NavController
-import androidx.navigation.NavHostController
-import androidx.navigation.NavType
+import androidx.navigation.*
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.augustbyrne.tas.R
 import com.augustbyrne.tas.ui.notes.ExpandedNoteUI
 import com.augustbyrne.tas.ui.notes.NoteListUI
 import com.augustbyrne.tas.ui.notes.NoteViewModel
 import com.augustbyrne.tas.ui.notes.TimerState
 import com.augustbyrne.tas.ui.timer.NoteTimer
-import com.augustbyrne.tas.ui.timer.PreferenceManager
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.timer.orange
 import com.augustbyrne.tas.ui.values.AppTheme
+import com.augustbyrne.tas.ui.values.Blue40
+import com.augustbyrne.tas.ui.values.Blue90
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
@@ -61,15 +58,11 @@ import com.google.android.gms.ads.MobileAds
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private val myViewModel: NoteViewModel by viewModels()
-
-    @Inject
-    lateinit var preferences: PreferenceManager
 
     private val adaptiveAdSize: AdSize
         get() {
@@ -91,16 +84,15 @@ class MainActivity : AppCompatActivity() {
         MobileAds.initialize(this) {}
 
         setContent {
-            val adState by preferences.showAdsFlow.collectAsState(initial = true)
-            val darkModeState by preferences.isDarkThemeFlow.collectAsState(initial = false)
+            val adState by myViewModel.showAdsFlow.observeAsState(initial = true)
+            val darkModeState by myViewModel.isDarkThemeFlow.observeAsState(initial = false)
             val navController = rememberNavController()
             val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val snackbarHostState = remember { SnackbarHostState() }
+            val coroutineScope = rememberCoroutineScope()
 
             AppTheme(darkModeState) {
-                val snackbarHostState = remember { SnackbarHostState() }
-                val coroutineScope = rememberCoroutineScope()
-
-                LaunchedEffect(key1 = true) {
+                LaunchedEffect(Unit) {
                     navigateToTimerIfNeeded(intent, navController)
                 }
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -119,15 +111,7 @@ class MainActivity : AppCompatActivity() {
                                 snackbarHostState
                             )
                         }
-                        val timerState: TimerState by TimerService.timerState.observeAsState(
-                            TimerState.Stopped
-                        )
-                        if (timerState != TimerState.Stopped && navBackStackEntry?.destination?.id != navController.findDestination(
-                                "note_timer"
-                            )!!.id
-                        ) {
-                            CollapsedTimerUI(navController)
-                        }
+                        CollapsedTimerUI(navController, navBackStackEntry)
                         if (adState) {
                             AndroidView(
                                 modifier = Modifier.fillMaxWidth(),
@@ -142,8 +126,9 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                     DefaultSnackbar(
+                        modifier = Modifier.align(Alignment.BottomCenter),
                         snackbarHostState = snackbarHostState,
-                        onDismiss = {
+                        onClickUndo = {
                             snackbarHostState.currentSnackbarData?.dismiss()
                             myViewModel.apply {
                                 tempSavedNote?.let {
@@ -151,8 +136,7 @@ class MainActivity : AppCompatActivity() {
                                     tempSavedNote = null
                                 }
                             }
-                        },
-                        modifier = Modifier.align(Alignment.BottomCenter)
+                        }
                     )
                 }
             }
@@ -211,8 +195,8 @@ fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navCont
                     navController.popBackStack()
                     coroutineScope.launch {
                         snackbarHostState.showSnackbar(
-                            message = "Note deleted",
-                            actionLabel = " Undo",
+                            message = "Note deleted.",
+                            actionLabel = " UNDO",
                             duration = SnackbarDuration.Short
                         )
                     }
@@ -228,7 +212,7 @@ fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navCont
             }
         }
         composable("settings") {
-            SettingsUI {
+            SettingsUI(myViewModel) {
                 navController.popBackStack()
             }
         }
@@ -236,124 +220,129 @@ fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navCont
 }
 
 @Composable
-fun CollapsedTimerUI(navController: NavController) {
-    Column(
-        modifier = Modifier
-            .wrapContentHeight()
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.primaryContainer)
-            .clickable(
-                onClick = { navController.navigate("note_timer") },
-                interactionSource = remember { MutableInteractionSource() },
-                indication = rememberRipple()
-            ),
-        verticalArrangement = Arrangement.SpaceEvenly
+fun CollapsedTimerUI(navController: NavController, navBackStackEntry: NavBackStackEntry?) {
+    val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
+    if (timerState != TimerState.Stopped && navBackStackEntry?.destination?.id != navController.findDestination(
+            "note_timer"
+        )!!.id
     ) {
         val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
-        val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
         val itemIndex: Int by TimerService.itemIndex.observeAsState(0)
         val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(1L)
         val icon =
             if (timerState == TimerState.Running) Icons.Default.Pause else Icons.Default.PlayArrow
         val bgColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
-        Canvas(
-            Modifier
+        Column(
+            modifier = Modifier
                 .wrapContentHeight()
                 .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .clickable(
+                    onClick = { navController.navigate("note_timer") },
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = rememberRipple()
+                ),
+            verticalArrangement = Arrangement.SpaceEvenly
         ) {
-            val progressLine =
-                size.width * (1f - (timerLengthMilli.toFloat() / totalTimerLengthMilli.toFloat()))
-            drawLine(
-                color = bgColor,
-                strokeWidth = 4.dp.toPx(),
-                cap = StrokeCap.Square,
-                start = Offset(y = 2.dp.toPx(), x = 0f),
-                end = Offset(y = 2.dp.toPx(), x = size.width)
-            )
-            drawLine(
-                color = orange,
-                strokeWidth = 4.dp.toPx(),
-                cap = StrokeCap.Square,
-                start = Offset(y = 2.dp.toPx(), x = 0f),
-                end = Offset(
-                    y = 2.dp.toPx(),
-                    x = progressLine
-                )
-            )
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight(),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(8.dp)
+            Canvas(
+                Modifier
                     .wrapContentHeight()
-                    .weight(1f)
+                    .fillMaxWidth()
             ) {
-                Text(
-                    text = TimerService.currentNote.title,
-                    style = MaterialTheme.typography.titleLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                val progressLine =
+                    size.width * (1f - (timerLengthMilli.toFloat() / totalTimerLengthMilli.toFloat()))
+                drawLine(
+                    color = bgColor,
+                    strokeWidth = 4.dp.toPx(),
+                    cap = StrokeCap.Square,
+                    start = Offset(y = 2.dp.toPx(), x = 0f),
+                    end = Offset(y = 2.dp.toPx(), x = size.width)
                 )
-                Text(
-                    text = TimerService.currentNoteItems[itemIndex].activity,
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                drawLine(
+                    color = orange,
+                    strokeWidth = 4.dp.toPx(),
+                    cap = StrokeCap.Square,
+                    start = Offset(y = 2.dp.toPx(), x = 0f),
+                    end = Offset(
+                        y = 2.dp.toPx(),
+                        x = progressLine
+                    )
                 )
             }
             Row(
-                modifier = Modifier.wrapContentSize()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(
-                    onClick = {
-                        if (timerLengthMilli > totalTimerLengthMilli - 5000L) {
-                            TimerService.modifyTimer(itemIndex - 1)
-                        } else {
-                            TimerService.modifyTimer(itemIndex)
-                        }
-                    }
+                Column(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .wrapContentHeight()
+                        .weight(1f)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.SkipPrevious,
-                        contentDescription = "back to previous item",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    Text(
+                        text = TimerService.currentNote.title,
+                        style = MaterialTheme.typography.titleLarge,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Text(
+                        text = TimerService.currentNoteItems[itemIndex].activity,
+                        style = MaterialTheme.typography.bodyLarge,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
-                TextButton(
-                    onClick = {
-                        if (timerLengthMilli != 0L) {
-                            if (timerState == TimerState.Running) { // Clicked Pause
-                                TimerService.pauseTimer(timerLengthMilli)
-                            } else { // Clicked Start
-                                TimerService.startTimer(itemIndex)
+                Row(
+                    modifier = Modifier.wrapContentSize()
+                ) {
+                    TextButton(
+                        onClick = {
+                            if (timerLengthMilli > totalTimerLengthMilli - 5000L) {
+                                TimerService.modifyTimer(itemIndex - 1)
+                            } else {
+                                TimerService.modifyTimer(itemIndex)
                             }
                         }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SkipPrevious,
+                            contentDescription = "back to previous item",
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
                     }
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = "Start or Pause",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-                TextButton(
-                    onClick = {
-                        TimerService.modifyTimer(itemIndex + 1)
+                    TextButton(
+                        onClick = {
+                            if (timerLengthMilli != 0L) {
+                                if (timerState == TimerState.Running) { // Clicked Pause
+                                    TimerService.pauseTimer(timerLengthMilli)
+                                } else { // Clicked Start
+                                    TimerService.startTimer(itemIndex)
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = "Start or Pause",
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
                     }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.SkipNext,
-                        contentDescription = "skip to next item",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                    TextButton(
+                        onClick = {
+                            TimerService.modifyTimer(itemIndex + 1)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SkipNext,
+                            contentDescription = "skip to next item",
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 }
             }
         }
@@ -364,24 +353,29 @@ fun CollapsedTimerUI(navController: NavController) {
 fun DefaultSnackbar(
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
-    onDismiss: () -> Unit
+    onClickUndo: () -> Unit
 ) {
     SnackbarHost(
         modifier = modifier,
         hostState = snackbarHostState
     ) { snackBarData ->
         Snackbar(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(8.dp),
             action = {
                 snackBarData.actionLabel?.let { actionLabel ->
-                    TextButton(onClick = onDismiss) {
-                        Icon(Icons.Rounded.Undo, "undo delete")
-                        Text(actionLabel)
+                    TextButton(onClick = onClickUndo) {
+                        Text(
+                            color = Blue40,
+                            text = actionLabel
+                        )
                     }
                 }
             }
         ) {
-            Text(snackBarData.message)
+            Text(
+                color = Blue90,
+                text = snackBarData.message
+            )
         }
     }
 }

@@ -27,10 +27,9 @@ import androidx.compose.ui.unit.dp
 import com.augustbyrne.tas.data.db.entities.NoteItem
 import com.augustbyrne.tas.ui.MainAppBar
 import com.augustbyrne.tas.ui.MainNavDrawer
-import com.augustbyrne.tas.ui.timer.PreferenceManager
 import com.augustbyrne.tas.ui.timer.TimerService
+import com.augustbyrne.tas.ui.values.AppTheme
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,9 +40,9 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val scrollBehavior = remember { TopAppBarDefaults.pinnedScrollBehavior() }
-    val sortTypeOrdinal by PreferenceManager(context).sortTypeFlow.collectAsState(initial = SortType.Default.ordinal)
+    val sortTypeOrdinal by myViewModel.sortTypeFlow.observeAsState(initial = SortType.Default.ordinal)
     val sortedNotes by myViewModel.sortedAllNotesWithItems(SortType.values()[sortTypeOrdinal])
-        .observeAsState()
+        .observeAsState(initial = null)
     LaunchedEffect(Unit) {
         drawerState.snapTo(DrawerValue.Closed)
     }
@@ -155,7 +154,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                         onValueSelected = {
                             if (it != null) {
                                 coroutineScope.launch {
-                                    PreferenceManager(context).setSortType(it.ordinal)
+                                    myViewModel.setSortType(it.ordinal)
                                 }
                             }
                             myViewModel.openSortPopup = false
@@ -174,8 +173,6 @@ fun NoteItemUI (
     onClickItem: () -> Unit,
     onClickStart: () -> Unit
     ) {
-    val simpleDateFormat = remember { SimpleDateFormat.getDateInstance() }
-    val creationDate = simpleDateFormat.format(note.creation_date!!.time)
     Card(
         modifier = Modifier
             .fillMaxWidth(),
@@ -191,44 +188,35 @@ fun NoteItemUI (
                 .padding(16.dp),
             horizontalAlignment = Alignment.Start
         ) {
+            Text(
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.titleLarge,
+                text = if (note.title.isNotBlank()) {
+                    note.title
+                } else {
+                    "Title"
+                }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Column(
-                    modifier = Modifier
-                        .wrapContentHeight()
-                        .weight(1f)
-                        .padding(end = 8.dp),
-                    verticalArrangement = Arrangement.Top
-                ) {
-                    Text(
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.titleLarge,
-                        text = if (note.title.isNotBlank()) {
-                            note.title
-                        } else {
-                            "Title"
-                        }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.bodyMedium,
-                        text = creationDate
-                    )
-                }
+                Text(
+                    modifier = Modifier.align(Alignment.Top).weight(1f),
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodyMedium,
+                    text = if (note.description.isNotBlank()) {
+                        note.description
+                    } else {
+                        "Description"
+                    }
+                )
+                Spacer(modifier = Modifier.width(8.dp))
                 FilledTonalButton(
-                    modifier = Modifier
-                        .wrapContentWidth()
-                        .height(40.dp),
-                    contentPadding = PaddingValues(
-                        start = 24.dp,
-                        end = 24.dp
-                    ),
+                    modifier = Modifier.align(Alignment.Bottom),
                     onClick = onClickStart
                 ) {
                     Text(
@@ -238,17 +226,6 @@ fun NoteItemUI (
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodyMedium,
-                text = if (note.description.isNotBlank()) {
-                    note.description
-                } else {
-                    "Description"
-                }
-            )
         }
     }
 }
@@ -259,10 +236,12 @@ fun NoteItemUITest() {
     val note = NoteItem(
         id = 1,
         title = "This is a title that is way too long",
-        description = "Description that is reagdfsgdfg sdfgsdg sdfgsdfgsdfgs fdsdfgsdf gsdfgsdsdf hashd fhadhf as dhasdf hasd fhddfd",
+        description = "Description dsdf hashd fhadhf as dhasdf hasd fhddfd",
         order = 1,
         last_edited_on = Calendar.getInstance(),
         creation_date = Calendar.getInstance()
     )
-    NoteItemUI(note, {}) {}
+    AppTheme {
+        NoteItemUI(note, {}) {}
+    }
 }

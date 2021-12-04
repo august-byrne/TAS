@@ -2,6 +2,7 @@ package com.augustbyrne.tas.ui.notes
 
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -36,8 +37,8 @@ import androidx.compose.ui.unit.dp
 import com.augustbyrne.tas.data.db.entities.DataItem
 import com.augustbyrne.tas.data.db.entities.NoteItem
 import com.augustbyrne.tas.data.db.entities.NoteWithItems
-import com.augustbyrne.tas.ui.timer.PreferenceManager
 import com.augustbyrne.tas.ui.timer.TimerService
+import com.augustbyrne.tas.ui.values.AppTheme
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -49,20 +50,10 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
     val coroutineScope = rememberCoroutineScope()
     val noteWithItems by myViewModel.getNoteWithItemsById(noteId)
         .observeAsState(NoteWithItems(NoteItem(0, null, null, 0, "", ""), listOf()))
-    val prevTimeType by PreferenceManager(context).lastUsedTimeUnitFlow.collectAsState(initial = 0)
+    val prevTimeType by myViewModel.lastUsedTimeUnitFlow.observeAsState(initial = 0)
     val listState = rememberLazyListState()
     val scrollBehavior = remember { TopAppBarDefaults.pinnedScrollBehavior() }
 
-    DisposableEffect(key1 = myViewModel) {
-        onDispose {
-            noteWithItems.apply {
-                if (note.title.isEmpty() && note.description.isEmpty() && dataItems.isNullOrEmpty()) {
-                    myViewModel.deleteNote(note.id)
-                    Toast.makeText(context, "Removed Empty Note", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
@@ -72,13 +63,19 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
             NoteExpandedTopBar(
                 note = noteWithItems.note,
                 scrollBehavior = scrollBehavior,
-                onNavBack = onNavBack,
-                onDeleteNote = {
-                    myViewModel.apply {
-                        tempSavedNote = noteWithItems
-                        deleteNote(noteId)
+                onNavBack = {
+                    onNavBack()
+                    noteWithItems.apply {
+                        if (note.title.isEmpty() && note.description.isEmpty() && dataItems.isNullOrEmpty()) {
+                            myViewModel.deleteNote(note.id)
+                            Toast.makeText(context, "Removed Empty Note", Toast.LENGTH_SHORT).show()
+                        }
                     }
+                },
+                onDeleteNote = {
+                    myViewModel.tempSavedNote = noteWithItems
                     onDeleteNote()
+                    myViewModel.deleteNote(noteId)
                 },
                 onCloneNote = {
                     myViewModel.upsertNoteAndData(
@@ -198,7 +195,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                         ) { returnedValue ->
                             initialDialogDataItem = null
                             coroutineScope.launch {
-                                PreferenceManager(context).setLastUsedTimeUnit(returnedValue.unit)
+                                myViewModel.setLastUsedTimeUnit(returnedValue.unit)
                                 upsertDataItem(returnedValue)
                                 updateNote(
                                     noteWithItems.note.copy(
@@ -253,6 +250,7 @@ fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, 
                 )
             }
             DropdownMenu(
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface),
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
                 content = {
@@ -283,53 +281,41 @@ fun DataItemUI (
                 indication = rememberRipple()
             )
             .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(text = "Activity:")
             Text(text = dataItem.activity)
         }
+        Spacer(modifier = Modifier.width(8.dp))
         Column {
             Text(text = "Time:")
             Text(
                 text = dataItem.time.toString() +
                         when (dataItem.unit) {
                             0 -> {
-                                if (dataItem.time == 1) {
-                                    " second"
-                                } else {
-                                    " seconds"
-                                }
+                                " second"
                             }
                             1 -> {
-                                if (dataItem.time == 1) {
-                                    " minute"
-                                } else {
-                                    " minutes"
-                                }
+                                " minute"
                             }
                             2 -> {
-                                if (dataItem.time == 1) {
-                                    " hour"
-                                } else {
-                                    " hours"
-                                }
+                                " hour"
                             }
                             else -> {
                                 " unit"
                             }
+                        } +
+                        if (dataItem.time == 1) {
+                            "s"
+                        } else {
+                            ""
                         }
             )
         }
+        Spacer(modifier = Modifier.width(8.dp))
         FilledTonalButton(
-            modifier = Modifier
-                .wrapContentWidth()
-                .height(40.dp),
-            contentPadding = PaddingValues(
-                start = 24.dp,
-                end = 24.dp
-            ),
             onClick = onClickStart
         ) {
             Icon(
@@ -347,7 +333,14 @@ fun DescriptionItemUI(note: NoteItem, onDescriptionClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomStart = 12.dp, bottomEnd = 12.dp))
+            .clip(
+                RoundedCornerShape(
+                    topStart = 0.dp,
+                    topEnd = 0.dp,
+                    bottomStart = 12.dp,
+                    bottomEnd = 12.dp
+                )
+            )
             .clickable(
                 onClick = { onDescriptionClick() },
                 interactionSource = remember { MutableInteractionSource() },
@@ -372,7 +365,7 @@ fun DescriptionItemUI(note: NoteItem, onDescriptionClick: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "last edited: ${
+                text = "created: ${note.creation_date?.let {dateFormatter.format(it.time)}}\nlast edited: ${
                     if (note.last_edited_on?.time != null) {
                         dateFormatter.format(note.last_edited_on.time)
                     } else {
@@ -399,5 +392,7 @@ fun DataItemUITest() {
         time = 12,
         unit = 1
     )
-    DataItemUI(dataItem, {}, {})
+    AppTheme {
+        DataItemUI(dataItem, {}, {})
+    }
 }

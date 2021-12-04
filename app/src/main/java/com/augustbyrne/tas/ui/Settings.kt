@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,17 +23,17 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.augustbyrne.tas.R
 import com.augustbyrne.tas.ui.notes.EditOneFieldDialog
-import com.augustbyrne.tas.ui.timer.PreferenceManager
+import com.augustbyrne.tas.ui.notes.NoteViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsUI(onNavBack: () -> Unit) {
+fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
     val uriHandler = LocalUriHandler.current
     val context = LocalContext.current
     val localCoroutineScope = rememberCoroutineScope()
     var showAdHiderPopup by rememberSaveable { mutableStateOf(false) }
-    val darkModeState by PreferenceManager(context).isDarkThemeFlow.collectAsState(initial = false)
+    val darkModeState by myViewModel.isDarkThemeFlow.observeAsState(initial = false)
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -105,7 +106,7 @@ fun SettingsUI(onNavBack: () -> Unit) {
                     .clickable(
                         onClick = {
                             localCoroutineScope.launch {
-                                PreferenceManager(context).setIsDarkTheme(!darkModeState)
+                                myViewModel.setIsDarkTheme(!darkModeState)
                             }
                         },
                         interactionSource = remember { MutableInteractionSource() },
@@ -123,7 +124,7 @@ fun SettingsUI(onNavBack: () -> Unit) {
                     checked = darkModeState,
                     onCheckedChange = {
                         localCoroutineScope.launch {
-                            PreferenceManager(context).setIsDarkTheme(it)
+                            myViewModel.setIsDarkTheme(it)
                         }
                     }
                 )
@@ -142,7 +143,7 @@ fun SettingsUI(onNavBack: () -> Unit) {
                     onDismissRequest = { showAdHiderPopup = false },
                     onAccepted = { userInput ->
                         localCoroutineScope.launch {
-                            PreferenceManager(context).setShowAds(
+                            myViewModel.setShowAds(
                                 userInput != context.getString(R.string.no_ads_password)
                             )
                             showAdHiderPopup = false
