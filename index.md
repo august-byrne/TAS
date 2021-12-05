@@ -1,5 +1,5 @@
 ---
-layout: default
+head: head
 ---
 ## TAS - Timed Activity System
 
