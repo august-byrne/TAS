@@ -1,3 +1,4 @@
+{% include header.html %}
 ## TAS - Timed Activity System
 
 You can use the [editor on GitHub](https://github.com/august-byrne/TAS/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
