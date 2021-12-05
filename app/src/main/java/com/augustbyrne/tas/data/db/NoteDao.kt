@@ -31,14 +31,14 @@ interface NoteDao {
     @Query("DELETE FROM note_table WHERE id = :key")
     suspend fun deleteNote(key: Int)
 
-    @Query("DELETE FROM data_table WHERE parent_id = :key")
+    @Query("DELETE FROM data_table WHERE id = :key")
     suspend fun deleteData(key: Int)
 
-    @Transaction
+/*    @Transaction
     suspend fun deleteNoteAndData(key: Int) {
         deleteNote(key)
         deleteData(key)
-    }
+    }*/
 
     @Query("SELECT * FROM note_table ORDER BY `creation_date` DESC")
     fun getAllNotes(): Flow<List<NoteItem>>

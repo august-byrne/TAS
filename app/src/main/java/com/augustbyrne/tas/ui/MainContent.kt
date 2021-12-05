@@ -120,32 +120,6 @@ fun MainAppBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, scroll
                     contentDescription = "Sort"
                 )
             }
-/*            var expanded by remember { mutableStateOf(false) }
-            IconButton(onClick = { expanded = true }) {
-                Icon(
-                    imageVector = Icons.Rounded.MoreVert,
-                    contentDescription = "Menu"
-                )
-            }
-            DropdownMenu(
-                modifier = Modifier.background(MaterialTheme.colorScheme.background),
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                content = {
-                    DropdownMenuItem(onClick = {
-                        expanded = false
-                        onNavSettings()
-                    }) {
-                        Text("Settings")
-                    }
-                    Divider()
-                    DropdownMenuItem(onClick = {
-                        expanded = false
-                    }) {
-                        Text("Donate")
-                    }
-                }
-            )*/
         }
     )
 }
@@ -165,10 +139,6 @@ fun MainNavDrawer(drawerState: DrawerState, onNavSettings: () -> Unit, content: 
             Text(
                 modifier = Modifier.padding(8.dp),
                 text = "* Any Drag/Drop (for whole notes or activity items)"
-            )
-            Text(
-                modifier = Modifier.padding(8.dp),
-                text = "* Deleting Individual Activity Items"
             )
             Divider(modifier = Modifier.padding(top = 8.dp))
             ItemButton(

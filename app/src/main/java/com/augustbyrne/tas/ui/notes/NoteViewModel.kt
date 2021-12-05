@@ -66,6 +66,8 @@ class NoteViewModel @Inject constructor(
         repo.cascadeDeleteNote(id)
     }
 
+    suspend fun deleteDataItem(id: Int) = repo.deleteDataItem(id)
+
     fun sortedAllNotesWithItems(sortType: SortType): LiveData<List<NoteWithItems>> {
         return repo.allNotesWithItems.map { list ->
             when (sortType) {

@@ -2,6 +2,7 @@ package com.augustbyrne.tas.ui.notes
 
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.animation.rememberSplineBasedDecay
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -52,7 +53,11 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
         .observeAsState(NoteWithItems(NoteItem(0, null, null, 0, "", ""), listOf()))
     val prevTimeType by myViewModel.lastUsedTimeUnitFlow.observeAsState(initial = 0)
     val listState = rememberLazyListState()
-    val scrollBehavior = remember { TopAppBarDefaults.pinnedScrollBehavior() }
+    val decayAnimationSpec = rememberSplineBasedDecay<Float>()
+    val scrollBehavior = remember(decayAnimationSpec) {
+        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(decayAnimationSpec)
+    }
+    val dateFormatter = rememberSaveable { SimpleDateFormat.getDateTimeInstance() }
 
     Scaffold(
         modifier = Modifier
@@ -69,6 +74,19 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                         if (note.title.isEmpty() && note.description.isEmpty() && dataItems.isNullOrEmpty()) {
                             myViewModel.deleteNote(note.id)
                             Toast.makeText(context, "Removed Empty Note", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                },
+                onClickStart = {
+                    if (!noteWithItems.dataItems.isNullOrEmpty()) {
+                        TimerService.initTimerService(
+                            noteWithItems.note,
+                            noteWithItems.dataItems
+                        )
+                        onNavigateTimerStart()
+                        Intent(context, TimerService::class.java).also {
+                            it.action = "ACTION_START_OR_RESUME_SERVICE"
+                            context.startService(it)
                         }
                     }
                 },
@@ -138,21 +156,44 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                 DataItemUI(
                     dataItem = item,
                     onClickToEdit = { myViewModel.initialDialogDataItem = item },
-                ) {
-                    if (!noteWithItems.dataItems.isNullOrEmpty()) {
-                        TimerService.initTimerService(
-                            noteWithItems.note,
-                            noteWithItems.dataItems,
-                            index
-                        )
-                        onNavigateTimerStart()
-                        Intent(context, TimerService::class.java).also {
-                            it.action = "ACTION_START_OR_RESUME_SERVICE"
-                            context.startService(it)
+                    onClickStart = {
+                        if (!noteWithItems.dataItems.isNullOrEmpty()) {
+                            TimerService.initTimerService(
+                                noteWithItems.note,
+                                noteWithItems.dataItems,
+                                index
+                            )
+                            onNavigateTimerStart()
+                            Intent(context, TimerService::class.java).also {
+                                it.action = "ACTION_START_OR_RESUME_SERVICE"
+                                context.startService(it)
+                            }
+                        }
+                    },
+                    onClickDelete = {
+                        coroutineScope.launch {
+                            myViewModel.deleteDataItem(item.id)
+                            myViewModel.updateNote(
+                                noteWithItems.note.copy(
+                                    last_edited_on = Calendar.getInstance()
+                                )
+                            )
                         }
                     }
-                }
+                )
                 Divider(modifier = Modifier.padding(horizontal = 8.dp))
+            }
+            noteWithItems.note.creation_date?.let {
+                item {
+                    Text(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        textAlign = TextAlign.End,
+                        style = MaterialTheme.typography.bodyMedium,
+                        text = "created: ${dateFormatter.format(it.time)}"
+                    )
+                }
             }
         }
         Box(
@@ -164,7 +205,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                     EditOneFieldDialog(
                         headerName = "Edit ${openEditDialog.name}",
                         fieldName = openEditDialog.name,
-                        maxChars = if (openEditDialog == EditDialogType.Title) 30 else 100,
+                        maxChars = if (openEditDialog == EditDialogType.Title) 26 else 100,
                         singleLine = false,
                         initialValue = if (openEditDialog == EditDialogType.Title) noteWithItems.note.title else noteWithItems.note.description,
                         onDismissRequest = { openEditDialog = EditDialogType.DialogClosed }
@@ -212,8 +253,8 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
 }
 
 @Composable
-fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, onClickTitle: () -> Unit, onNavBack: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit) {
-    SmallTopAppBar(
+fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, onClickTitle: () -> Unit, onNavBack: () -> Unit, onClickStart: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit) {
+    MediumTopAppBar(
         scrollBehavior = scrollBehavior,
         title = {
             Text(
@@ -224,9 +265,8 @@ fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, 
                         onClick = { onClickTitle() },
                         interactionSource = remember { MutableInteractionSource() },
                         indication = rememberRipple()
-                    )
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                maxLines = 2,
+                    ),
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 text = if (note.title.isNotEmpty()) note.title else "Add Title Here"
             )
@@ -243,6 +283,12 @@ fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, 
         },
         actions = {
             var expanded by remember { mutableStateOf(false) }
+            IconButton(onClick = onClickStart) {
+                Icon(
+                    imageVector = Icons.Rounded.PlayArrow,
+                    contentDescription = "Play"
+                )
+            }
             IconButton(onClick = { expanded = true }) {
                 Icon(
                     imageVector = Icons.Rounded.MoreVert,
@@ -270,8 +316,10 @@ fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, 
 fun DataItemUI (
     dataItem: DataItem,
     onClickToEdit: () -> Unit,
-    onClickStart: () -> Unit
+    onClickStart: () -> Unit,
+    onClickDelete: () -> Unit
 ) {
+    var itemExpanded by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -307,7 +355,7 @@ fun DataItemUI (
                                 " unit"
                             }
                         } +
-                        if (dataItem.time == 1) {
+                        if (dataItem.time != 1) {
                             "s"
                         } else {
                             ""
@@ -315,13 +363,35 @@ fun DataItemUI (
             )
         }
         Spacer(modifier = Modifier.width(8.dp))
-        FilledTonalButton(
-            onClick = onClickStart
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.PlayArrow,
-                tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                contentDescription = "Play"
+        Box {
+            IconButton(onClick = { itemExpanded = true }) {
+                Icon(
+                    imageVector = Icons.Rounded.MoreVert,
+                    contentDescription = "Menu"
+                )
+            }
+            DropdownMenu(
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+                expanded = itemExpanded,
+                onDismissRequest = { itemExpanded = false },
+                content = {
+                    DropdownMenuItem(
+                        onClick = {
+                            itemExpanded = false
+                            onClickStart()
+                        }
+                    ) {
+                        Text("Start from Here")
+                    }
+                    DropdownMenuItem(
+                        onClick = {
+                            itemExpanded = false
+                            onClickDelete()
+                        }
+                    ) {
+                        Text("Delete Item")
+                    }
+                }
             )
         }
     }
@@ -333,22 +403,14 @@ fun DescriptionItemUI(note: NoteItem, onDescriptionClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(
-                RoundedCornerShape(
-                    topStart = 0.dp,
-                    topEnd = 0.dp,
-                    bottomStart = 12.dp,
-                    bottomEnd = 12.dp
-                )
-            )
+            .clip(RoundedCornerShape(12.dp))
             .clickable(
                 onClick = { onDescriptionClick() },
                 interactionSource = remember { MutableInteractionSource() },
                 indication = rememberRipple()
             ),
-        shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomStart = 12.dp, bottomEnd = 12.dp),
-        backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-        elevation = 12.dp
+        shape = RoundedCornerShape(12.dp),
+        backgroundColor = MaterialTheme.colorScheme.primaryContainer
     ) {
         Column(
             modifier = Modifier
@@ -359,13 +421,19 @@ fun DescriptionItemUI(note: NoteItem, onDescriptionClick: () -> Unit) {
             Text(
                 modifier = Modifier
                     .fillMaxWidth(),
+                style = MaterialTheme.typography.titleMedium,
+                text = "Description"
+            )
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth(),
                 style = MaterialTheme.typography.bodyLarge,
                 maxLines = 4,
                 text = if (note.description.isNotEmpty()) note.description else "Add Description Here"
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "created: ${note.creation_date?.let {dateFormatter.format(it.time)}}\nlast edited: ${
+                text = "last edited: ${
                     if (note.last_edited_on?.time != null) {
                         dateFormatter.format(note.last_edited_on.time)
                     } else {
@@ -375,7 +443,7 @@ fun DescriptionItemUI(note: NoteItem, onDescriptionClick: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth(),
                 textAlign = TextAlign.End,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
@@ -393,6 +461,6 @@ fun DataItemUITest() {
         unit = 1
     )
     AppTheme {
-        DataItemUI(dataItem, {}, {})
+        DataItemUI(dataItem, {}, {}, {})
     }
 }
