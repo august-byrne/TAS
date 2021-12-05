@@ -1,4 +1,3 @@
-includes: header.html
 ## TAS - Timed Activity System
 
 {% include header.html %}
