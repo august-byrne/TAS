@@ -147,7 +147,7 @@ dependencies {
     // Accompanist Components (temp)
     //implementation 'com.google.accompanist:accompanist-pager:0.21.3-beta'
     //implementation 'com.google.accompanist:accompanist-pager-indicators:0.21.3-beta'
-    implementation "com.google.accompanist:accompanist-flowlayout:0.21.3-beta"
+    implementation 'com.google.accompanist:accompanist-flowlayout:0.21.4-beta'
 
     // UI Tests
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
