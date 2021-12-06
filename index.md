@@ -8,8 +8,7 @@ This project was fully rebuilt from single Activity many Fragment design with xm
 
 #### _[Now on the Google Play Store](https://play.google.com/store/apps/details?id=com.augustbyrne.tas)_
 
-![front_app_page](app_front_page.png)
-![front_timer_page](app_timer_page.png)
+![front_app_page](app_front_page.png) | ![front_timer_page](app_timer_page.png)
 
 ### Markdown
 
