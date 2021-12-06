@@ -4,9 +4,12 @@ layout: default
 
 ## TAS - Timed Activity System
 
-You can use the [editor on GitHub](https://github.com/august-byrne/TAS/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+This project was fully rebuilt from single Activity many Fragment design with xml-based UI, into the new declarative UI coding style of Jetpack Compose. It also makes use of many Jetpack components like Room, DataStore, Lifecycle, and Navigation. It implements MVVM architecture (with Hilt Dagger DI), unidirectional data flow, and Material You (Material Design 3).
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+#### _[Now on the Google Play Store](https://play.google.com/store/apps/details?id=com.augustbyrne.tas)_
+
+![front_app_page](app_front_page.png)
+![front_timer_page](app_timer_page.png)
 
 ### Markdown
 
