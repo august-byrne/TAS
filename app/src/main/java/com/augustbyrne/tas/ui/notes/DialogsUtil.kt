@@ -76,6 +76,7 @@ fun EditOneFieldDialog(headerName: String, fieldName: String? = null, initialVal
                 .wrapContentHeight()) {
                 OutlinedTextField(
                     modifier = Modifier.focusRequester(focusRequester = focusRequester),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
                     label = { if (fieldName != null) Text(fieldName) },
                     value = fieldValue,
                     onValueChange = {
@@ -177,7 +178,7 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
                     } else {
                         "Edit"
                     }
-                } Activity"
+                } activity"
             )
         },
         text = {
@@ -332,7 +333,7 @@ fun SortNotesByDialog(currentSortType: SortType, onValueSelected: (SortType?) ->
             dismissOnClickOutside = true
         ),
         title = {
-            Text("Sort By")
+            Text("Sort by")
         },
         text = {
             Column(
@@ -359,7 +360,7 @@ fun SortNotesByDialog(currentSortType: SortType, onValueSelected: (SortType?) ->
                         }
                     )
                     Spacer(Modifier.width(16.dp))
-                    Text("Creation Date")
+                    Text(text = "Creation date", style = MaterialTheme.typography.bodyLarge)
                 }
                 Row(
                     modifier = Modifier
@@ -379,7 +380,7 @@ fun SortNotesByDialog(currentSortType: SortType, onValueSelected: (SortType?) ->
                         }
                     )
                     Spacer(Modifier.width(16.dp))
-                    Text("Last Edited")
+                    Text(text = "Last edited", style = MaterialTheme.typography.bodyLarge)
                 }
                 Row(
                     modifier = Modifier
@@ -399,10 +400,16 @@ fun SortNotesByDialog(currentSortType: SortType, onValueSelected: (SortType?) ->
                         }
                     )
                     Spacer(Modifier.width(16.dp))
-                    Text("Custom")
+                    Text(text = "Custom", style = MaterialTheme.typography.bodyLarge)
                 }
             }
         },
-        confirmButton = {}
+        confirmButton = {
+            TextButton(
+                onClick = { onValueSelected(null) }
+            ) {
+                Text("Cancel")
+            }
+        }
     )
 }

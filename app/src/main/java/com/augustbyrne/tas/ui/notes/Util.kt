@@ -23,3 +23,7 @@ enum class SortType {
 enum class EditDialogType {
     Title, Description, DialogClosed
 }
+
+enum class DarkMode {
+    System, On, Off
+}

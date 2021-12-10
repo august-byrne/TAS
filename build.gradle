@@ -7,7 +7,7 @@ buildscript {
     }
     dependencies {
         //classpath "androidx.navigation:navigation-safe-args-gradle-plugin:2.3.5"
-        classpath 'com.android.tools.build:gradle:7.0.3'
+        classpath 'com.android.tools.build:gradle:7.0.4'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         //classpath 'com.google.gms:google-services:4.3.6'
         classpath 'com.google.dagger:hilt-android-gradle-plugin:2.37'
@@ -17,7 +17,7 @@ buildscript {
 }
 plugins {
     // Gradle Doctor
-    //id "com.osacky.doctor" version "0.7.3"
+    id "com.osacky.doctor" version "0.7.3"
     // Can I Drop Jetifier
     //id "com.dipien.byebyejetifier" version "1.2.0"
 }

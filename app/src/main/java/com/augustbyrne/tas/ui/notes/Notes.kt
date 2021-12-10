@@ -18,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
@@ -40,8 +41,8 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val scrollBehavior = remember { TopAppBarDefaults.pinnedScrollBehavior() }
-    val sortTypeOrdinal by myViewModel.sortTypeFlow.observeAsState(initial = SortType.Default.ordinal)
-    val sortedNotes by myViewModel.sortedAllNotesWithItems(SortType.values()[sortTypeOrdinal])
+    val sortType by myViewModel.sortTypeFlow.observeAsState(initial = SortType.Default)
+    val sortedNotes by myViewModel.sortedAllNotesWithItems(sortType)
         .observeAsState(initial = null)
     LaunchedEffect(Unit) {
         drawerState.snapTo(DrawerValue.Closed)
@@ -84,7 +85,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Add,
-                        contentDescription = "New Note"
+                        contentDescription = "New note"
                     )
                 }
             },
@@ -130,7 +131,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                                 context.startService(it)
                             }
                         } else {
-                            Toast.makeText(context, "Empty Activity", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Empty activity", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
@@ -141,7 +142,8 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                                 .fillMaxWidth()
                                 .padding(16.dp),
                             text = "You have no routines.\nClick the + below to make one.",
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            color = Color.Gray
                         )
                     }
                 }
@@ -150,11 +152,11 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                 if (myViewModel.openSortPopup) {
                     myViewModel.saveListPosition(listState)
                     SortNotesByDialog(
-                        currentSortType = SortType.values()[sortTypeOrdinal],
+                        currentSortType = sortType,
                         onValueSelected = {
                             if (it != null) {
                                 coroutineScope.launch {
-                                    myViewModel.setSortType(it.ordinal)
+                                    myViewModel.setSortType(it)
                                 }
                             }
                             myViewModel.openSortPopup = false

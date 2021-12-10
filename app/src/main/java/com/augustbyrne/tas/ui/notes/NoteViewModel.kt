@@ -96,11 +96,11 @@ class NoteViewModel @Inject constructor(
     val showAdsFlow: LiveData<Boolean> = preferences.showAdsFlow.asLiveData()
     suspend fun setShowAds(value: Boolean) = preferences.setShowAds(value)
 
-    val isDarkThemeFlow: LiveData<Boolean> = preferences.isDarkThemeFlow.asLiveData()
-    suspend fun setIsDarkTheme(value: Boolean) = preferences.setIsDarkTheme(value)
+    val isDarkThemeFlow: LiveData<DarkMode> = preferences.isDarkThemeFlow.map { DarkMode.values()[it] }.asLiveData()
+    suspend fun setIsDarkTheme(value: DarkMode) = preferences.setIsDarkTheme(value.ordinal)
 
-    val sortTypeFlow: LiveData<Int> = preferences.sortTypeFlow.asLiveData()
-    suspend fun setSortType(value: Int) = preferences.setSortType(value)
+    val sortTypeFlow: LiveData<SortType> = preferences.sortTypeFlow.map { SortType.values()[it] }.asLiveData()
+    suspend fun setSortType(value: SortType) = preferences.setSortType(value.ordinal)
 
     val lastUsedTimeUnitFlow: LiveData<Int> = preferences.lastUsedTimeUnitFlow.asLiveData()
     suspend fun setLastUsedTimeUnit(value: Int) = preferences.setLastUsedTimeUnit(value)

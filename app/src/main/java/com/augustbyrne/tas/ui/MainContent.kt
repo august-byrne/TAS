@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.icons.Icons
@@ -142,7 +141,7 @@ fun MainNavDrawer(drawerState: DrawerState, onNavSettings: () -> Unit, content: 
             )
             Divider(modifier = Modifier.padding(top = 8.dp))
             ItemButton(
-                modifier = Modifier.padding(horizontal = 8.dp),
+                modifier = Modifier.padding(end = 8.dp),
                 icon = Icons.Rounded.Settings,
                 text = "Settings",
                 onClick = onNavSettings
@@ -188,7 +187,7 @@ fun ItemButton(modifier: Modifier = Modifier, icon: ImageVector, text: String, o
         modifier = modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .clip(RoundedCornerShape(CornerSize(30.dp)))
+            .clip(RoundedCornerShape(topStart = 0.dp, bottomStart = 0.dp, topEnd = 30.dp, bottomEnd = 30.dp))
             .clickable(
                 onClick = { onClick() },
                 interactionSource = remember { MutableInteractionSource() },

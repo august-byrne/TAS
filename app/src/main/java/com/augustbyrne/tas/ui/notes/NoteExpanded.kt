@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
@@ -28,7 +26,6 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
@@ -73,7 +70,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                     noteWithItems.apply {
                         if (note.title.isEmpty() && note.description.isEmpty() && dataItems.isNullOrEmpty()) {
                             myViewModel.deleteNote(note.id)
-                            Toast.makeText(context, "Removed Empty Note", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Removed empty note", Toast.LENGTH_SHORT).show()
                         }
                     }
                 },
@@ -100,7 +97,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                         noteWithItems.note.run {
                             copy(
                                 id = 0,
-                                title = title.plus(" - Copy"),
+                                title = title.plus(" - copy"),
                                 last_edited_on = Calendar.getInstance(),
                                 creation_date = Calendar.getInstance()
                             )
@@ -119,12 +116,12 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 text = {
-                    Text(text = "Add Activity")
+                    Text(text = "Add activity")
                        },
                 icon = {
                     Icon(
                         imageVector = Icons.Rounded.Add,
-                        contentDescription = "New Item",
+                        contentDescription = "New item",
                         tint = MaterialTheme.colorScheme.onTertiaryContainer
                     )
                 },
@@ -255,20 +252,20 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
 @Composable
 fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, onClickTitle: () -> Unit, onNavBack: () -> Unit, onClickStart: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit) {
     MediumTopAppBar(
+        modifier = Modifier
+            .clickable(
+                onClick = { onClickTitle() },
+                interactionSource = remember { MutableInteractionSource() },
+                indication = rememberRipple()
+            ),
         scrollBehavior = scrollBehavior,
         title = {
             Text(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(CornerSize(30.dp)))
-                    .clickable(
-                        onClick = { onClickTitle() },
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = rememberRipple()
-                    ),
+                    .fillMaxWidth(),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                text = if (note.title.isNotEmpty()) note.title else "Add Title Here"
+                text = if (note.title.isNotEmpty()) note.title else "Add title here"
             )
         },
         navigationIcon = {
@@ -301,7 +298,7 @@ fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, 
                 onDismissRequest = { expanded = false },
                 content = {
                     DropdownMenuItem(onClick = onCloneNote) {
-                        Text("Clone Note")
+                        Text("Clone note")
                     }
                     DropdownMenuItem(onClick = onDeleteNote) {
                         Text("Delete")
@@ -403,13 +400,11 @@ fun DescriptionItemUI(note: NoteItem, onDescriptionClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
             .clickable(
                 onClick = { onDescriptionClick() },
                 interactionSource = remember { MutableInteractionSource() },
                 indication = rememberRipple()
             ),
-        shape = RoundedCornerShape(12.dp),
         backgroundColor = MaterialTheme.colorScheme.primaryContainer
     ) {
         Column(
@@ -420,18 +415,19 @@ fun DescriptionItemUI(note: NoteItem, onDescriptionClick: () -> Unit) {
         ) {
             Text(
                 modifier = Modifier
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .padding(8.dp),
                 style = MaterialTheme.typography.titleMedium,
                 text = "Description"
             )
             Text(
                 modifier = Modifier
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
                 style = MaterialTheme.typography.bodyLarge,
                 maxLines = 4,
-                text = if (note.description.isNotEmpty()) note.description else "Add Description Here"
+                text = if (note.description.isNotEmpty()) note.description else "Add description here"
             )
-            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "last edited: ${
                     if (note.last_edited_on?.time != null) {

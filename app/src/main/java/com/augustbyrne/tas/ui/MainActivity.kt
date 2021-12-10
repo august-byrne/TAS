@@ -11,6 +11,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Snackbar
 import androidx.compose.material.SnackbarDuration
@@ -41,10 +42,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.augustbyrne.tas.R
-import com.augustbyrne.tas.ui.notes.ExpandedNoteUI
-import com.augustbyrne.tas.ui.notes.NoteListUI
-import com.augustbyrne.tas.ui.notes.NoteViewModel
-import com.augustbyrne.tas.ui.notes.TimerState
+import com.augustbyrne.tas.ui.notes.*
 import com.augustbyrne.tas.ui.timer.NoteTimer
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.timer.orange
@@ -85,13 +83,20 @@ class MainActivity : AppCompatActivity() {
 
         setContent {
             val adState by myViewModel.showAdsFlow.observeAsState(initial = true)
-            val darkModeState by myViewModel.isDarkThemeFlow.observeAsState(initial = false)
+            val darkModeState by myViewModel.isDarkThemeFlow.observeAsState(initial = DarkMode.System)
             val navController = rememberNavController()
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val snackbarHostState = remember { SnackbarHostState() }
             val coroutineScope = rememberCoroutineScope()
+            val systemDarkMode = isSystemInDarkTheme()
 
-            AppTheme(darkModeState) {
+            AppTheme(
+                when(darkModeState){
+                    DarkMode.System -> systemDarkMode
+                    DarkMode.Off -> false
+                    DarkMode.On -> true
+                }
+            ) {
                 LaunchedEffect(Unit) {
                     navigateToTimerIfNeeded(intent, navController)
                 }
