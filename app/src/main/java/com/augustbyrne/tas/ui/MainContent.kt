@@ -9,9 +9,12 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Menu
+import androidx.compose.material.icons.outlined.Notes
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material.icons.rounded.Notes
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.Sort
+import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.augustbyrne.tas.ui.notes.NoteViewModel
 
 /*
@@ -91,53 +95,93 @@ fun MainUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavi
 }
 */
 
-@ExperimentalMaterial3Api
 @Composable
-fun MainAppBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, scrollBehavior: TopAppBarScrollBehavior, onDrawerOpen: () -> Unit) {
-    CenterAlignedTopAppBar(
-        modifier = modifier,
-        scrollBehavior = scrollBehavior,
-        title = {
-            Text("Timed Activity System")
-        },
-        navigationIcon = {
-            IconButton(
-                onClick = onDrawerOpen
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Menu,
-                    contentDescription = "Menu"
-                )
-            }
-        },
-        actions = {
-            IconButton(onClick = {
-                myViewModel.openSortPopup = true
-            }) {
-                Icon(
-                    imageVector = Icons.Rounded.Sort,
-                    contentDescription = "Sort"
-                )
-            }
-        }
-    )
+fun NavBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, navController: NavController) {
+    NavigationBar(modifier = modifier) {
+        NavigationBarItem(
+            icon = {
+                if (myViewModel.selectedNavBarItem == 0) {
+                    Icon(
+                        Icons.Rounded.Notes,
+                        contentDescription = "routines"
+                    )
+                } else {
+                    Icon(
+                        Icons.Outlined.Notes,
+                        contentDescription = "routines"
+                    )
+                }
+            },
+            label = { Text("Routines") },
+            selected = myViewModel.selectedNavBarItem == 0,
+            onClick = {
+                myViewModel.selectedNavBarItem = 0
+                navController.navigate("home")
+            })
+        NavigationBarItem(
+            icon = {
+                if (myViewModel.selectedNavBarItem == 1) {
+                    Icon(
+                        Icons.Rounded.Timer,
+                        contentDescription = "quick timer"
+                    )
+                } else {
+                    Icon(
+                        Icons.Outlined.Timer,
+                        contentDescription = "quick timer"
+                    )
+                }
+            },
+            label = { Text("Timer") },
+            selected = myViewModel.selectedNavBarItem == 1,
+            onClick = {
+                myViewModel.selectedNavBarItem = 1
+                navController.navigate("general_timer")
+            })
+        NavigationBarItem(
+            icon = {
+                if (myViewModel.selectedNavBarItem == 2) {
+                    Icon(
+                        Icons.Rounded.Settings,
+                        contentDescription = "settings"
+                    )
+                } else {
+                    Icon(
+                        Icons.Outlined.Settings,
+                        contentDescription = "settings"
+                    )
+                }
+            },
+            label = { Text("Settings") },
+            selected = myViewModel.selectedNavBarItem == 2,
+            onClick = {
+                myViewModel.selectedNavBarItem = 2
+                navController.navigate("settings")
+            })
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainNavDrawer(drawerState: DrawerState, onNavSettings: () -> Unit, content: @Composable () -> Unit) {
+fun MainNavDrawer(drawerState: DrawerState, onNavSettings: () -> Unit, onNavTimer: () -> Unit, content: @Composable () -> Unit) {
     NavigationDrawer(
         drawerState = drawerState,
         gesturesEnabled = true,
         drawerContent = {
             Text(
                 modifier = Modifier.padding(vertical = 16.dp, horizontal = 24.dp),
-                text = "What doesn't work yet",
+                text = "TAS",
                 style = MaterialTheme.typography.titleLarge
             )
-            Text(
+/*            Text(
                 modifier = Modifier.padding(8.dp),
                 text = "* Any Drag/Drop (for whole notes or activity items)"
+            )*/
+            ItemButton(
+                modifier = Modifier.padding(end = 8.dp),
+                icon = Icons.Rounded.Timer,
+                text = "Quick Timer",
+                onClick = onNavTimer
             )
             Divider(modifier = Modifier.padding(top = 8.dp))
             ItemButton(
@@ -187,7 +231,14 @@ fun ItemButton(modifier: Modifier = Modifier, icon: ImageVector, text: String, o
         modifier = modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .clip(RoundedCornerShape(topStart = 0.dp, bottomStart = 0.dp, topEnd = 30.dp, bottomEnd = 30.dp))
+            .clip(
+                RoundedCornerShape(
+                    topStart = 0.dp,
+                    bottomStart = 0.dp,
+                    topEnd = 30.dp,
+                    bottomEnd = 30.dp
+                )
+            )
             .clickable(
                 onClick = { onClick() },
                 interactionSource = remember { MutableInteractionSource() },

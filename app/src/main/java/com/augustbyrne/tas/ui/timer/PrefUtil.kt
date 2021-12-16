@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
-// At the top level of your kotlin file:
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "com.augustbyrne.tas.preferences")
 
 class PreferenceManager @Inject constructor(

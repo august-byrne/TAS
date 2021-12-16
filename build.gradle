@@ -17,7 +17,7 @@ buildscript {
 }
 plugins {
     // Gradle Doctor
-    id "com.osacky.doctor" version "0.7.3"
+    //id "com.osacky.doctor" version "0.7.3"
     // Can I Drop Jetifier
     //id "com.dipien.byebyejetifier" version "1.2.0"
 }

@@ -3,25 +3,9 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/drawable/ic_baseline_drag_indicator_24.xml" value="0.1" />
-        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/drawable/ic_baseline_play_arrow_24.xml" value="0.1" />
-        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/drawable/ic_launcher_background.xml" value="0.1" />
-        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/drawable/ic_launcher_foreground.xml" value="0.15798045602605862" />
-        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/drawable/ic_time_blocking.xml" value="0.10972222222222222" />
+        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/drawable/pause.xml" value="0.79375" />
+        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/drawable/play.xml" value="0.79375" />
         <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/font/noto_sans.xml" value="0.1" />
-        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/activity_main.xml" value="0.13819444444444445" />
-        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/content_main.xml" value="0.1493421052631579" />
-        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/data_item.xml" value="0.176" />
-        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/nav_header_main.xml" value="0.1" />
-        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/note_data.xml" value="0.14788273615635178" />
-        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/note_data_header.xml" value="0.264" />
-        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/note_item.xml" value="0.2" />
-        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/notes_list.xml" value="0.14788273615635178" />
-        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/sleep.xml" value="0.1493421052631579" />
-        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/layout/timer.xml" value="0.14788273615635178" />
-        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/menu/activity_main_drawer.xml" value="0.13163265306122449" />
-        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/menu/app_bar_menu.xml" value="0.1" />
-        <entry key="..\:/Users/August/AndroidStudioProjects/ProtoSuite/app/src/main/res/menu/note_bar_menu.xml" value="0.1" />
       </map>
     </option>
   </component>

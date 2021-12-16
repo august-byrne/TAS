@@ -101,7 +101,7 @@ private const val PROGRESS_FULL_DEGREES = 360f
 // on a button press save TimerState to preferences
 // on TimerState.Stopped, nothing, Paused, return value to timer, running, create time left value and start countdown timer
 @Composable
-fun NoteTimer(onNavBack: () -> Unit) {
+fun NoteTimer(onNavBack: () -> Unit, onNavTimerSettings: () -> Unit) {
     val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     val itemIndex: Int by TimerService.itemIndex.observeAsState(0)
@@ -111,7 +111,7 @@ fun NoteTimer(onNavBack: () -> Unit) {
     } else {
         (timerLengthMilli.div(1000) + 1).coerceIn(0, totalTimerLengthMilli.div(1000))
     }
-    val hour = timerLengthAdjusted.div(60 * 60)
+    val hour = timerLengthAdjusted.div(3600)
     val min = timerLengthAdjusted.div(60).mod(60)
     val sec = timerLengthAdjusted.mod(60)
     val formattedTimerLength: String = String.format("%02d:%02d:%02d", hour, min, sec)
@@ -156,7 +156,10 @@ fun NoteTimer(onNavBack: () -> Unit) {
                     expanded = expanded,
                     onDismissRequest = { expanded = false },
                     content = {
-                        DropdownMenuItem(onClick = { expanded = false }) {
+                        DropdownMenuItem(onClick = {
+                            expanded = false
+                            onNavTimerSettings()
+                        }) {
                             Text("Timer Settings")
                         }
                     }
@@ -212,29 +215,31 @@ fun NoteTimer(onNavBack: () -> Unit) {
                     )
                 }
             }
-            FlowRow(
-                mainAxisSize = SizeMode.Expand,
-                mainAxisAlignment = FlowMainAxisAlignment.Center,
-                mainAxisSpacing = 0.dp,
-                crossAxisAlignment = FlowCrossAxisAlignment.Start,
-                crossAxisSpacing = 8.dp
-            ) {
-                for (dataItemIndex in TimerService.currentNoteItems.indices) {
-                    Icon(
-                        modifier = Modifier
-                            .wrapContentSize()
-                            .scale(0.65f)
-                            .clip(CircleShape)
-                            .clickable(
-                                onClick = { TimerService.modifyTimer(dataItemIndex) },
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = rememberRipple()
-                            )
-                            .padding(4.dp),
-                        imageVector = Icons.Default.Circle,
-                        contentDescription = "item marker",
-                        tint = if (itemIndex == dataItemIndex) Color.Green else Color.DarkGray
-                    )
+            if (TimerService.currentNoteItems.size < 1) {
+                FlowRow(
+                    mainAxisSize = SizeMode.Expand,
+                    mainAxisAlignment = FlowMainAxisAlignment.Center,
+                    mainAxisSpacing = 0.dp,
+                    crossAxisAlignment = FlowCrossAxisAlignment.Start,
+                    crossAxisSpacing = 8.dp
+                ) {
+                    for (dataItemIndex in TimerService.currentNoteItems.indices) {
+                        Icon(
+                            modifier = Modifier
+                                .wrapContentSize()
+                                .scale(0.64f)
+                                .clip(CircleShape)
+                                .clickable(
+                                    onClick = { TimerService.modifyTimer(dataItemIndex) },
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = rememberRipple()
+                                )
+                                .padding(4.dp),
+                            imageVector = Icons.Default.Circle,
+                            contentDescription = "item marker",
+                            tint = if (itemIndex == dataItemIndex) Color.Green else Color.DarkGray
+                        )
+                    }
                 }
             }
             Text(

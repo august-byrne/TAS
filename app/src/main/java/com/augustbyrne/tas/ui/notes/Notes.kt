@@ -12,6 +12,8 @@ import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Menu
+import androidx.compose.material.icons.rounded.Sort
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,7 +28,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.augustbyrne.tas.data.db.entities.NoteItem
-import com.augustbyrne.tas.ui.MainAppBar
 import com.augustbyrne.tas.ui.MainNavDrawer
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
@@ -35,7 +36,7 @@ import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavigateTimerStart: () -> Unit, onNavSettings: () -> Unit) {
+fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavigateTimerStart: () -> Unit, onNavSettings: () -> Unit, onNavQuickTimer: () -> Unit) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -51,6 +52,9 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
         drawerState = drawerState,
         onNavSettings = {
             onNavSettings()
+        },
+        onNavTimer = {
+            onNavQuickTimer()
         }
     ) {
         Scaffold(
@@ -59,12 +63,33 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                 // attach as a parent to the nested scroll system
                 .nestedScroll(scrollBehavior.nestedScrollConnection),
             topBar = {
-                MainAppBar(
-                    myViewModel = myViewModel,
+                CenterAlignedTopAppBar(
                     scrollBehavior = scrollBehavior,
-                    onDrawerOpen = {
-                        coroutineScope.launch {
-                            drawerState.open()
+                    title = {
+                        Text("Timed Activity System")
+                    },
+                    navigationIcon = {
+                        IconButton(
+                            onClick = {
+                                coroutineScope.launch {
+                                    drawerState.open()
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Menu,
+                                contentDescription = "Open Navigation Drawer",
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = {
+                            myViewModel.openSortPopup = true
+                        }) {
+                            Icon(
+                                imageVector = Icons.Rounded.Sort,
+                                contentDescription = "Sort"
+                            )
                         }
                     }
                 )
@@ -206,7 +231,9 @@ fun NoteItemUI (
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    modifier = Modifier.align(Alignment.Top).weight(1f),
+                    modifier = Modifier
+                        .align(Alignment.Top)
+                        .weight(1f),
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodyMedium,

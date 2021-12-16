@@ -97,6 +97,21 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
                     style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray)
                 )
             }
+/*            Text(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .clickable(
+                        onClick = {
+                            showColorPopup = true
+                        },
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple()
+                    )
+                    .padding(16.dp),
+                text = "Timer Background",
+                style = MaterialTheme.typography.bodyLarge
+            )*/
             Divider(modifier = Modifier.fillMaxWidth())
             Text(
                 modifier = Modifier

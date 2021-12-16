@@ -65,8 +65,8 @@ class TimerService : LifecycleService() {
         }
 
         // Create a media session. NotificationCompat.MediaStyle
-        // PlayerService is your own Service or Activity responsible for media playback.
-        val mediaSession = MediaSessionCompat(this, "PlayerService")
+        // TimerService is our Service or Activity responsible for media playback.
+        val mediaSession = MediaSessionCompat(this, "TimerService")
 
         // Create a MediaStyle object and supply your media session token to it.
         val mediaStyle = androidx.media.app.NotificationCompat.MediaStyle()
@@ -76,7 +76,7 @@ class TimerService : LifecycleService() {
         val notificationBuilder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setAutoCancel(false)
             .setOngoing(true)
-            .setSmallIcon(R.drawable.ic_baseline_play_arrow_24)
+            .setSmallIcon(R.drawable.play)
             .setContentTitle(currentNote.title)
             .setColor(yellow100.toArgb())
             .setColorized(true)

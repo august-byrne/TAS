@@ -121,11 +121,9 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                 icon = {
                     Icon(
                         imageVector = Icons.Rounded.Add,
-                        contentDescription = "New item",
-                        tint = MaterialTheme.colorScheme.onTertiaryContainer
+                        contentDescription = "New item"
                     )
                 },
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                 onClick = {
                     myViewModel.initialDialogDataItem = DataItem(
                         id = 0,

@@ -44,6 +44,7 @@ import androidx.navigation.compose.rememberNavController
 import com.augustbyrne.tas.R
 import com.augustbyrne.tas.ui.notes.*
 import com.augustbyrne.tas.ui.timer.NoteTimer
+import com.augustbyrne.tas.ui.timer.QuickTimer
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.timer.orange
 import com.augustbyrne.tas.ui.values.AppTheme
@@ -89,9 +90,8 @@ class MainActivity : AppCompatActivity() {
             val snackbarHostState = remember { SnackbarHostState() }
             val coroutineScope = rememberCoroutineScope()
             val systemDarkMode = isSystemInDarkTheme()
-
             AppTheme(
-                when(darkModeState){
+                when (darkModeState) {
                     DarkMode.System -> systemDarkMode
                     DarkMode.Off -> false
                     DarkMode.On -> true
@@ -104,20 +104,20 @@ class MainActivity : AppCompatActivity() {
                     Column(
                         verticalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        Row(
+                        NavGraph(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .weight(1f)
-                        ) {
-                            NavGraph(
-                                myViewModel,
-                                coroutineScope,
-                                navController,
-                                snackbarHostState
-                            )
-                        }
+                                .weight(1f),
+                            viewModel = myViewModel,
+                            coroutineScope = coroutineScope,
+                            navController = navController,
+                            snackbarState = snackbarHostState
+                        )
                         CollapsedTimerUI(navController, navBackStackEntry)
-                        if (adState) {
+/*                        if (navBackStackEntry?.destination?.id != navController.findDestination("note_timer")!!.id) {
+                            NavBar(navController = navController, myViewModel = myViewModel)
+                        }*/
+                        if (adState /*&& navBackStackEntry?.destination?.id == navController.findDestination("note_timer")!!.id*/) {
                             AndroidView(
                                 modifier = Modifier.fillMaxWidth(),
                                 factory = { context ->
@@ -164,11 +164,15 @@ class MainActivity : AppCompatActivity() {
 }
 
 @Composable
-fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navController: NavHostController, snackbarHostState: SnackbarHostState) {
-    NavHost(navController = navController, startDestination = "home") {
+fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineScope: CoroutineScope, navController: NavHostController, snackbarState: SnackbarHostState) {
+    NavHost(
+        modifier = modifier,
+        navController = navController,
+        startDestination = "home"
+    ) {
         composable("home") {
             NoteListUI(
-                myViewModel,
+                viewModel,
                 { noteId: Int ->
                     navController.navigate("note_expanded/$noteId")
                 },
@@ -177,6 +181,9 @@ fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navCont
                 },
                 {
                     navController.navigate("settings")
+                },
+                {
+                    navController.navigate("general_timer")
                 }
             )
         }
@@ -192,14 +199,14 @@ fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navCont
             val noteId = it.arguments?.getInt("noteId") ?: 0
             ExpandedNoteUI(
                 noteId,
-                myViewModel,
+                viewModel,
                 {
                     navController.navigate("note_timer")
                 },
                 {
                     navController.popBackStack()
                     coroutineScope.launch {
-                        snackbarHostState.showSnackbar(
+                        snackbarState.showSnackbar(
                             message = "Note deleted.",
                             actionLabel = " UNDO",
                             duration = SnackbarDuration.Short
@@ -212,12 +219,26 @@ fun NavGraph(myViewModel: NoteViewModel, coroutineScope: CoroutineScope, navCont
             )
         }
         composable("note_timer") {
-            NoteTimer {
-                navController.popBackStack()
-            }
+            NoteTimer (
+                {
+                    navController.popBackStack()
+                }, {
+                    //TODO: Create Timer Theming Options
+                }
+            )
+        }
+        composable("general_timer") {
+            QuickTimer(
+                {
+                    navController.navigate("note_timer")
+                },
+                {
+                    navController.popBackStack()
+                }
+            )
         }
         composable("settings") {
-            SettingsUI(myViewModel) {
+            SettingsUI(viewModel) {
                 navController.popBackStack()
             }
         }

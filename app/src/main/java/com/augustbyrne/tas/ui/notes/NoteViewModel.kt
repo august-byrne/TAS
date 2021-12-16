@@ -30,13 +30,7 @@ class NoteViewModel @Inject constructor(
      * Room Local Database Here, LiveData for view access, since Flow gives me lifecycle bugs
      */
     // returns noteId. Be aware this does not update nicely with one to many relations
-    suspend fun upsert(item: NoteItem?): Long {
-        return if (item != null) {
-            repo.upsert(item)
-        } else {
-            0
-        }
-    }
+    suspend fun upsert(item: NoteItem): Long = repo.upsert(item)
 
     suspend fun updateNote(item: NoteItem) = repo.updateNote(item)
 
@@ -68,8 +62,8 @@ class NoteViewModel @Inject constructor(
 
     suspend fun deleteDataItem(id: Int) = repo.deleteDataItem(id)
 
-    fun sortedAllNotesWithItems(sortType: SortType): LiveData<List<NoteWithItems>> {
-        return repo.allNotesWithItems.map { list ->
+    fun sortedAllNotesWithItems(sortType: SortType): LiveData<List<NoteWithItems>> =
+        repo.allNotesWithItems.map { list ->
             when (sortType) {
                 SortType.Creation -> {
                     list.sortedByDescending { it.note.creation_date }
@@ -85,7 +79,6 @@ class NoteViewModel @Inject constructor(
                 }
             }
         }.asLiveData()
-    }
 
     fun getNoteWithItemsById(id: Int): LiveData<NoteWithItems> =
         repo.getNoteWithItemsById(id).asLiveData()
@@ -96,11 +89,15 @@ class NoteViewModel @Inject constructor(
     val showAdsFlow: LiveData<Boolean> = preferences.showAdsFlow.asLiveData()
     suspend fun setShowAds(value: Boolean) = preferences.setShowAds(value)
 
-    val isDarkThemeFlow: LiveData<DarkMode> = preferences.isDarkThemeFlow.map { DarkMode.values()[it] }.asLiveData()
-    suspend fun setIsDarkTheme(value: DarkMode) = preferences.setIsDarkTheme(value.ordinal)
+    val isDarkThemeFlow: LiveData<DarkMode> =
+        preferences.isDarkThemeFlow.map { DarkMode.getMode(it) }.asLiveData()
 
-    val sortTypeFlow: LiveData<SortType> = preferences.sortTypeFlow.map { SortType.values()[it] }.asLiveData()
-    suspend fun setSortType(value: SortType) = preferences.setSortType(value.ordinal)
+    suspend fun setIsDarkTheme(value: DarkMode) = preferences.setIsDarkTheme(value.mode)
+
+    val sortTypeFlow: LiveData<SortType> =
+        preferences.sortTypeFlow.map { SortType.getType(it) }.asLiveData()
+
+    suspend fun setSortType(value: SortType) = preferences.setSortType(value.type)
 
     val lastUsedTimeUnitFlow: LiveData<Int> = preferences.lastUsedTimeUnitFlow.asLiveData()
     suspend fun setLastUsedTimeUnit(value: Int) = preferences.setLastUsedTimeUnit(value)
@@ -112,6 +109,7 @@ class NoteViewModel @Inject constructor(
     var tempSavedNote: NoteWithItems? = null
     var openSortPopup by mutableStateOf(false)
     var openEditDialog by mutableStateOf(EditDialogType.DialogClosed)
+    var selectedNavBarItem by mutableStateOf(0)
 
     private var listState: LazyListState = LazyListState()
     fun saveListPosition(newListState: LazyListState) {
