@@ -97,15 +97,8 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
             floatingActionButton = {
                 FloatingActionButton(
                     onClick = {
-                        coroutineScope.launch {
-                            onNavigate(
-                                myViewModel.upsert(
-                                    NoteItem(0, Calendar.getInstance(), null, 0, "", "")
-                                ).toInt()
-                            )
-                            myViewModel.saveListPosition(LazyListState())
-                        }
-
+                        myViewModel.saveListPosition(LazyListState())
+                        myViewModel.openEditDialog = true
                     }
                 ) {
                     Icon(
@@ -174,19 +167,42 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                 }
             }
             Box(modifier = Modifier.fillMaxSize()) {
-                if (myViewModel.openSortPopup) {
-                    myViewModel.saveListPosition(listState)
-                    SortNotesByDialog(
-                        currentSortType = sortType,
-                        onValueSelected = {
-                            if (it != null) {
-                                coroutineScope.launch {
-                                    myViewModel.setSortType(it)
+                myViewModel.apply {
+                    if (openSortPopup) {
+                        saveListPosition(listState)
+                        SortNotesByDialog(
+                            currentSortType = sortType,
+                            onValueSelected = {
+                                if (it != null) {
+                                    coroutineScope.launch {
+                                        setSortType(it)
+                                    }
                                 }
+                                openSortPopup = false
                             }
-                            myViewModel.openSortPopup = false
+                        )
+                    }
+                    if (openEditDialog) {
+                        EditExpandedNoteHeaderDialog(
+                            onDismissRequest = { openEditDialog = false }
+                        ) { returnedValue ->
+                            coroutineScope.launch {
+                                onNavigate(
+                                    myViewModel.upsert(
+                                        NoteItem(
+                                            0,
+                                            Calendar.getInstance(),
+                                            null,
+                                            0,
+                                            returnedValue.title,
+                                            returnedValue.description
+                                        )
+                                    ).toInt()
+                                )
+                                openEditDialog = false
+                            }
                         }
-                    )
+                    }
                 }
             }
         }

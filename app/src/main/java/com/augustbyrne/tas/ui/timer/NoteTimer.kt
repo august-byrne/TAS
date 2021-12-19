@@ -215,7 +215,7 @@ fun NoteTimer(onNavBack: () -> Unit, onNavTimerSettings: () -> Unit) {
                     )
                 }
             }
-            if (TimerService.currentNoteItems.size < 1) {
+            if (TimerService.currentNoteItems.size != 1) {
                 FlowRow(
                     mainAxisSize = SizeMode.Expand,
                     mainAxisAlignment = FlowMainAxisAlignment.Center,

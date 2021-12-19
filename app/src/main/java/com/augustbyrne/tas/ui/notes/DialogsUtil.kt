@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.augustbyrne.tas.data.db.entities.DataItem
+import com.augustbyrne.tas.data.db.entities.NoteItem
 
 /**
  * A reusable Dialog with a single text entry field that follows Material Design 3 specifications
@@ -126,6 +127,130 @@ fun EditOneFieldDialog(headerName: String, fieldName: String? = null, initialVal
         confirmButton = {
             TextButton(
                 onClick = { onAccepted(fieldValue.text) }
+            ) {
+                Text("Ok")
+            }
+        }
+    )
+}
+
+@Composable
+fun EditExpandedNoteHeaderDialog(initialValue: NoteItem = NoteItem(0,null,null,0,"",""), onDismissRequest: () -> Unit, onAccepted: (returnedValue: NoteItem) -> Unit) {
+    val titleMaxChars = 26
+    val descriptionMaxChars = 100
+    var titleFieldValue by remember {
+        mutableStateOf(
+            TextFieldValue(
+                text = initialValue.title,
+                selection = TextRange(initialValue.title.length)
+            )
+        )
+    }
+    var descriptionFieldValue by remember {
+        mutableStateOf(
+            TextFieldValue(
+                text = initialValue.description,
+                selection = TextRange(initialValue.description.length)
+            )
+        )
+    }
+    val focusManager = LocalFocusManager.current
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = false
+        ),
+        title = {
+            Text("${if (initialValue.id == 0) "New" else "Edit"} routine")
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+            ) {
+                OutlinedTextField(
+                    modifier = Modifier.focusRequester(focusRequester = focusRequester),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
+                    label = { Text("Title") },
+                    value = titleFieldValue,
+                    onValueChange = {
+                        if (it.text.length <= titleMaxChars) {
+                            titleFieldValue = it
+                        }
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.moveFocus(FocusDirection.Next)
+                        }
+                    )
+                )
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End,
+                    text = "${titleFieldValue.text.length}/$titleMaxChars"
+                )
+                OutlinedTextField(
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
+                    label = { Text("Description") },
+                    value = descriptionFieldValue,
+                    onValueChange = {
+                        if (it.text.length <= descriptionMaxChars) {
+                            descriptionFieldValue = it
+                        }
+                    },
+                    maxLines = 5,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            onAccepted(
+                                initialValue.copy(
+                                    title = titleFieldValue.text,
+                                    description = descriptionFieldValue.text
+                                )
+                            )
+                            focusManager.clearFocus()
+                        }
+                    )
+                )
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End,
+                    text = "${descriptionFieldValue.text.length}/$descriptionMaxChars"
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismissRequest
+            ) {
+                Text("Cancel")
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onAccepted(
+                        initialValue.copy(
+                            title = titleFieldValue.text,
+                            description = descriptionFieldValue.text
+                        )
+                    )
+                    focusManager.clearFocus()
+                }
             ) {
                 Text("Ok")
             }

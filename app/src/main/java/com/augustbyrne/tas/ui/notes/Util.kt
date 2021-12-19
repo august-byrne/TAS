@@ -23,10 +23,6 @@ enum class TimerState {
     Stopped, Paused, Running
 }
 
-enum class EditDialogType {
-    Title, Description, DialogClosed
-}
-
 /**
  * Stored Enum Classes
  */

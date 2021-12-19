@@ -10,15 +10,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.Card
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -55,6 +51,13 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
         TopAppBarDefaults.exitUntilCollapsedScrollBehavior(decayAnimationSpec)
     }
     val dateFormatter = rememberSaveable { SimpleDateFormat.getDateTimeInstance() }
+    val lastEdited = rememberSaveable {
+        if (noteWithItems.note.last_edited_on != null) {
+            "last edited: ${dateFormatter.format(noteWithItems.note.last_edited_on)}"
+        } else {
+            "last edited: never"
+        }
+    }
 
     Scaffold(
         modifier = Modifier
@@ -107,9 +110,6 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                         }
                     )
                     onNavBack()
-                },
-                onClickTitle = {
-                    myViewModel.openEditDialog = EditDialogType.Title
                 }
             )
         },
@@ -143,8 +143,76 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             item {
-                DescriptionItemUI(noteWithItems.note) {
-                    myViewModel.openEditDialog = EditDialogType.Description
+                Column(
+                    modifier = Modifier
+                        .wrapContentSize()
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                ) {
+                    Text(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp, start = 16.dp),
+                        style = MaterialTheme.typography.bodyLarge,
+                        maxLines = 4,
+                        text = noteWithItems.note.description
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        IconButton(onClick = {
+                            if (!noteWithItems.dataItems.isNullOrEmpty()) {
+                                TimerService.initTimerService(
+                                    noteWithItems.note,
+                                    noteWithItems.dataItems.shuffled()
+                                )
+                                onNavigateTimerStart()
+                                Intent(context, TimerService::class.java).also {
+                                    it.action = "ACTION_START_OR_RESUME_SERVICE"
+                                    context.startService(it)
+                                }
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Rounded.Shuffle,
+                                contentDescription = "shuffle play"
+                            )
+                        }
+                        IconButton(onClick = {
+                            myViewModel.openEditDialog = true
+                        }) {
+                            Icon(
+                                imageVector = Icons.Rounded.Edit,
+                                contentDescription = "edit title and description"
+                            )
+                        }
+                    }
+                }
+            }
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "${noteWithItems.dataItems.size} item" +
+                                if (noteWithItems.dataItems.size != 1) {
+                                    "s"
+                                } else {
+                                    ""
+                                }
+                    )
+                    Text(
+                        text = lastEdited,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             }
             itemsIndexed(noteWithItems.dataItems) { index: Int, item: DataItem ->
@@ -196,30 +264,20 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
             contentAlignment = Alignment.Center
         ) {
             myViewModel.apply {
-                if (openEditDialog != EditDialogType.DialogClosed) {
-                    EditOneFieldDialog(
-                        headerName = "Edit ${openEditDialog.name}",
-                        fieldName = openEditDialog.name,
-                        maxChars = if (openEditDialog == EditDialogType.Title) 26 else 100,
-                        singleLine = false,
-                        initialValue = if (openEditDialog == EditDialogType.Title) noteWithItems.note.title else noteWithItems.note.description,
-                        onDismissRequest = { openEditDialog = EditDialogType.DialogClosed }
+                if (openEditDialog) {
+                    EditExpandedNoteHeaderDialog(
+                        initialValue = noteWithItems.note,
+                        onDismissRequest = { openEditDialog = false }
                     ) { returnedValue ->
                         coroutineScope.launch {
                             updateNote(
-                                if (openEditDialog == EditDialogType.Title) {
-                                    noteWithItems.note.copy(
-                                        title = returnedValue,
-                                        last_edited_on = Calendar.getInstance()
-                                    )
-                                } else {
-                                    noteWithItems.note.copy(
-                                        description = returnedValue,
-                                        last_edited_on = Calendar.getInstance()
-                                    )
-                                }
+                                noteWithItems.note.copy(
+                                    title = returnedValue.title,
+                                    description = returnedValue.description,
+                                    last_edited_on = Calendar.getInstance()
+                                )
                             )
-                            openEditDialog = EditDialogType.DialogClosed
+                            openEditDialog = false
                         }
                     }
                 }
@@ -248,14 +306,8 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
 }
 
 @Composable
-fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, onClickTitle: () -> Unit, onNavBack: () -> Unit, onClickStart: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit) {
+fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, onNavBack: () -> Unit, onClickStart: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit) {
     MediumTopAppBar(
-        modifier = Modifier
-            .clickable(
-                onClick = { onClickTitle() },
-                interactionSource = remember { MutableInteractionSource() },
-                indication = rememberRipple()
-            ),
         scrollBehavior = scrollBehavior,
         title = {
             Text(
@@ -387,57 +439,6 @@ fun DataItemUI (
                         Text("Delete Item")
                     }
                 }
-            )
-        }
-    }
-}
-
-@Composable
-fun DescriptionItemUI(note: NoteItem, onDescriptionClick: () -> Unit) {
-    val dateFormatter = rememberSaveable { SimpleDateFormat.getDateTimeInstance() }
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(
-                onClick = { onDescriptionClick() },
-                interactionSource = remember { MutableInteractionSource() },
-                indication = rememberRipple()
-            ),
-        backgroundColor = MaterialTheme.colorScheme.primaryContainer
-    ) {
-        Column(
-            modifier = Modifier
-                .wrapContentHeight()
-                .fillMaxWidth()
-                .padding(8.dp)
-        ) {
-            Text(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                style = MaterialTheme.typography.titleMedium,
-                text = "Description"
-            )
-            Text(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
-                style = MaterialTheme.typography.bodyLarge,
-                maxLines = 4,
-                text = if (note.description.isNotEmpty()) note.description else "Add description here"
-            )
-            Text(
-                text = "last edited: ${
-                    if (note.last_edited_on?.time != null) {
-                        dateFormatter.format(note.last_edited_on.time)
-                    } else {
-                        "never"
-                    }
-                }",
-                modifier = Modifier
-                    .fillMaxWidth(),
-                textAlign = TextAlign.End,
-                style = MaterialTheme.typography.bodyMedium
             )
         }
     }

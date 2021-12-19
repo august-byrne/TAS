@@ -39,21 +39,17 @@ class NoteViewModel @Inject constructor(
     fun upsertNoteAndData(noteItem: NoteItem, dataItems: MutableList<DataItem>) =
         CoroutineScope(Dispatchers.Main).launch {
             if (noteItem.id == 0) {
-                val noteDataId = repo.upsert(noteItem)
-                dataItems.replaceAll { dataItem ->
-                    dataItem.copy(
-                        id = dataItem.id,
-                        parent_id = noteDataId.toInt(),
-                        activity = dataItem.activity,
-                        order = dataItems.lastIndex - dataItems.indexOf(dataItem),
-                        time = dataItem.time
+                val noteDataId = repo.upsert(noteItem).toInt()
+                dataItems.replaceAll {
+                    it.copy(
+                        parent_id = noteDataId,
+                        order = dataItems.lastIndex - dataItems.indexOf(it)
                     )
                 }
-                repo.upsertData(dataItems)
             } else {
                 repo.upsert(noteItem)
-                repo.upsertData(dataItems)
             }
+            repo.upsertData(dataItems)
         }
 
     fun deleteNote(id: Int) = CoroutineScope(Dispatchers.Main).launch {
@@ -108,7 +104,7 @@ class NoteViewModel @Inject constructor(
     var initialDialogDataItem: DataItem? by mutableStateOf(null)
     var tempSavedNote: NoteWithItems? = null
     var openSortPopup by mutableStateOf(false)
-    var openEditDialog by mutableStateOf(EditDialogType.DialogClosed)
+    var openEditDialog by mutableStateOf(false)
     var selectedNavBarItem by mutableStateOf(0)
 
     private var listState: LazyListState = LazyListState()
