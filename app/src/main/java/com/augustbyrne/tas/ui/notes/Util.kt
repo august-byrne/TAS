@@ -1,18 +1,19 @@
 package com.augustbyrne.tas.ui.notes
 
 import androidx.room.TypeConverter
-import java.util.*
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 /**
  * Type Converters
  */
 class Converters {
     @TypeConverter
-    fun toCalendar(l: Long?): Calendar? =
-        if (l == null) null else Calendar.getInstance().apply { timeInMillis = l }
+    fun toLocalDateTime(s: String?): LocalDateTime? = s?.let { LocalDateTime.parse(s) }
 
     @TypeConverter
-    fun fromCalendar(c: Calendar?): Long? = c?.time?.time
+    fun fromLocalDateTime(l: LocalDateTime?): String? =
+        l?.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
 }
 
 /**

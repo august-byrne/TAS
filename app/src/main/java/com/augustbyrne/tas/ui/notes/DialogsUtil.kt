@@ -135,7 +135,7 @@ fun EditOneFieldDialog(headerName: String, fieldName: String? = null, initialVal
 }
 
 @Composable
-fun EditExpandedNoteHeaderDialog(initialValue: NoteItem = NoteItem(0,null,null,0,"",""), onDismissRequest: () -> Unit, onAccepted: (returnedValue: NoteItem) -> Unit) {
+fun EditExpandedNoteHeaderDialog(initialValue: NoteItem = NoteItem(), onDismissRequest: () -> Unit, onAccepted: (returnedValue: NoteItem) -> Unit) {
     val titleMaxChars = 26
     val descriptionMaxChars = 100
     var titleFieldValue by remember {

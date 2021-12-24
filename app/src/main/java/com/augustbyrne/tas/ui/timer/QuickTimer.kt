@@ -84,13 +84,14 @@ fun QuickTimer(onNavigateTimerStart: () -> Unit, onNavBack: () -> Unit) {
                 ) {
                     Icon(imageVector = Icons.Rounded.Add, contentDescription = "plus 1 hour")
                 }
-                FilledTonalButton(onClick = {
-                    if (timeValue + 60 >= 35999) {
-                        timeValue = 35999
-                    } else {
-                        timeValue += 60
-                    }
-                },
+                FilledTonalButton(
+                    onClick = {
+                        if (timeValue + 60 >= 35999) {
+                            timeValue = 35999
+                        } else {
+                            timeValue += 60
+                        }
+                    },
                     colors = ButtonDefaults.buttonColors(
                         MaterialTheme.colorScheme.secondaryContainer,
                         MaterialTheme.colorScheme.onSecondaryContainer
@@ -98,13 +99,14 @@ fun QuickTimer(onNavigateTimerStart: () -> Unit, onNavBack: () -> Unit) {
                 ) {
                     Icon(imageVector = Icons.Rounded.Add, contentDescription = "plus 1 minute")
                 }
-                FilledTonalButton(onClick = {
-                    if (timeValue + 1 >= 35999) {
-                        timeValue = 35999
-                    } else {
-                        timeValue += 1
-                    }
-                },
+                FilledTonalButton(
+                    onClick = {
+                        if (timeValue + 1 >= 35999) {
+                            timeValue = 35999
+                        } else {
+                            timeValue += 1
+                        }
+                    },
                     colors = ButtonDefaults.buttonColors(
                         MaterialTheme.colorScheme.secondaryContainer,
                         MaterialTheme.colorScheme.onSecondaryContainer
@@ -125,13 +127,14 @@ fun QuickTimer(onNavigateTimerStart: () -> Unit, onNavBack: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                FilledTonalButton(onClick = {
-                    if (timeValue - 3600 <= 0) {
-                        timeValue = 0
-                    } else {
-                        timeValue -= 3600
-                    }
-                },
+                FilledTonalButton(
+                    onClick = {
+                        if (timeValue - 3600 <= 0) {
+                            timeValue = 0
+                        } else {
+                            timeValue -= 3600
+                        }
+                    },
                     colors = ButtonDefaults.buttonColors(
                         MaterialTheme.colorScheme.tertiaryContainer,
                         MaterialTheme.colorScheme.onTertiaryContainer
@@ -139,13 +142,14 @@ fun QuickTimer(onNavigateTimerStart: () -> Unit, onNavBack: () -> Unit) {
                 ) {
                     Icon(imageVector = Icons.Rounded.Remove, contentDescription = "minus 1 hour")
                 }
-                FilledTonalButton(onClick = {
-                    if (timeValue - 60 <= 0) {
-                        timeValue = 0
-                    } else {
-                        timeValue -= 60
-                    }
-                },
+                FilledTonalButton(
+                    onClick = {
+                        if (timeValue - 60 <= 0) {
+                            timeValue = 0
+                        } else {
+                            timeValue -= 60
+                        }
+                    },
                     colors = ButtonDefaults.buttonColors(
                         MaterialTheme.colorScheme.tertiaryContainer,
                         MaterialTheme.colorScheme.onTertiaryContainer
@@ -153,13 +157,14 @@ fun QuickTimer(onNavigateTimerStart: () -> Unit, onNavBack: () -> Unit) {
                 ) {
                     Icon(imageVector = Icons.Rounded.Remove, contentDescription = "minus 1 minute")
                 }
-                FilledTonalButton(onClick = {
-                    if (timeValue - 1 <= 0) {
-                        timeValue = 0
-                    } else {
-                        timeValue -= 1
-                    }
-                },
+                FilledTonalButton(
+                    onClick = {
+                        if (timeValue - 1 <= 0) {
+                            timeValue = 0
+                        } else {
+                            timeValue -= 1
+                        }
+                    },
                     colors = ButtonDefaults.buttonColors(
                         MaterialTheme.colorScheme.tertiaryContainer,
                         MaterialTheme.colorScheme.onTertiaryContainer
@@ -178,17 +183,8 @@ fun QuickTimer(onNavigateTimerStart: () -> Unit, onNavBack: () -> Unit) {
                     onClick = {
                         if (timeValue != 0) {
                             TimerService.initTimerService(
-                                NoteItem(0, null, null, 0, "Timer", ""),
-                                listOf(
-                                    DataItem(
-                                        0,
-                                        0,
-                                        0,
-                                        "",
-                                        timeValue,
-                                        0
-                                    )
-                                )
+                                NoteItem(title = "Timer"),
+                                listOf(DataItem(time = timeValue))
                             )
                             onNavigateTimerStart()
                             Intent(context, TimerService::class.java).also {

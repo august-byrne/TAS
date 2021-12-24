@@ -19,7 +19,6 @@ import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -34,8 +33,11 @@ import com.augustbyrne.tas.data.db.entities.NoteWithItems
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+
+private val localLongShortFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG, FormatStyle.SHORT)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,20 +45,12 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val noteWithItems by myViewModel.getNoteWithItemsById(noteId)
-        .observeAsState(NoteWithItems(NoteItem(0, null, null, 0, "", ""), listOf()))
+        .observeAsState(NoteWithItems(NoteItem(), listOf()))
     val prevTimeType by myViewModel.lastUsedTimeUnitFlow.observeAsState(initial = 0)
     val listState = rememberLazyListState()
     val decayAnimationSpec = rememberSplineBasedDecay<Float>()
     val scrollBehavior = remember(decayAnimationSpec) {
         TopAppBarDefaults.exitUntilCollapsedScrollBehavior(decayAnimationSpec)
-    }
-    val dateFormatter = rememberSaveable { SimpleDateFormat.getDateTimeInstance() }
-    val lastEdited = rememberSaveable {
-        if (noteWithItems.note.last_edited_on != null) {
-            "last edited: ${dateFormatter.format(noteWithItems.note.last_edited_on)}"
-        } else {
-            "last edited: never"
-        }
     }
 
     Scaffold(
@@ -101,8 +95,8 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                             copy(
                                 id = 0,
                                 title = title.plus(" - copy"),
-                                last_edited_on = Calendar.getInstance(),
-                                creation_date = Calendar.getInstance()
+                                last_edited_on = LocalDateTime.now(),
+                                creation_date = LocalDateTime.now()
                             )
                         },
                         noteWithItems.dataItems.mapTo(mutableListOf()) { dataItem ->
@@ -117,7 +111,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
             ExtendedFloatingActionButton(
                 text = {
                     Text(text = "Add activity")
-                       },
+                },
                 icon = {
                     Icon(
                         imageVector = Icons.Rounded.Add,
@@ -126,11 +120,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                 },
                 onClick = {
                     myViewModel.initialDialogDataItem = DataItem(
-                        id = 0,
                         parent_id = noteId,
-                        order = 0,
-                        activity = "",
-                        time = 0,
                         unit = prevTimeType
                     )
                 }
@@ -209,10 +199,12 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                                     ""
                                 }
                     )
-                    Text(
-                        text = lastEdited,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    noteWithItems.note.last_edited_on?.let {
+                        Text(
+                            text = "last edited: ${it.format(localLongShortFormat)}",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 }
             }
             itemsIndexed(noteWithItems.dataItems) { index: Int, item: DataItem ->
@@ -238,7 +230,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                             myViewModel.deleteDataItem(item.id)
                             myViewModel.updateNote(
                                 noteWithItems.note.copy(
-                                    last_edited_on = Calendar.getInstance()
+                                    last_edited_on = LocalDateTime.now()
                                 )
                             )
                         }
@@ -251,10 +243,10 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                     Text(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(8.dp),
+                            .padding(16.dp),
                         textAlign = TextAlign.End,
                         style = MaterialTheme.typography.bodyMedium,
-                        text = "created: ${dateFormatter.format(it.time)}"
+                        text = "created: ${it.format(localLongShortFormat)}"
                     )
                 }
             }
@@ -274,7 +266,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                                 noteWithItems.note.copy(
                                     title = returnedValue.title,
                                     description = returnedValue.description,
-                                    last_edited_on = Calendar.getInstance()
+                                    last_edited_on = LocalDateTime.now()
                                 )
                             )
                             openEditDialog = false
@@ -293,7 +285,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                                 upsertDataItem(returnedValue)
                                 updateNote(
                                     noteWithItems.note.copy(
-                                        last_edited_on = Calendar.getInstance()
+                                        last_edited_on = LocalDateTime.now()
                                     )
                                 )
                             }

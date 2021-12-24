@@ -1,5 +1,6 @@
 package com.augustbyrne.tas.ui.timer
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.NotificationManager.IMPORTANCE_LOW
@@ -8,16 +9,16 @@ import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.content.Context
 import android.content.Intent
+import android.graphics.drawable.Icon
 import android.media.AudioManager
 import android.media.ToneGenerator
+import android.media.session.MediaSession
 import android.os.Build
 import android.os.CountDownTimer
-import android.support.v4.media.session.MediaSessionCompat
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.toArgb
-import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -29,7 +30,7 @@ import com.augustbyrne.tas.ui.notes.TimerState
 import com.augustbyrne.tas.ui.values.yellow100
 import kotlin.math.pow
 
-// if lifecycle interaction with the service or lifecycleScope is needed, instead implement lifecycleService()
+// Since lifecycle interaction with the service or lifecycleScope is needed, we implement lifecycleService()
 class TimerService : LifecycleService() {
 
     private var isFirstRun = true
@@ -42,7 +43,7 @@ class TimerService : LifecycleService() {
                         startForegroundService()
                         isFirstRun = false
                     } //else {
-                        //Timber.d("Resuming service...")
+                    //Timber.d("Resuming service...")
                     //}
                 }
                 ACTION_PAUSE_SERVICE -> {
@@ -60,35 +61,53 @@ class TimerService : LifecycleService() {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE)
                 as NotificationManager
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            createNotificationChannel(notificationManager)
-        }
+        createNotificationChannel(notificationManager)
 
-        // Create a media session. NotificationCompat.MediaStyle
-        // TimerService is our Service or Activity responsible for media playback.
-        val mediaSession = MediaSessionCompat(this, "TimerService")
+        val mediaSession = MediaSession(this, "TimerService")
 
-        // Create a MediaStyle object and supply your media session token to it.
-        val mediaStyle = androidx.media.app.NotificationCompat.MediaStyle()
+        val mediaStyle = Notification.MediaStyle()
             .setMediaSession(mediaSession.sessionToken)
             .setShowActionsInCompactView(0, 1, 2)
 
-        val notificationBuilder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+        fun actionPrevious(index: Int = 0) = Notification.Action.Builder(
+            Icon.createWithResource(this, R.drawable.previous),
+            "previous",
+            getNotificationPendingIntent("PREV_ITEM", index)
+        )
+
+        fun actionNext(index: Int = 0) = Notification.Action.Builder(
+            Icon.createWithResource(this, R.drawable.next),
+            "next",
+            getNotificationPendingIntent("NEXT_ITEM", index)
+        )
+
+        fun actionPlay(index: Int = 0) = Notification.Action.Builder(
+            Icon.createWithResource(this, R.drawable.play),
+            "play_pause",
+            getNotificationPendingIntent("PLAY", index)
+        )
+
+        fun actionPause(index: Int = 0) = Notification.Action.Builder(
+            Icon.createWithResource(this, R.drawable.pause),
+            "play_pause",
+            getNotificationPendingIntent("PAUSE", index)
+        )
+
+
+        val notificationBuilder = Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setAutoCancel(false)
             .setOngoing(true)
             .setSmallIcon(R.drawable.play)
             .setContentTitle(currentNote.title)
             .setColor(yellow100.toArgb())
             .setColorized(true)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setVisibility(Notification.VISIBILITY_PUBLIC)
             .setContentIntent(getMainActivityPendingIntent())
-            .addAction(
-                R.drawable.previous,
-                "previous",
-                getNotificationPendingIntent("PREV_ITEM", 0)
+            .setActions(
+                actionPrevious().build(),
+                actionPause().build(),
+                actionNext().build()
             )
-            .addAction(R.drawable.pause, "play_pause", getNotificationPendingIntent("PAUSE"))
-            .addAction(R.drawable.next, "next", getNotificationPendingIntent("NEXT_ITEM", 0))
             .setStyle(mediaStyle)
 
         startForeground(NOTIFICATION_ID, notificationBuilder.build())
@@ -99,34 +118,17 @@ class TimerService : LifecycleService() {
             }
         })
 
-        var tempIndex = 0
         itemIndex.observe(this, { index ->
-            tempIndex = index
             notificationBuilder
                 .setContentText(currentNoteItems[index].activity)
-                .clearActions()
-                .addAction(
-                    R.drawable.previous,
-                    "previous",
-                    getNotificationPendingIntent("PREV_ITEM", index)
-                )
-                .addAction(
+                .setActions(
+                    actionPrevious(index).build(),
                     if (timerState.value == TimerState.Running) {
-                        R.drawable.pause
+                        actionPause(index).build()
                     } else {
-                        R.drawable.play
-                           },
-                    "play_pause", getNotificationPendingIntent(
-                        if (timerState.value == TimerState.Running) {
-                            "PAUSE"
-                        } else {
-                            "PLAY"
-                        }
-                    ))
-                .addAction(
-                    R.drawable.next,
-                    "next",
-                    getNotificationPendingIntent("NEXT_ITEM", index)
+                        actionPlay(index).build()
+                    },
+                    actionNext(index).build()
                 )
             if (internalTimerState != TimerState.Stopped) {
                 notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
@@ -141,33 +143,19 @@ class TimerService : LifecycleService() {
                 }
                 TimerState.Paused -> {
                     notificationBuilder
-                        .clearActions()
-                        .addAction(
-                            R.drawable.previous,
-                            "previous",
-                            getNotificationPendingIntent("PREV_ITEM", tempIndex)
-                        )
-                        .addAction(R.drawable.play, "play_pause", getNotificationPendingIntent("PLAY"))
-                        .addAction(
-                            R.drawable.next,
-                            "next",
-                            getNotificationPendingIntent("NEXT_ITEM", tempIndex)
+                        .setActions(
+                            actionPrevious(internalIndex).build(),
+                            actionPlay(internalIndex).build(),
+                            actionNext(internalIndex).build()
                         )
                     notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
                 }
                 TimerState.Running -> {
                     notificationBuilder
-                        .clearActions()
-                        .addAction(
-                            R.drawable.previous,
-                            "previous",
-                            getNotificationPendingIntent("PREV_ITEM", tempIndex)
-                        )
-                        .addAction(R.drawable.pause, "play_pause", getNotificationPendingIntent("PAUSE"))
-                        .addAction(
-                            R.drawable.next,
-                            "next",
-                            getNotificationPendingIntent("NEXT_ITEM", tempIndex)
+                        .setActions(
+                            actionPrevious(internalIndex).build(),
+                            actionPause(internalIndex).build(),
+                            actionNext(internalIndex).build()
                         )
                     startForeground(NOTIFICATION_ID, notificationBuilder.build())
                     //notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
@@ -187,18 +175,17 @@ class TimerService : LifecycleService() {
         FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE
     )
 
-    private fun getNotificationPendingIntent(clickAction: String, index: Int? = null) = PendingIntent.getBroadcast(
-        this,
-        0,
-        Intent(this, NotificationReceiver::class.java)
-            .also {
-                it.action = clickAction
-                if (index != null) {
+    private fun getNotificationPendingIntent(clickAction: String, index: Int) =
+        PendingIntent.getBroadcast(
+            this,
+            0,
+            Intent(this, NotificationReceiver::class.java)
+                .also {
+                    it.action = clickAction
                     it.putExtra("com.augustbyrne.tas.ItemListIndex", index)
-                }
-            },
-        FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE
-    )
+                },
+            FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE
+        )
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun createNotificationChannel(notificationManager: NotificationManager) {
@@ -220,7 +207,7 @@ class TimerService : LifecycleService() {
         const val NOTIFICATION_CHANNEL_NAME = "Tracking"
         const val NOTIFICATION_ID = 1
 
-        var currentNote by mutableStateOf(NoteItem(0, null, null, 0, "", ""))
+        var currentNote by mutableStateOf(NoteItem())
         var currentNoteItems = mutableStateListOf<DataItem>()
 
         private var finalBeep: MutableLiveData<Boolean> = MutableLiveData(false)
@@ -290,6 +277,7 @@ class TimerService : LifecycleService() {
 
         private var tempSavedTimerLengthMilli = 0L
         private var internalTimerState: TimerState = TimerState.Stopped
+        private var internalIndex: Int = 0
 
         fun initTimerService(note: NoteItem, dataItems: List<DataItem>, index: Int = 0) {
             currentNote = note
@@ -327,6 +315,7 @@ class TimerService : LifecycleService() {
         private fun setActiveItemIndex(itemIndex: Int) {
             if (itemIndex >= 0) {
                 serviceItemIndex.value = itemIndex
+                internalIndex = itemIndex
             }
         }
 

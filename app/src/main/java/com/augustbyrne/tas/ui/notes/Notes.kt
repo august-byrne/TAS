@@ -32,7 +32,7 @@ import com.augustbyrne.tas.ui.MainNavDrawer
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
 import kotlinx.coroutines.launch
-import java.util.*
+import java.time.LocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -191,8 +191,8 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                                     myViewModel.upsert(
                                         NoteItem(
                                             0,
-                                            Calendar.getInstance(),
-                                            null,
+                                            LocalDateTime.now(),
+                                            LocalDateTime.now(),
                                             0,
                                             returnedValue.title,
                                             returnedValue.description
@@ -283,8 +283,8 @@ fun NoteItemUITest() {
         title = "This is a title that is way too long",
         description = "Description dsdf hashd fhadhf as dhasdf hasd fhddfd",
         order = 1,
-        last_edited_on = Calendar.getInstance(),
-        creation_date = Calendar.getInstance()
+        last_edited_on = LocalDateTime.now(),
+        creation_date = LocalDateTime.now()
     )
     AppTheme {
         NoteItemUI(note, {}) {}
