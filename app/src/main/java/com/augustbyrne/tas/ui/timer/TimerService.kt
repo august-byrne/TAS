@@ -98,7 +98,6 @@ class TimerService : LifecycleService() {
             .setAutoCancel(false)
             .setOngoing(true)
             .setSmallIcon(R.drawable.play)
-            .setContentTitle(currentNote.title)
             .setColor(yellow100.toArgb())
             .setColorized(true)
             .setVisibility(Notification.VISIBILITY_PUBLIC)
@@ -120,6 +119,7 @@ class TimerService : LifecycleService() {
 
         itemIndex.observe(this, { index ->
             notificationBuilder
+                .setContentTitle(currentNote.title)
                 .setContentText(currentNoteItems[index].activity)
                 .setActions(
                     actionPrevious(index).build(),

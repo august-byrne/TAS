@@ -37,7 +37,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
-private val localLongShortFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG, FormatStyle.SHORT)
+private val myDateTimeFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -201,7 +201,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                     )
                     noteWithItems.note.last_edited_on?.let {
                         Text(
-                            text = "last edited: ${it.format(localLongShortFormat)}",
+                            text = "last edited: ${it.format(myDateTimeFormat)}",
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -246,7 +246,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                             .padding(16.dp),
                         textAlign = TextAlign.End,
                         style = MaterialTheme.typography.bodyMedium,
-                        text = "created: ${it.format(localLongShortFormat)}"
+                        text = "created: ${it.format(myDateTimeFormat)}"
                     )
                 }
             }
