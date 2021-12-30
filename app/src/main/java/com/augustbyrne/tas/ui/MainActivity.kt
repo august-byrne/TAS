@@ -2,6 +2,7 @@ package com.augustbyrne.tas.ui
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ActivityInfo
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -14,7 +15,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Snackbar
-import androidx.compose.material.SnackbarDuration
 import androidx.compose.material.SnackbarHost
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.icons.Icons
@@ -36,27 +36,25 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.navigation.*
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.augustbyrne.tas.R
-import com.augustbyrne.tas.ui.notes.*
-import com.augustbyrne.tas.ui.timer.NoteTimer
-import com.augustbyrne.tas.ui.timer.QuickTimer
+import com.augustbyrne.tas.ui.components.orange
+import com.augustbyrne.tas.ui.notes.NoteViewModel
 import com.augustbyrne.tas.ui.timer.TimerService
-import com.augustbyrne.tas.ui.timer.orange
 import com.augustbyrne.tas.ui.values.AppTheme
 import com.augustbyrne.tas.ui.values.Blue40
 import com.augustbyrne.tas.ui.values.Blue90
+import com.augustbyrne.tas.util.BatteryLevelReceiver
+import com.augustbyrne.tas.util.DarkMode
+import com.augustbyrne.tas.util.TimerState
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -81,6 +79,9 @@ class MainActivity : AppCompatActivity() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         //initialize the mobile ads sdk
         MobileAds.initialize(this) {}
+
+        registerReceiver(BatteryLevelReceiver(), IntentFilter(Intent.ACTION_BATTERY_LOW))
+        registerReceiver(BatteryLevelReceiver(), IntentFilter(Intent.ACTION_BATTERY_OKAY))
 
         setContent {
             val adState by myViewModel.showAdsFlow.observeAsState(initial = true)
@@ -113,7 +114,7 @@ class MainActivity : AppCompatActivity() {
                             navController = navController,
                             snackbarState = snackbarHostState
                         )
-                        CollapsedTimerUI(navController, navBackStackEntry)
+                        CollapsedTimer(navController, navBackStackEntry)
 /*                        if (navBackStackEntry?.destination?.id != navController.findDestination("note_timer")!!.id) {
                             NavBar(navController = navController, myViewModel = myViewModel)
                         }*/
@@ -156,6 +157,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        unregisterReceiver(BatteryLevelReceiver())
+    }
+
     private fun navigateToTimerIfNeeded(intent: Intent?, navController: NavController) {
         if (intent?.action == TimerService.ACTION_SHOW_TRACKING_FRAGMENT) {
             navController.navigate("note_timer")
@@ -164,89 +170,7 @@ class MainActivity : AppCompatActivity() {
 }
 
 @Composable
-fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineScope: CoroutineScope, navController: NavHostController, snackbarState: SnackbarHostState) {
-    NavHost(
-        modifier = modifier,
-        navController = navController,
-        startDestination = "home"
-    ) {
-        composable("home") {
-            NoteListUI(
-                viewModel,
-                { noteId: Int ->
-                    navController.navigate("note_expanded/$noteId")
-                },
-                {
-                    navController.navigate("note_timer")
-                },
-                {
-                    navController.navigate("settings")
-                },
-                {
-                    navController.navigate("general_timer")
-                }
-            )
-        }
-        composable(
-            route = "note_expanded/{noteId}",
-            arguments = listOf(
-                navArgument("noteId") {
-                    // Make argument type safe
-                    type = NavType.IntType
-                }
-            )
-        ) {
-            val noteId = it.arguments?.getInt("noteId") ?: 0
-            ExpandedNoteUI(
-                noteId,
-                viewModel,
-                {
-                    navController.navigate("note_timer")
-                },
-                {
-                    navController.popBackStack()
-                    coroutineScope.launch {
-                        snackbarState.showSnackbar(
-                            message = "Note deleted.",
-                            actionLabel = " UNDO",
-                            duration = SnackbarDuration.Short
-                        )
-                    }
-                },
-                {
-                    navController.popBackStack()
-                }
-            )
-        }
-        composable("note_timer") {
-            NoteTimer (
-                {
-                    navController.popBackStack()
-                }, {
-                    //TODO: Create Timer Theming Options
-                }
-            )
-        }
-        composable("general_timer") {
-            QuickTimer(
-                {
-                    navController.navigate("note_timer")
-                },
-                {
-                    navController.popBackStack()
-                }
-            )
-        }
-        composable("settings") {
-            SettingsUI(viewModel) {
-                navController.popBackStack()
-            }
-        }
-    }
-}
-
-@Composable
-fun CollapsedTimerUI(navController: NavController, navBackStackEntry: NavBackStackEntry?) {
+fun CollapsedTimer(navController: NavController, navBackStackEntry: NavBackStackEntry?) {
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     if (timerState != TimerState.Stopped && navBackStackEntry?.destination?.id != navController.findDestination(
             "note_timer"

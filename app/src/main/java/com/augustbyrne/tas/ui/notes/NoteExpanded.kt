@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import com.augustbyrne.tas.data.db.entities.DataItem
 import com.augustbyrne.tas.data.db.entities.NoteItem
 import com.augustbyrne.tas.data.db.entities.NoteWithItems
+import com.augustbyrne.tas.ui.components.EditDataItemDialog
+import com.augustbyrne.tas.ui.components.EditExpandedNoteHeaderDialog
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
 import kotlinx.coroutines.launch

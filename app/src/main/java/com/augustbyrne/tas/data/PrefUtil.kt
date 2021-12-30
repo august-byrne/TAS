@@ -1,4 +1,4 @@
-package com.augustbyrne.tas.ui.timer
+package com.augustbyrne.tas.data
 
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -21,6 +21,7 @@ class PreferenceManager @Inject constructor(
     companion object {
         private val PREF_SHOW_ADS = booleanPreferencesKey("ads_state")
         private val PREF_DARK_MODE = intPreferencesKey("dark_mode_state")
+        private val PREF_TIMER_THEME = intPreferencesKey("timer_theme_state")
         private val PREF_SORT_BY = intPreferencesKey("sort_type")
         private val PREF_LAST_TIME_UNIT = intPreferencesKey("previous_time_unit")
     }
@@ -30,6 +31,9 @@ class PreferenceManager @Inject constructor(
 
     val isDarkThemeFlow: Flow<Int> = context.dataStore.data.map{ it[PREF_DARK_MODE] ?: 0 }
     suspend fun setIsDarkTheme(value: Int) = context.dataStore.edit { it[PREF_DARK_MODE] = value }
+
+    val timerThemeFlow: Flow<Int> = context.dataStore.data.map{ it[PREF_TIMER_THEME] ?: 0 }
+    suspend fun setTimerTheme(value: Int) = context.dataStore.edit { it[PREF_TIMER_THEME] = value }
 
     val sortTypeFlow: Flow<Int> = context.dataStore.data.map{ it[PREF_SORT_BY] ?: 0 }
     suspend fun setSortType(value: Int) = context.dataStore.edit { it[PREF_SORT_BY] = value }

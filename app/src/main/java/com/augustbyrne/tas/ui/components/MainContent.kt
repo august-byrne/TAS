@@ -1,4 +1,4 @@
-package com.augustbyrne.tas.ui
+package com.augustbyrne.tas.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -240,7 +240,7 @@ fun ItemButton(modifier: Modifier = Modifier, icon: ImageVector, text: String, o
                 )
             )
             .clickable(
-                onClick = { onClick() },
+                onClick = onClick,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = rememberRipple()
             )

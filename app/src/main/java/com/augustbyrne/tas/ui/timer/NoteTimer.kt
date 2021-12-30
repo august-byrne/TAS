@@ -15,6 +15,7 @@ import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -28,67 +29,82 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.augustbyrne.tas.ui.AutoSizingText
-import com.augustbyrne.tas.ui.notes.TimerState
+import com.augustbyrne.tas.ui.components.AutoSizingText
+import com.augustbyrne.tas.ui.components.RadioItemsDialog
+import com.augustbyrne.tas.ui.components.ThemedBackground
+import com.augustbyrne.tas.ui.notes.NoteViewModel
 import com.augustbyrne.tas.ui.values.blue500
+import com.augustbyrne.tas.ui.values.orange500
 import com.augustbyrne.tas.ui.values.yellow200
+import com.augustbyrne.tas.util.BatteryLevelReceiver
+import com.augustbyrne.tas.util.TimerState
+import com.augustbyrne.tas.util.TimerTheme
 import com.google.accompanist.flowlayout.FlowCrossAxisAlignment
 import com.google.accompanist.flowlayout.FlowMainAxisAlignment
 import com.google.accompanist.flowlayout.FlowRow
 import com.google.accompanist.flowlayout.SizeMode
+import kotlinx.coroutines.launch
 
 @Composable
 fun DeterminateProgressBar(
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     progressInMilli: Long,
-    progressColor: Color = blue500,
+    progressColorStart: Color = yellow200,
+    progressColorEnd: Color = blue500,
     backgroundColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
     content: @Composable () -> Unit
 ) {
     val drawStyle = remember { Stroke(width = 24.dp.value, cap = StrokeCap.Round) }
     val brush = remember {
         Brush.sweepGradient(
-            colorStops = arrayOf(Pair(0F, yellow200), Pair(1F, progressColor))
+            colorStops = arrayOf(Pair(0F, progressColorStart), Pair(1F, progressColorEnd))
         )
     }
-    val brushTip = remember { SolidColor(progressColor) }
+    val brushTip = remember { SolidColor(progressColorEnd) }
     val brushBackground = remember { SolidColor(backgroundColor) }
     val progressDegrees = progressInMilli.toFloat().div(1000F) * PROGRESS_FULL_DEGREES
 
     Box {
-        Canvas(
-            modifier = modifier
+        if (enabled) {
+            Canvas(
+                modifier = modifier
+                    .aspectRatio(1f)
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+
+                // Background of Progress bar
+                drawArc(
+                    brush = brushBackground,
+                    startAngle = 90f,
+                    sweepAngle = PROGRESS_FULL_DEGREES,
+                    useCenter = false,
+                    style = drawStyle
+                )
+
+                rotate(progressDegrees + 270f, center) {
+                    drawArc(
+                        brush = brush,
+                        startAngle = PROGRESS_FULL_DEGREES - progressDegrees,
+                        sweepAngle = progressDegrees,
+                        useCenter = false,
+                        style = drawStyle
+                    )
+                    drawArc(
+                        brush = brushTip,
+                        startAngle = PROGRESS_FULL_DEGREES,
+                        sweepAngle = 0.1f,
+                        useCenter = false,
+                        style = drawStyle
+                    )
+                }
+            }
+        } else {
+            Spacer(modifier = Modifier
                 .aspectRatio(1f)
                 .fillMaxSize()
-                .padding(16.dp)
-        ) {
-
-            // Background of Progress bar
-            drawArc(
-                brush = brushBackground,
-                startAngle = 90f,
-                sweepAngle = PROGRESS_FULL_DEGREES,
-                useCenter = false,
-                style = drawStyle
-            )
-
-            rotate(progressDegrees + 270f, center) {
-                drawArc(
-                    brush = brush,
-                    startAngle = PROGRESS_FULL_DEGREES - progressDegrees,
-                    sweepAngle = progressDegrees,
-                    useCenter = false,
-                    style = drawStyle
-                )
-                drawArc(
-                    brush = brushTip,
-                    startAngle = PROGRESS_FULL_DEGREES,
-                    sweepAngle = 0.1f,
-                    useCenter = false,
-                    style = drawStyle
-                )
-            }
-
+                .padding(16.dp))
         }
         Box(modifier = Modifier.align(Alignment.Center)) {
             content()
@@ -96,12 +112,11 @@ fun DeterminateProgressBar(
     }
 }
 private const val PROGRESS_FULL_DEGREES = 360f
-// play: run parsed time on clock, pause, stop alarm and leave time on clock (and save time in preferences
-// stop: remove alarm and reset time to 0
-// on a button press save TimerState to preferences
-// on TimerState.Stopped, nothing, Paused, return value to timer, running, create time left value and start countdown timer
 @Composable
-fun NoteTimer(onNavBack: () -> Unit, onNavTimerSettings: () -> Unit) {
+fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSettings: () -> Unit) {
+    val localCoroutineScope = rememberCoroutineScope()
+    var showTimerThemeDialog by rememberSaveable { mutableStateOf(false) }
+    val savedTimerTheme by myViewModel.timerThemeFlow.observeAsState(initial = TimerTheme.Vibrant)
     val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     val itemIndex: Int by TimerService.itemIndex.observeAsState(0)
@@ -120,7 +135,12 @@ fun NoteTimer(onNavBack: () -> Unit, onNavTimerSettings: () -> Unit) {
     } else {
         0L
     }
-    BackgroundGradient()
+    val timerTheme = if (BatteryLevelReceiver.lowBattery == true) {
+        TimerTheme.Original
+    } else {
+        savedTimerTheme
+    }
+    ThemedBackground(timerTheme, progressInMilli)
     Column(
         modifier = Modifier
             .fillMaxSize(),
@@ -158,15 +178,19 @@ fun NoteTimer(onNavBack: () -> Unit, onNavTimerSettings: () -> Unit) {
                     content = {
                         DropdownMenuItem(onClick = {
                             expanded = false
-                            onNavTimerSettings()
+                            //onNavTimerSettings()
                         }) {
-                            Text("Timer Settings")
+                            Text("Timer theme")
                         }
                     }
                 )
             },
             colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                containerColor = Color.Transparent,
+                containerColor = if (BatteryLevelReceiver.lowBattery == true) {
+                    orange500
+                } else {
+                    Color.Transparent
+                },
                 titleContentColor = Color.Black,
                 navigationIconContentColor = Color.Black,
                 actionIconContentColor = Color.Black
@@ -179,10 +203,14 @@ fun NoteTimer(onNavBack: () -> Unit, onNavTimerSettings: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceEvenly
         ) {
+            if (BatteryLevelReceiver.lowBattery == true) {
+                Text(style = MaterialTheme.typography.titleMedium, text = "LOW BATTERY MODE")
+            }
             DeterminateProgressBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight(),
+                enabled = timerTheme != TimerTheme.VaporWave && BatteryLevelReceiver.lowBattery != true,
                 progressInMilli = progressInMilli
             ) {
                 if (timerState == TimerState.Running && timerLengthMilli <= 5000) {
@@ -309,6 +337,22 @@ fun NoteTimer(onNavBack: () -> Unit, onNavTimerSettings: () -> Unit) {
                     )
                 }
             }
+        }
+        if (showTimerThemeDialog) {
+            RadioItemsDialog(
+                title = "Timer theme",
+                radioItemNames = listOf("original", "vibrant", "vapor wave"),
+                currentState = timerTheme.theme,
+                onClickItem = { indexClicked ->
+                    localCoroutineScope.launch {
+                        myViewModel.setTimerTheme(TimerTheme.getTheme(indexClicked))
+                    }
+                    showTimerThemeDialog = false
+                },
+                onDismissRequest = {
+                    showTimerThemeDialog = false
+                }
+            )
         }
     }
 }

@@ -3,8 +3,6 @@ package com.augustbyrne.tas.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -15,18 +13,18 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import com.augustbyrne.tas.R
-import com.augustbyrne.tas.ui.notes.DarkMode
-import com.augustbyrne.tas.ui.notes.EditOneFieldDialog
+import com.augustbyrne.tas.ui.components.EditOneFieldDialog
+import com.augustbyrne.tas.ui.components.RadioItemsDialog
 import com.augustbyrne.tas.ui.notes.NoteViewModel
 import com.augustbyrne.tas.ui.values.blue500
+import com.augustbyrne.tas.util.DarkMode
+import com.augustbyrne.tas.util.TimerTheme
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,7 +35,9 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
     val localCoroutineScope = rememberCoroutineScope()
     var showAdHiderPopup by rememberSaveable { mutableStateOf(false) }
     var showDarkModeDialog by rememberSaveable { mutableStateOf(false) }
+    var showTimerThemeDialog by rememberSaveable { mutableStateOf(false) }
     val darkModeState by myViewModel.isDarkThemeFlow.observeAsState(initial = DarkMode.System)
+    val timerThemeState by myViewModel.timerThemeFlow.observeAsState(initial = TimerTheme.Original)
     Scaffold(
         topBar = {
             SmallTopAppBar(
@@ -97,21 +97,34 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
                     style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray)
                 )
             }
-/*            Text(
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
                     .wrapContentHeight()
+                    .fillMaxWidth()
                     .clickable(
                         onClick = {
-                            showColorPopup = true
+                            showTimerThemeDialog = true
                         },
                         interactionSource = remember { MutableInteractionSource() },
                         indication = rememberRipple()
                     )
                     .padding(16.dp),
-                text = "Timer Background",
-                style = MaterialTheme.typography.bodyLarge
-            )*/
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Text(
+                    text = "Timer theme",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = when (timerThemeState) {
+                        TimerTheme.Original -> "Original"
+                        TimerTheme.Vibrant -> "Vibrant"
+                        TimerTheme.VaporWave -> "Vaporwave"
+                    },
+                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray)
+                )
+            }
             Divider(modifier = Modifier.fillMaxWidth())
             Text(
                 modifier = Modifier
@@ -169,8 +182,36 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
                     }
                 )
             }
+            if (showTimerThemeDialog) {
+                RadioItemsDialog(
+                    title = "Timer theme",
+                    radioItemNames = listOf("original", "vibrant", "vapor wave"),
+                    currentState = timerThemeState.theme,
+                    onClickItem = { indexClicked ->
+                        localCoroutineScope.launch {
+                            myViewModel.setTimerTheme(TimerTheme.getTheme(indexClicked))
+                        }
+                        showTimerThemeDialog = false
+                    },
+                    onDismissRequest = {
+                        showTimerThemeDialog = false
+                    }
+                )
+            }
             if (showDarkModeDialog) {
-                AlertDialog(
+                RadioItemsDialog(
+                    title = "Dark mode",
+                    radioItemNames = listOf("Follow system", "Off", "On"),
+                    currentState = darkModeState.mode,
+                    onClickItem = {
+                        showDarkModeDialog = false
+                        localCoroutineScope.launch {
+                            myViewModel.setIsDarkTheme(DarkMode.getMode(it))
+                        }
+                    },
+                    onDismissRequest = { showDarkModeDialog = false }
+                )
+/*                AlertDialog(
                     onDismissRequest = {
                         showDarkModeDialog = false
                     },
@@ -281,7 +322,7 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
                             Text("Cancel")
                         }
                     }
-                )
+                )*/
             }
         }
     }

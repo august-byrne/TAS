@@ -26,8 +26,8 @@ import com.augustbyrne.tas.R
 import com.augustbyrne.tas.data.db.entities.DataItem
 import com.augustbyrne.tas.data.db.entities.NoteItem
 import com.augustbyrne.tas.ui.MainActivity
-import com.augustbyrne.tas.ui.notes.TimerState
 import com.augustbyrne.tas.ui.values.yellow100
+import com.augustbyrne.tas.util.TimerState
 import kotlin.math.pow
 
 // Since lifecycle interaction with the service or lifecycleScope is needed, we implement lifecycleService()

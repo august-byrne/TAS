@@ -1,4 +1,4 @@
-package com.augustbyrne.tas.ui.notes
+package com.augustbyrne.tas.util
 
 import androidx.room.TypeConverter
 import java.time.LocalDateTime
@@ -30,12 +30,25 @@ enum class TimerState {
 
 enum class DarkMode(val mode: Int) {
     System(0),
-    On(1),
-    Off(2);
+    Off(1),
+    On(2);
     companion object {
         fun getMode(modeValue: Int): DarkMode {
             return values().first { value ->
                 value.mode == modeValue
+            }
+        }
+    }
+}
+
+enum class TimerTheme(val theme: Int) {
+    Original(0),
+    Vibrant(1),
+    VaporWave(2);
+    companion object {
+        fun getTheme(themeValue: Int): TimerTheme {
+            return values().first { value ->
+                value.theme == themeValue
             }
         }
     }

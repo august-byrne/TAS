@@ -7,11 +7,14 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
+import com.augustbyrne.tas.data.PreferenceManager
 import com.augustbyrne.tas.data.db.entities.DataItem
 import com.augustbyrne.tas.data.db.entities.NoteItem
 import com.augustbyrne.tas.data.db.entities.NoteWithItems
 import com.augustbyrne.tas.data.repositories.NoteRepository
-import com.augustbyrne.tas.ui.timer.PreferenceManager
+import com.augustbyrne.tas.util.DarkMode
+import com.augustbyrne.tas.util.SortType
+import com.augustbyrne.tas.util.TimerTheme
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -89,6 +92,11 @@ class NoteViewModel @Inject constructor(
         preferences.isDarkThemeFlow.map { DarkMode.getMode(it) }.asLiveData()
 
     suspend fun setIsDarkTheme(value: DarkMode) = preferences.setIsDarkTheme(value.mode)
+
+    val timerThemeFlow: LiveData<TimerTheme> =
+        preferences.timerThemeFlow.map { TimerTheme.getTheme(it) }.asLiveData()
+
+    suspend fun setTimerTheme(value: TimerTheme) = preferences.setTimerTheme(value.theme)
 
     val sortTypeFlow: LiveData<SortType> =
         preferences.sortTypeFlow.map { SortType.getType(it) }.asLiveData()

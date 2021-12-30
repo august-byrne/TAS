@@ -1,4 +1,4 @@
-package com.augustbyrne.tas.ui.notes
+package com.augustbyrne.tas.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -446,20 +446,19 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
     )
 }
 
-
+/**
+ * A flexible Dialog which populates the given list of names.
+ * Returns the index of the clicked item.
+ */
 @Composable
-fun SortNotesByDialog(currentSortType: SortType, onValueSelected: (SortType?) -> Unit) {
+fun RadioItemsDialog(title: String, radioItemNames: List<String>,currentState: Int? = null, onClickItem: (Int) -> Unit, onDismissRequest: () -> Unit) {
     AlertDialog(
-        onDismissRequest = {
-        onValueSelected(null)
-    },
+        onDismissRequest = onDismissRequest,
         properties = DialogProperties(
             dismissOnBackPress = true,
             dismissOnClickOutside = true
         ),
-        title = {
-            Text("Sort by")
-        },
+        title = { Text(title) },
         text = {
             Column(
                 modifier = Modifier
@@ -467,74 +466,35 @@ fun SortNotesByDialog(currentSortType: SortType, onValueSelected: (SortType?) ->
                     .wrapContentHeight(),
                 verticalArrangement = Arrangement.SpaceEvenly
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(CornerSize(30.dp)))
-                        .clickable(
-                            onClick = { onValueSelected(SortType.Creation) },
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = rememberRipple()
-                        ),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = currentSortType == SortType.Creation,
-                        onClick = {
-                            onValueSelected(SortType.Creation)
-                        }
-                    )
-                    Spacer(Modifier.width(16.dp))
-                    Text(text = "Creation date", style = MaterialTheme.typography.bodyLarge)
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(CornerSize(30.dp)))
-                        .clickable(
-                            onClick = { onValueSelected(SortType.LastEdited) },
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = rememberRipple()
-                        ),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = currentSortType == SortType.LastEdited,
-                        onClick = {
-                            onValueSelected(SortType.LastEdited)
-                        }
-                    )
-                    Spacer(Modifier.width(16.dp))
-                    Text(text = "Last edited", style = MaterialTheme.typography.bodyLarge)
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(CornerSize(30.dp)))
-                        .clickable(
-                            onClick = { onValueSelected(SortType.Order) },
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = rememberRipple()
-                        ),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = currentSortType == SortType.Order,
-                        onClick = {
-                            onValueSelected(SortType.Order)
-                        }
-                    )
-                    Spacer(Modifier.width(16.dp))
-                    Text(text = "Custom", style = MaterialTheme.typography.bodyLarge)
+                for (index in 0..radioItemNames.lastIndex) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(CornerSize(30.dp)))
+                            .clickable(
+                                onClick = { onClickItem(index) },
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = rememberRipple()
+                            ),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = currentState == index,
+                            onClick = { onClickItem(index) }
+                        )
+                        Spacer(Modifier.width(16.dp))
+                        Text(
+                            text = radioItemNames[index],
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
                 }
             }
         },
         confirmButton = {
             TextButton(
-                onClick = { onValueSelected(null) }
-            ) {
-                Text("Cancel")
-            }
+                onClick = onDismissRequest
+            ) { Text("Cancel") }
         }
     )
 }

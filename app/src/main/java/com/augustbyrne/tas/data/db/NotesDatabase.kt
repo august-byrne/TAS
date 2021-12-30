@@ -5,7 +5,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.augustbyrne.tas.data.db.entities.DataItem
 import com.augustbyrne.tas.data.db.entities.NoteItem
-import com.augustbyrne.tas.ui.notes.Converters
+import com.augustbyrne.tas.util.Converters
 
 // Annotates class to be a Room Database with a table (entity) of the Note class
 @Database(
