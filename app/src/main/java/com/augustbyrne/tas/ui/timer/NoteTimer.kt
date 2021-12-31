@@ -1,5 +1,8 @@
 package com.augustbyrne.tas.ui.timer
 
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.BatteryManager
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -27,6 +30,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.augustbyrne.tas.ui.components.AutoSizingText
@@ -114,6 +118,7 @@ fun DeterminateProgressBar(
 private const val PROGRESS_FULL_DEGREES = 360f
 @Composable
 fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSettings: () -> Unit) {
+    val context = LocalContext.current
     val localCoroutineScope = rememberCoroutineScope()
     var showTimerThemeDialog by rememberSaveable { mutableStateOf(false) }
     val savedTimerTheme by myViewModel.timerThemeFlow.observeAsState(initial = TimerTheme.Vibrant)
@@ -139,6 +144,17 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
         TimerTheme.Original
     } else {
         savedTimerTheme
+    }
+    LaunchedEffect(Unit) {
+        val batteryStatus: Intent? = IntentFilter(Intent.ACTION_BATTERY_CHANGED).let { ifilter ->
+            context.registerReceiver(null, ifilter)
+        }
+        val batteryPct: Float? = batteryStatus?.let { intent ->
+            val level: Int = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+            val scale: Int = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+            level * 100 / scale.toFloat()
+        }
+        BatteryLevelReceiver.lowBattery = batteryPct != null && batteryPct <= 15
     }
     ThemedBackground(timerTheme, progressInMilli)
     Column(
@@ -178,6 +194,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                     content = {
                         DropdownMenuItem(onClick = {
                             expanded = false
+                            showTimerThemeDialog = true
                             //onNavTimerSettings()
                         }) {
                             Text("Timer theme")

@@ -72,6 +72,8 @@ class MainActivity : AppCompatActivity() {
             return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, adWidth)
         }
 
+    private val batteryLevelReceiver = BatteryLevelReceiver()
+
     @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,8 +82,7 @@ class MainActivity : AppCompatActivity() {
         //initialize the mobile ads sdk
         MobileAds.initialize(this) {}
 
-        registerReceiver(BatteryLevelReceiver(), IntentFilter(Intent.ACTION_BATTERY_LOW))
-        registerReceiver(BatteryLevelReceiver(), IntentFilter(Intent.ACTION_BATTERY_OKAY))
+        registerReceiver(batteryLevelReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
         setContent {
             val adState by myViewModel.showAdsFlow.observeAsState(initial = true)
@@ -157,9 +158,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
-        unregisterReceiver(BatteryLevelReceiver())
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(batteryLevelReceiver)
     }
 
     private fun navigateToTimerIfNeeded(intent: Intent?, navController: NavController) {
