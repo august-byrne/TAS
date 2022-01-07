@@ -9,10 +9,6 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Notes
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.Timer
-import androidx.compose.material.icons.rounded.Notes
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.ripple.rememberRipple
@@ -30,8 +26,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import com.augustbyrne.tas.ui.notes.NoteViewModel
 
 /*
 @ExperimentalPagerApi
@@ -95,6 +89,7 @@ fun MainUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavi
 }
 */
 
+/*
 @Composable
 fun NavBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, navController: NavController) {
     NavigationBar(modifier = modifier) {
@@ -160,6 +155,7 @@ fun NavBar(modifier: Modifier = Modifier, myViewModel: NoteViewModel, navControl
             })
     }
 }
+ */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -173,10 +169,6 @@ fun MainNavDrawer(drawerState: DrawerState, onNavSettings: () -> Unit, onNavTime
                 text = "TAS",
                 style = MaterialTheme.typography.titleLarge
             )
-/*            Text(
-                modifier = Modifier.padding(8.dp),
-                text = "* Any Drag/Drop (for whole notes or activity items)"
-            )*/
             ItemButton(
                 modifier = Modifier.padding(end = 8.dp),
                 icon = Icons.Rounded.Timer,
@@ -257,4 +249,3 @@ fun ItemButton(modifier: Modifier = Modifier, icon: ImageVector, text: String, o
         )
     }
 }
-

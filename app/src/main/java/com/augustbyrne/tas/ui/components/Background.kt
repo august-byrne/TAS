@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,6 +22,7 @@ import androidx.core.graphics.ColorUtils
 import com.augustbyrne.tas.R
 import com.augustbyrne.tas.ui.values.*
 import com.augustbyrne.tas.util.TimerTheme
+import kotlin.math.pow
 import kotlin.math.roundToInt
 
 @Composable
@@ -28,7 +30,11 @@ fun ThemedBackground(timerTheme: TimerTheme, progressInMilli: Long, modifier: Mo
     Box(modifier = Modifier.fillMaxSize()) {
         when (timerTheme) {
             TimerTheme.Original -> {
-                // No Added Background
+                Box(
+                    modifier = Modifier
+                        .background(yellow50)
+                        .fillMaxSize()
+                )
             }
             TimerTheme.Vibrant -> {
                 val infiniteTransition = rememberInfiniteTransition()
@@ -110,7 +116,7 @@ fun ThemedBackground(timerTheme: TimerTheme, progressInMilli: Long, modifier: Mo
                     val brushTopBackground = Brush.verticalGradient(
                         listOf(pink200, pink100),
                         0f,
-                        (size.height * (3f/5f)),
+                        (size.height * (3f / 5f)),
                         TileMode.Decal
                     )
                     drawRect(
@@ -122,28 +128,28 @@ fun ThemedBackground(timerTheme: TimerTheme, progressInMilli: Long, modifier: Mo
                         size = size.copy(height = size.height * 3f / 5f),
                         topLeft = Offset(0f, size.height * 3f / 5f)
                     )
-                    for (z in -5..15) {
+                    for (z in -10..16) {
                         drawLine(
-                            color = blue200,
-                            start = Offset(size.width * (z.toFloat() / 8f), size.height),
+                            color = blue500,
+                            start = Offset(size.width * (z.toFloat() / 6f), size.height),
                             end = Offset(
-                                (size.width * 0.5f) * (z.toFloat() / 10f) + (size.width * 0.25f),
+                                size.width * ((0.4f * z.toFloat() / 10f) + 0.38f),
                                 size.height * (3f / 5f)
                             ),
                             strokeWidth = 5f,
                             cap = StrokeCap.Butt
                         )
                     }
-                    for (z in 15..25) {
+                    for (z in 0..17) {
                         drawLine(
-                            color = blue200,
+                            color = blue500,
                             start = Offset(
                                 0f,
-                                (size.height) - ((size.height) * (1 - (3f / (z.toFloat() / 5f))))
+                                size.height * (3f + 2f * (z.toFloat().div(17).pow(2))) / 5f
                             ),
                             end = Offset(
                                 size.width,
-                                (size.height) - ((size.height) * (1 - (3f / (z.toFloat() / 5f))))
+                                size.height * (3f + 2f * (z.toFloat().div(17).pow(2))) / 5f
                             ),
                             strokeWidth = 5f,
                             cap = StrokeCap.Butt
@@ -165,7 +171,6 @@ fun ThemedBackground(timerTheme: TimerTheme, progressInMilli: Long, modifier: Mo
                             val yLocation = (space.height * (3f / 5f)) - (size.height * 0.98f)
 
                             val x = centerX * (1)
-                            //val y = centerY * (2)
                             IntOffset(x.roundToInt(), yLocation.roundToInt())
                         },
                     painter = painterResource(id = R.drawable.vapor_wave_sun),
@@ -175,15 +180,13 @@ fun ThemedBackground(timerTheme: TimerTheme, progressInMilli: Long, modifier: Mo
                 )
                 Image(
                     modifier = Modifier
-                        .size(60.dp)
+                        .size(50.dp)
                         .align { size, space, _ ->
                             val remaining =
                                 IntSize(space.width - size.width, space.height - size.height)
                             val centerX = remaining.width.toFloat() / 2f
-                            val centerY = remaining.height.toFloat() / 2f
-
-                            val x = centerX * (1 + 0.625f)
-                            val y = centerY * (1 + 0.2f)
+                            val y = (space.height * 0.625f) - size.height
+                            val x = centerX * (1 + 0.35f)
                             IntOffset(x.roundToInt(), y.roundToInt())
                         },
                     painter = painterResource(id = R.drawable.vapor_wave_palm),
@@ -192,16 +195,14 @@ fun ThemedBackground(timerTheme: TimerTheme, progressInMilli: Long, modifier: Mo
                 )
                 Image(
                     modifier = Modifier
-                        .size(60.dp)
+                        .size(50.dp)
                         .graphicsLayer(rotationY = 180f)
                         .align { size, space, _ ->
                             val remaining =
                                 IntSize(space.width - size.width, space.height - size.height)
                             val centerX = remaining.width.toFloat() / 2f
-                            val centerY = remaining.height.toFloat() / 2f
-
-                            val x = centerX * (1 - 0.625f)
-                            val y = centerY * (1 + 0.2f)
+                            val y = (space.height * 0.625f) - size.height
+                            val x = centerX * (1 - 0.35f)
                             IntOffset(x.roundToInt(), y.roundToInt())
                         },
                     painter = painterResource(id = R.drawable.vapor_wave_palm),
@@ -210,15 +211,13 @@ fun ThemedBackground(timerTheme: TimerTheme, progressInMilli: Long, modifier: Mo
                 )
                 Image(
                     modifier = Modifier
-                        .size(120.dp)
+                        .size(100.dp)
                         .align { size, space, _ ->
                             val remaining =
                                 IntSize(space.width - size.width, space.height - size.height)
                             val centerX = remaining.width.toFloat() / 2f
-                            val centerY = remaining.height.toFloat() / 2f
-
-                            val x = centerX * (1 + 1f)
-                            val y = centerY * (1 + 0.5f)
+                            val y = (space.height * 0.75f) - size.height
+                            val x = centerX * (1 + 0.75f)
                             IntOffset(x.roundToInt(), y.roundToInt())
                         },
                     painter = painterResource(id = R.drawable.vapor_wave_palm),
@@ -227,16 +226,14 @@ fun ThemedBackground(timerTheme: TimerTheme, progressInMilli: Long, modifier: Mo
                 )
                 Image(
                     modifier = Modifier
-                        .size(120.dp)
+                        .size(100.dp)
                         .graphicsLayer(rotationY = 180f)
                         .align { size, space, _ ->
                             val remaining =
                                 IntSize(space.width - size.width, space.height - size.height)
                             val centerX = remaining.width.toFloat() / 2f
-                            val centerY = remaining.height.toFloat() / 2f
-
-                            val x = centerX * (1 - 1f)
-                            val y = centerY * (1 + 0.5f)
+                            val y = (space.height * 0.75f) - size.height
+                            val x = centerX * (1 - 0.75f)
                             IntOffset(x.roundToInt(), y.roundToInt())
                         },
                     painter = painterResource(id = R.drawable.vapor_wave_palm),
@@ -245,15 +242,13 @@ fun ThemedBackground(timerTheme: TimerTheme, progressInMilli: Long, modifier: Mo
                 )
                 Image(
                     modifier = Modifier
-                        .size(180.dp)
+                        .size(160.dp)
                         .align { size, space, _ ->
                             val remaining =
                                 IntSize(space.width - size.width, space.height - size.height)
                             val centerX = remaining.width.toFloat() / 2f
-                            val centerY = remaining.height.toFloat() / 2f
-
-                            val x = centerX * (1 + 1.75f)
-                            val y = centerY * (1 + 1.125f)
+                            val y = (space.height * 0.95f) - size.height
+                            val x = centerX * (1 + 1.6f)
                             IntOffset(x.roundToInt(), y.roundToInt())
                         },
                     painter = painterResource(id = R.drawable.vapor_wave_palm),
@@ -262,16 +257,14 @@ fun ThemedBackground(timerTheme: TimerTheme, progressInMilli: Long, modifier: Mo
                 )
                 Image(
                     modifier = Modifier
-                        .size(180.dp)
+                        .size(160.dp)
                         .graphicsLayer(rotationY = 180f)
                         .align { size, space, _ ->
                             val remaining =
                                 IntSize(space.width - size.width, space.height - size.height)
                             val centerX = remaining.width.toFloat() / 2f
-                            val centerY = remaining.height.toFloat() / 2f
-
-                            val x = centerX * (1 - 1.75f)
-                            val y = centerY * (1 + 1.125f)
+                            val y = (space.height * 0.95f) - size.height
+                            val x = centerX * (1 - 1.6f)
                             IntOffset(x.roundToInt(), y.roundToInt())
                         },
                     painter = painterResource(id = R.drawable.vapor_wave_palm),

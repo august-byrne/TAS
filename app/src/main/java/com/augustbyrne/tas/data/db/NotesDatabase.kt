@@ -10,7 +10,7 @@ import com.augustbyrne.tas.util.Converters
 // Annotates class to be a Room Database with a table (entity) of the Note class
 @Database(
     entities = [NoteItem::class, DataItem::class],
-    version = 11,
+    version = 12,
     autoMigrations = [
         //AutoMigration(from = 9, to = 10),
                      ],
