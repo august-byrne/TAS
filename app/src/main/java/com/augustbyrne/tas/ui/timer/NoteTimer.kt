@@ -396,7 +396,7 @@ fun TimerText(modifier: Modifier = Modifier, enabled: Boolean = true, timerState
         val sec = timerLengthAdjusted.mod(60)
         val formattedTimerLength: String = String.format("%02d:%02d:%02d", hour, min, sec)
         Box(modifier = modifier) {
-            if (timerState == TimerState.Running && timerLengthAdjusted <= 5000) {
+            if (timerState == TimerState.Running && timerLengthAdjusted <= 5) {
                 // Flashing Timer Text
                 val infiniteTransition = rememberInfiniteTransition()
                 val alpha by infiniteTransition.animateFloat(
