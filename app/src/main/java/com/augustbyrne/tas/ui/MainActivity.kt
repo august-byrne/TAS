@@ -32,10 +32,12 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.WindowCompat
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -50,6 +52,9 @@ import com.augustbyrne.tas.ui.values.Blue90
 import com.augustbyrne.tas.util.BatteryLevelReceiver
 import com.augustbyrne.tas.util.DarkMode
 import com.augustbyrne.tas.util.TimerState
+import com.google.accompanist.insets.ProvideWindowInsets
+import com.google.accompanist.insets.navigationBarsPadding
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
@@ -79,10 +84,14 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         //DynamicColors.applyToActivitiesIfAvailable(application)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
         //initialize the mobile ads sdk
         MobileAds.initialize(this) {}
 
         registerReceiver(batteryLevelReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+
+        // remove system insets as we will handle these ourselves with accompanist
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
             val adState by myViewModel.showAdsFlow.observeAsState(initial = true)
@@ -92,59 +101,86 @@ class MainActivity : AppCompatActivity() {
             val snackbarHostState = remember { SnackbarHostState() }
             val coroutineScope = rememberCoroutineScope()
             val systemDarkMode = isSystemInDarkTheme()
-            AppTheme(
-                when (darkModeState) {
-                    DarkMode.System -> systemDarkMode
-                    DarkMode.Off -> false
-                    DarkMode.On -> true
+            val isAppDark = when (darkModeState) {
+                DarkMode.System -> systemDarkMode
+                DarkMode.Off -> false
+                DarkMode.On -> true
+            }
+            AppTheme(darkTheme = isAppDark) {
+                //window.statusBarColor = MaterialTheme.colorScheme.surface.toArgb()
+                // Update the system bars to be translucent
+                val systemUiController = rememberSystemUiController()
+                SideEffect {
+                    systemUiController.setStatusBarColor(
+                        color = Color.Transparent,
+                        darkIcons = navBackStackEntry?.destination?.id == navController.findDestination(
+                            "note_timer"
+                        )!!.id || !isAppDark
+                    )
                 }
-            ) {
+/*                SideEffect {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        window.insetsController?.setSystemBarsAppearance(
+                            if (isAppDark) 0 else APPEARANCE_LIGHT_STATUS_BARS,
+                            APPEARANCE_LIGHT_STATUS_BARS
+                        )
+                    } else {
+                        window.decorView.systemUiVisibility =
+                            if (isAppDark) 0 else View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                    }
+                }*/
                 LaunchedEffect(Unit) {
                     navigateToTimerIfNeeded(intent, navController)
                 }
-                Box(modifier = Modifier.fillMaxSize()) {
-                    Column(
-                        verticalArrangement = Arrangement.SpaceEvenly
+                ProvideWindowInsets {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .navigationBarsPadding()
                     ) {
-                        NavGraph(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            viewModel = myViewModel,
-                            coroutineScope = coroutineScope,
-                            navController = navController,
-                            snackbarState = snackbarHostState
-                        )
-                        CollapsedTimer(navController, navBackStackEntry)
+                        Column(
+                            verticalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            NavGraph(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                viewModel = myViewModel,
+                                coroutineScope = coroutineScope,
+                                navController = navController,
+                                snackbarState = snackbarHostState
+                            )
+                            CollapsedTimer(navController, navBackStackEntry)
 /*                        if (navBackStackEntry?.destination?.id != navController.findDestination("note_timer")!!.id) {
                             NavBar(navController = navController, myViewModel = myViewModel)
                         }*/
-                        if (adState /*&& navBackStackEntry?.destination?.id == navController.findDestination("note_timer")!!.id*/) {
-                            AndroidView(
-                                modifier = Modifier.fillMaxWidth(),
-                                factory = { context ->
-                                    AdView(context).apply {
-                                        adSize = adaptiveAdSize
-                                        adUnitId = context.getString(R.string.banner_ad_unit_id)
-                                        loadAd(AdRequest.Builder().build())
+                            if (adState /*&& navBackStackEntry?.destination?.id == navController.findDestination("note_timer")!!.id*/) {
+                                AndroidView(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    factory = { context ->
+                                        AdView(context).apply {
+                                            adSize = adaptiveAdSize
+                                            adUnitId = context.getString(R.string.banner_ad_unit_id)
+                                            loadAd(AdRequest.Builder().build())
+                                        }
                                     }
-                                }
-                            )
-                        }
-                    }
-                    DefaultSnackbar(
-                        modifier = Modifier.align(Alignment.BottomCenter),
-                        snackbarHostState = snackbarHostState,
-                        onClickUndo = {
-                            snackbarHostState.currentSnackbarData?.dismiss()
-                            myViewModel.apply {
-                                tempSavedNote?.let {
-                                    upsertNoteAndData(it.note, it.dataItems.toMutableList())
-                                    tempSavedNote = null
-                                }
+                                )
                             }
                         }
-                    )
+                        DefaultSnackbar(
+                            modifier = Modifier.align(Alignment.BottomCenter),
+                            snackbarHostState = snackbarHostState,
+                            onClickUndo = {
+                                snackbarHostState.currentSnackbarData?.dismiss()
+                                myViewModel.apply {
+                                    tempSavedNote?.let {
+                                        upsertNoteAndData(it.note, it.dataItems.toMutableList())
+                                        tempSavedNote = null
+                                    }
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }

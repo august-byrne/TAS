@@ -34,6 +34,7 @@ import com.augustbyrne.tas.ui.components.RadioItemsDialog
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
 import com.augustbyrne.tas.util.SortType
+import com.google.accompanist.insets.statusBarsPadding
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
@@ -67,6 +68,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                 .nestedScroll(scrollBehavior.nestedScrollConnection),
             topBar = {
                 CenterAlignedTopAppBar(
+                    modifier = Modifier.statusBarsPadding(),
                     scrollBehavior = scrollBehavior,
                     title = {
                         Text("Timed Activity System")

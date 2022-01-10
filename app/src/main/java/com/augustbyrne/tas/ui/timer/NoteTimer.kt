@@ -48,6 +48,7 @@ import com.google.accompanist.flowlayout.FlowCrossAxisAlignment
 import com.google.accompanist.flowlayout.FlowMainAxisAlignment
 import com.google.accompanist.flowlayout.FlowRow
 import com.google.accompanist.flowlayout.SizeMode
+import com.google.accompanist.insets.statusBarsPadding
 import kotlinx.coroutines.launch
 
 @Composable
@@ -68,7 +69,7 @@ fun DeterminateProgressBar(
     }
     val brushTip = remember { SolidColor(progressColorEnd) }
     val brushBackground = remember { SolidColor(backgroundColor) }
-    val progressDegrees = progressInMilli.toFloat().div(1000F) * PROGRESS_FULL_DEGREES
+    val progressDegrees = progressInMilli.times(360).div(1000f)
 
     Box {
         if (enabled) {
@@ -83,7 +84,7 @@ fun DeterminateProgressBar(
                 drawArc(
                     brush = brushBackground,
                     startAngle = 90f,
-                    sweepAngle = PROGRESS_FULL_DEGREES,
+                    sweepAngle = 360f,
                     useCenter = false,
                     style = drawStyle
                 )
@@ -91,14 +92,14 @@ fun DeterminateProgressBar(
                 rotate(progressDegrees + 270f, center) {
                     drawArc(
                         brush = brush,
-                        startAngle = PROGRESS_FULL_DEGREES - progressDegrees,
+                        startAngle = 360f - progressDegrees,
                         sweepAngle = progressDegrees,
                         useCenter = false,
                         style = drawStyle
                     )
                     drawArc(
                         brush = brushTip,
-                        startAngle = PROGRESS_FULL_DEGREES,
+                        startAngle = 360f,
                         sweepAngle = 0.1f,
                         useCenter = false,
                         style = drawStyle
@@ -116,7 +117,7 @@ fun DeterminateProgressBar(
         }
     }
 }
-private const val PROGRESS_FULL_DEGREES = 360f
+
 @Composable
 fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSettings: () -> Unit) {
     val context = LocalContext.current
@@ -127,20 +128,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     val itemIndex: Int by TimerService.itemIndex.observeAsState(0)
     val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(1L)
-    val timerLengthAdjusted = if (timerState == TimerState.Stopped) {
-        totalTimerLengthMilli.div(1000)
-    } else {
-        (timerLengthMilli.div(1000) + 1).coerceIn(0, totalTimerLengthMilli.div(1000))
-    }
-    val hour = timerLengthAdjusted.div(3600)
-    val min = timerLengthAdjusted.div(60).mod(60)
-    val sec = timerLengthAdjusted.mod(60)
-    val formattedTimerLength: String = String.format("%02d:%02d:%02d", hour, min, sec)
-    val progressInMilli: Long = if (timerState != TimerState.Stopped) {
-        1000L - (timerLengthMilli.times(1000L) / totalTimerLengthMilli)
-    } else {
-        0L
-    }
+    val progressInMilli: Long = 1000L - timerLengthMilli.times(1000L).div(totalTimerLengthMilli)
     val timerTheme = if (BatteryLevelReceiver.lowBattery == true) {
         TimerTheme.Original
     } else {
@@ -165,6 +153,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         CenterAlignedTopAppBar(
+            modifier = Modifier.statusBarsPadding(),
             title = {
                 AutoSizingText(
                     modifier = Modifier.fillMaxWidth(0.9F),
@@ -235,35 +224,12 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                 enabled = timerTheme != TimerTheme.VaporWave && BatteryLevelReceiver.lowBattery != true,
                 progressInMilli = progressInMilli
             ) {
-                if (timerState == TimerState.Running && timerLengthMilli <= 5000) {
-                    // Flashing Timer Text
-                    val infiniteTransition = rememberInfiniteTransition()
-                    val alpha by infiniteTransition.animateFloat(
-                        initialValue = 1.0f,
-                        targetValue = 0.0f,
-                        animationSpec = infiniteRepeatable(
-                            animation = tween(400, easing = FastOutLinearInEasing),
-                            repeatMode = RepeatMode.Reverse
-                        )
-                    )
-                    AutoSizingText(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp)
-                            .alpha(alpha),
-                        textStyle = MaterialTheme.typography.displayLarge.copy(fontSize = 96.sp),
-                        text = formattedTimerLength
-                    )
-                } else {
-                    // Normal Resized Text
-                    AutoSizingText(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        textStyle = MaterialTheme.typography.displayLarge.copy(fontSize = 96.sp),
-                        text = formattedTimerLength
-                    )
-                }
+                TimerText(
+                    enabled = timerTheme != TimerTheme.VaporWave,
+                    timerState = timerState,
+                    timerLengthMilli = timerLengthMilli,
+                    totalTimerLengthMilli = totalTimerLengthMilli
+                )
             }
             if (TimerService.currentNoteItems.size != 1) {
                 FlowRow(
@@ -412,6 +378,52 @@ private fun PlayPauseStopButtons(timerState: TimerState, onClickStartPause: () -
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Red, contentColor = Color.Black)
             ) {
                 Icon(Icons.Default.Stop, contentDescription = "Stop")
+            }
+        }
+    }
+}
+
+@Composable
+fun TimerText(modifier: Modifier = Modifier, enabled: Boolean = true, timerState: TimerState, timerLengthMilli: Long, totalTimerLengthMilli: Long) {
+    if (enabled) {
+        val timerLengthAdjusted = if (timerState == TimerState.Stopped) {
+            totalTimerLengthMilli.div(1000)
+        } else {
+            (timerLengthMilli.div(1000) + 1).coerceIn(0, totalTimerLengthMilli.div(1000))
+        }
+        val hour = timerLengthAdjusted.div(3600).toInt()
+        val min = timerLengthAdjusted.div(60).mod(60)
+        val sec = timerLengthAdjusted.mod(60)
+        val formattedTimerLength: String = String.format("%02d:%02d:%02d", hour, min, sec)
+        Box(modifier = modifier) {
+            if (timerState == TimerState.Running && timerLengthAdjusted <= 5000) {
+                // Flashing Timer Text
+                val infiniteTransition = rememberInfiniteTransition()
+                val alpha by infiniteTransition.animateFloat(
+                    initialValue = 1.0f,
+                    targetValue = 0.0f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(400, easing = FastOutLinearInEasing),
+                        repeatMode = RepeatMode.Reverse
+                    )
+                )
+                AutoSizingText(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp)
+                        .alpha(alpha),
+                    textStyle = MaterialTheme.typography.displayLarge.copy(fontSize = 96.sp),
+                    text = formattedTimerLength
+                )
+            } else {
+                // Normal Resized Text
+                AutoSizingText(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
+                    textStyle = MaterialTheme.typography.displayLarge.copy(fontSize = 96.sp),
+                    text = formattedTimerLength
+                )
             }
         }
     }

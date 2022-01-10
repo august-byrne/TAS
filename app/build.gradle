@@ -158,6 +158,8 @@ dependencies {
     //implementation 'com.google.accompanist:accompanist-pager:0.21.3-beta'
     //implementation 'com.google.accompanist:accompanist-pager-indicators:0.21.3-beta'
     implementation 'com.google.accompanist:accompanist-flowlayout:0.22.0-rc'
+    implementation 'com.google.accompanist:accompanist-systemuicontroller:0.22.0-rc'
+    implementation 'com.google.accompanist:accompanist-insets:0.22.0-rc'
 
     // UI Tests
     //androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"

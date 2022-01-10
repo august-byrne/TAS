@@ -8,7 +8,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.lerp
@@ -20,13 +22,19 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import com.augustbyrne.tas.R
+import com.augustbyrne.tas.ui.timer.TimerService
+import com.augustbyrne.tas.ui.timer.TimerText
 import com.augustbyrne.tas.ui.values.*
+import com.augustbyrne.tas.util.TimerState
 import com.augustbyrne.tas.util.TimerTheme
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
 @Composable
 fun ThemedBackground(timerTheme: TimerTheme, progressInMilli: Long, modifier: Modifier = Modifier) {
+    val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
+    val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(1L)
+    val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     Box(modifier = Modifier.fillMaxSize()) {
         when (timerTheme) {
             TimerTheme.Original -> {
@@ -156,7 +164,7 @@ fun ThemedBackground(timerTheme: TimerTheme, progressInMilli: Long, modifier: Mo
                         )
                     }
                 }
-                Image(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .wrapContentHeight()
@@ -172,12 +180,32 @@ fun ThemedBackground(timerTheme: TimerTheme, progressInMilli: Long, modifier: Mo
 
                             val x = centerX * (1)
                             IntOffset(x.roundToInt(), yLocation.roundToInt())
-                        },
-                    painter = painterResource(id = R.drawable.vapor_wave_sun),
-                    contentScale = ContentScale.Fit,
-                    colorFilter = ColorFilter.tint(Color(ColorUtils.blendARGB(yellowOrange.toArgb(), redOrange.toArgb(), progressInMilli/1000f))),
-                    contentDescription = "sun"
-                )
+                        }
+                ) {
+                    Image(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight(),
+                        painter = painterResource(id = R.drawable.vapor_wave_sun),
+                        contentScale = ContentScale.Fit,
+                        colorFilter = ColorFilter.tint(
+                            Color(
+                                ColorUtils.blendARGB(
+                                    yellowOrange.toArgb(),
+                                    redOrange.toArgb(),
+                                    progressInMilli.div(1000f)
+                                )
+                            )
+                        ),
+                        contentDescription = "sun"
+                    )
+                    TimerText(
+                        modifier = Modifier.align(Alignment.Center),
+                        timerState = timerState,
+                        timerLengthMilli = timerLengthMilli,
+                        totalTimerLengthMilli = totalTimerLengthMilli
+                    )
+                }
                 Image(
                     modifier = Modifier
                         .size(50.dp)
