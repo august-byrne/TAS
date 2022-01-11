@@ -12,7 +12,7 @@ TAS helps you stay organized and manage your daily activities effectively using 
   </em>
 </p>
 
-![front_app_page](app_front_page.png) | ![timer_page_1](app_timer_page1.png) | ![timer_page_2](app_timer_page2.png)
+![front_app_page](app_front_page.png) | ![expanded_app_page](app_expanded_page.png) | ![timer_page_1](app_timer_page1.png) | ![timer_page_2](app_timer_page2.png)
 
 
 This project was fully rebuilt from a multi-fragment and xml design into the new declarative UI coding style of Jetpack Compose. It also makes use of many Jetpack components like Room, DataStore, Lifecycle, and Navigation. It implements MVVM architecture (with Hilt Dagger DI), unidirectional data flow, and Material You. It also makes use of a few of the accompanist libraries by Google.
