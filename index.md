@@ -6,6 +6,6 @@ This project was fully rebuilt from single Activity many Fragment design with xm
 
 #### _[Now on the Google Play Store](https://play.google.com/store/apps/details?id=com.augustbyrne.tas){:target="_blank"}_
 
-![front_app_page](app_front_page.png) | ![front_timer_page](app_timer_page.png)
+![front_app_page](app_front_page.png) | ![timer_page_1](app_timer_page1.png) | ![timer_page_2](app_timer_page2.png)
 
 [Privacy Policy](privacy-policy.md)
