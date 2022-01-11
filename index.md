@@ -6,11 +6,11 @@ Plan out your activities with TAS!
 
 TAS helps you stay organized and manage your daily activities effectively using timed tasks and routines.
 
-<em>
-  <p align="center">
+<p align="center">
+  <em>
     <a href="https://play.google.com/store/apps/details?id=com.augustbyrne.tas" target="_blank">Now on the Google Play Store</a>
-  </p>
-</em>
+  </em>
+</p>
 
 ![front_app_page](app_front_page.png) | ![timer_page_1](app_timer_page1.png) | ![timer_page_2](app_timer_page2.png)
 
