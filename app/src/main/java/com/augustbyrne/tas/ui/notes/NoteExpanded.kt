@@ -9,7 +9,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
@@ -36,9 +35,14 @@ import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
 import com.google.accompanist.insets.statusBarsPadding
 import kotlinx.coroutines.launch
+import org.burnoutcrew.reorderable.detectReorderAfterLongPress
+import org.burnoutcrew.reorderable.draggedItem
+import org.burnoutcrew.reorderable.rememberReorderState
+import org.burnoutcrew.reorderable.reorderable
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import java.util.*
 
 private val myDateTimeFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
 
@@ -50,11 +54,11 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
     val noteWithItems by myViewModel.getNoteWithItemsById(noteId)
         .observeAsState(NoteWithItems(NoteItem(), listOf()))
     val prevTimeType by myViewModel.lastUsedTimeUnitFlow.observeAsState(initial = 0)
-    val listState = rememberLazyListState()
     val decayAnimationSpec = rememberSplineBasedDecay<Float>()
     val scrollBehavior = remember(decayAnimationSpec) {
         TopAppBarDefaults.exitUntilCollapsedScrollBehavior(decayAnimationSpec)
     }
+    val state = rememberReorderState()
 
     Scaffold(
         modifier = Modifier
@@ -131,7 +135,24 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
         }
     ) {
         LazyColumn(
-            state = listState,
+            state = state.listState,
+            modifier = Modifier.reorderable(
+                state = state,
+                onMove = { from, to ->
+                    if (to.index >= 2 && to.index <= noteWithItems.dataItems.lastIndex + 2) {
+                        if (!noteWithItems.dataItems.isNullOrEmpty()) {
+                            Collections.swap(noteWithItems.dataItems, from.index - 2, to.index - 2)
+                        }
+                    }
+                }, onDragEnd = { from, to ->
+                    if (from >= 0 && to >= 0) {
+                        myViewModel.upsertNoteAndData(
+                            noteWithItems.note,
+                            noteWithItems.dataItems.toMutableList()
+                        )
+                    }
+                }
+            ),
             contentPadding = PaddingValues(bottom = 88.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
@@ -212,6 +233,9 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
             }
             itemsIndexed(noteWithItems.dataItems) { index: Int, item: DataItem ->
                 DataItemUI(
+                    modifier = Modifier
+                        .draggedItem(state.offsetByIndex(index.plus(2)))
+                        .detectReorderAfterLongPress(state),
                     dataItem = item,
                     onClickToEdit = { myViewModel.initialDialogDataItem = item },
                     onClickStart = {
@@ -231,11 +255,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                     onClickDelete = {
                         coroutineScope.launch {
                             myViewModel.deleteDataItem(item.id)
-                            myViewModel.updateNote(
-                                noteWithItems.note.copy(
-                                    last_edited_on = LocalDateTime.now()
-                                )
-                            )
+                            myViewModel.updateNote(noteWithItems.note.copy(last_edited_on = LocalDateTime.now()))
                         }
                     }
                 )
@@ -357,6 +377,7 @@ fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, 
 
 @Composable
 fun DataItemUI (
+    modifier: Modifier = Modifier,
     dataItem: DataItem,
     onClickToEdit: () -> Unit,
     onClickStart: () -> Unit,
@@ -364,7 +385,7 @@ fun DataItemUI (
 ) {
     var itemExpanded by remember { mutableStateOf(false) }
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable(
                 onClick = { onClickToEdit() },
@@ -452,6 +473,6 @@ fun DataItemUITest() {
         unit = 1
     )
     AppTheme {
-        DataItemUI(dataItem, {}, {}, {})
+        DataItemUI(Modifier, dataItem, {}, {}, {})
     }
 }

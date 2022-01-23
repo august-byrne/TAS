@@ -51,6 +51,11 @@ class NoteViewModel @Inject constructor(
                 }
             } else {
                 repo.upsert(noteItem)
+                dataItems.replaceAll {
+                    it.copy(
+                        order = dataItems.lastIndex - dataItems.indexOf(it)
+                    )
+                }
             }
             repo.upsertData(dataItems)
         }
@@ -80,7 +85,9 @@ class NoteViewModel @Inject constructor(
         }.asLiveData()
 
     fun getNoteWithItemsById(id: Int): LiveData<NoteWithItems> =
-        repo.getNoteWithItemsById(id).asLiveData()
+        repo.getNoteWithItemsById(id).map { value ->
+            NoteWithItems(value.note, value.dataItems.sortedByDescending { it.order })
+        }.asLiveData()
 
     /**
      * PreferenceManager DataStore Preferences Here
@@ -113,7 +120,6 @@ class NoteViewModel @Inject constructor(
     var tempSavedNote: NoteWithItems? = null
     var openSortPopup by mutableStateOf(false)
     var openEditDialog by mutableStateOf(false)
-    var selectedNavBarItem by mutableStateOf(0)
 
     private var listState: LazyListState = LazyListState()
     fun saveListPosition(newListState: LazyListState) {

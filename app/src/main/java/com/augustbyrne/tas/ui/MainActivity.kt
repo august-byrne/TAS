@@ -69,8 +69,6 @@ class MainActivity : AppCompatActivity() {
     private val adaptiveAdSize: AdSize
         get() {
             val adWidthPixels = this.resources.displayMetrics.widthPixels
-            //removed from window API: WindowManager(this).getCurrentWindowMetrics().bounds.width().toFloat()
-            //requires android API 30: windowManager.currentWindowMetrics.bounds.width().toFloat()
             val density = this.resources.displayMetrics.density
             val adWidth = (adWidthPixels.div(density)).toInt()
             //return the optimal size depends on your orientation (landscape or portrait)
@@ -107,8 +105,7 @@ class MainActivity : AppCompatActivity() {
                 DarkMode.On -> true
             }
             AppTheme(darkTheme = isAppDark) {
-                //window.statusBarColor = MaterialTheme.colorScheme.surface.toArgb()
-                // Update the system bars to be translucent
+                // Update the status bar to be translucent
                 val systemUiController = rememberSystemUiController()
                 SideEffect {
                     systemUiController.setStatusBarColor(
@@ -118,17 +115,6 @@ class MainActivity : AppCompatActivity() {
                         )!!.id || !isAppDark
                     )
                 }
-/*                SideEffect {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        window.insetsController?.setSystemBarsAppearance(
-                            if (isAppDark) 0 else APPEARANCE_LIGHT_STATUS_BARS,
-                            APPEARANCE_LIGHT_STATUS_BARS
-                        )
-                    } else {
-                        window.decorView.systemUiVisibility =
-                            if (isAppDark) 0 else View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-                    }
-                }*/
                 LaunchedEffect(Unit) {
                     navigateToTimerIfNeeded(intent, navController)
                 }
@@ -151,10 +137,7 @@ class MainActivity : AppCompatActivity() {
                                 snackbarState = snackbarHostState
                             )
                             CollapsedTimer(navController, navBackStackEntry)
-/*                        if (navBackStackEntry?.destination?.id != navController.findDestination("note_timer")!!.id) {
-                            NavBar(navController = navController, myViewModel = myViewModel)
-                        }*/
-                            if (adState /*&& navBackStackEntry?.destination?.id == navController.findDestination("note_timer")!!.id*/) {
+                            if (adState) {
                                 AndroidView(
                                     modifier = Modifier.fillMaxWidth(),
                                     factory = { context ->
