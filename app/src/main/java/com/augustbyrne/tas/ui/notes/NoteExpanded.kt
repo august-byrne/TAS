@@ -1,6 +1,5 @@
 package com.augustbyrne.tas.ui.notes
 
-import android.content.Intent
 import android.widget.Toast
 import androidx.compose.animation.rememberSplineBasedDecay
 import androidx.compose.foundation.background
@@ -33,6 +32,7 @@ import com.augustbyrne.tas.ui.components.EditDataItemDialog
 import com.augustbyrne.tas.ui.components.EditExpandedNoteHeaderDialog
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
+import com.augustbyrne.tas.util.TimerState
 import com.google.accompanist.insets.statusBarsPadding
 import kotlinx.coroutines.launch
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
@@ -48,7 +48,7 @@ private val myDateTimeFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStart: () -> Unit, onDeleteNote: () -> Unit, onNavBack: () -> Unit) {
+fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStart: (noteWithData: NoteWithItems, index: Int) -> Unit, onDeleteNote: () -> Unit, onNavBack: () -> Unit) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val noteWithItems by myViewModel.getNoteWithItemsById(noteId)
@@ -59,6 +59,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
         TopAppBarDefaults.exitUntilCollapsedScrollBehavior(decayAnimationSpec)
     }
     val state = rememberReorderState()
+    val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
 
     Scaffold(
         modifier = Modifier
@@ -79,17 +80,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                     }
                 },
                 onClickStart = {
-                    if (!noteWithItems.dataItems.isNullOrEmpty()) {
-                        TimerService.initTimerService(
-                            noteWithItems.note,
-                            noteWithItems.dataItems
-                        )
-                        onNavigateTimerStart()
-                        Intent(context, TimerService::class.java).also {
-                            it.action = "ACTION_START_OR_RESUME_SERVICE"
-                            context.startService(it)
-                        }
-                    }
+                    onNavigateTimerStart(noteWithItems, 0)
                 },
                 onDeleteNote = {
                     myViewModel.tempSavedNote = noteWithItems
@@ -111,25 +102,6 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                         }
                     )
                     onNavBack()
-                }
-            )
-        },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                text = {
-                    Text(text = "Add activity")
-                },
-                icon = {
-                    Icon(
-                        imageVector = Icons.Rounded.Add,
-                        contentDescription = "New item"
-                    )
-                },
-                onClick = {
-                    myViewModel.initialDialogDataItem = DataItem(
-                        parent_id = noteId,
-                        unit = prevTimeType
-                    )
                 }
             )
         }
@@ -178,17 +150,12 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                         horizontalArrangement = Arrangement.Start
                     ) {
                         IconButton(onClick = {
-                            if (!noteWithItems.dataItems.isNullOrEmpty()) {
-                                TimerService.initTimerService(
+                            onNavigateTimerStart(
+                                NoteWithItems(
                                     noteWithItems.note,
                                     noteWithItems.dataItems.shuffled()
-                                )
-                                onNavigateTimerStart()
-                                Intent(context, TimerService::class.java).also {
-                                    it.action = "ACTION_START_OR_RESUME_SERVICE"
-                                    context.startService(it)
-                                }
-                            }
+                                ), 0
+                            )
                         }) {
                             Icon(
                                 imageVector = Icons.Rounded.Shuffle,
@@ -239,18 +206,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                     dataItem = item,
                     onClickToEdit = { myViewModel.initialDialogDataItem = item },
                     onClickStart = {
-                        if (!noteWithItems.dataItems.isNullOrEmpty()) {
-                            TimerService.initTimerService(
-                                noteWithItems.note,
-                                noteWithItems.dataItems,
-                                index
-                            )
-                            onNavigateTimerStart()
-                            Intent(context, TimerService::class.java).also {
-                                it.action = "ACTION_START_OR_RESUME_SERVICE"
-                                context.startService(it)
-                            }
-                        }
+                        onNavigateTimerStart(noteWithItems, index)
                     },
                     onClickDelete = {
                         coroutineScope.launch {
@@ -316,6 +272,31 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                     }
                 }
             }
+        }
+        Box(
+            modifier = Modifier.fillMaxSize().padding(
+                end = 16.dp,
+                bottom = if (timerState != TimerState.Stopped) 88.dp else 16.dp
+            )
+        ) {
+            ExtendedFloatingActionButton(
+                modifier = Modifier.align(Alignment.BottomEnd),
+                text = {
+                    Text(text = "Add activity")
+                },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Rounded.Add,
+                        contentDescription = "New item"
+                    )
+                },
+                onClick = {
+                    myViewModel.initialDialogDataItem = DataItem(
+                        parent_id = noteId,
+                        unit = prevTimeType
+                    )
+                }
+            )
         }
     }
 }

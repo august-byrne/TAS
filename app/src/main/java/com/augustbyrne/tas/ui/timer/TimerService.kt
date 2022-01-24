@@ -25,6 +25,7 @@ import androidx.lifecycle.MutableLiveData
 import com.augustbyrne.tas.R
 import com.augustbyrne.tas.data.db.entities.DataItem
 import com.augustbyrne.tas.data.db.entities.NoteItem
+import com.augustbyrne.tas.data.db.entities.NoteWithItems
 import com.augustbyrne.tas.ui.MainActivity
 import com.augustbyrne.tas.ui.values.yellow100
 import com.augustbyrne.tas.util.TimerState
@@ -215,7 +216,7 @@ class TimerService : LifecycleService() {
         private var timer: CountDownTimer? = null
 
         //takes care of all time unit (and some timer state) manipulation
-        fun startTimer(itemIndex: Int) {
+        fun startTimer(itemIndex: Int = 0) {
             setActiveItemIndex(itemIndex)
             val activeItem = currentNoteItems[itemIndex]
             var activeTimeLengthMilli =
@@ -279,11 +280,10 @@ class TimerService : LifecycleService() {
         private var internalTimerState: TimerState = TimerState.Stopped
         private var internalIndex: Int = 0
 
-        fun initTimerService(note: NoteItem, dataItems: List<DataItem>, index: Int = 0) {
-            currentNote = note
-            currentNoteItems = dataItems.toMutableStateList()
+        fun initTimerServiceValues(noteWithItems: NoteWithItems, index: Int = 0) {
+            currentNote = noteWithItems.note
+            currentNoteItems = noteWithItems.dataItems.toMutableStateList()
             stopTimer(index)
-            startTimer(index)
         }
 
         // LiveData holds state which is observed by the UI

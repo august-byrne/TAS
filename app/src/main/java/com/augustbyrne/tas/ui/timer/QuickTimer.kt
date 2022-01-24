@@ -1,6 +1,5 @@
 package com.augustbyrne.tas.ui.timer
 
-import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
@@ -14,16 +13,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.augustbyrne.tas.data.db.entities.DataItem
 import com.augustbyrne.tas.data.db.entities.NoteItem
+import com.augustbyrne.tas.data.db.entities.NoteWithItems
+import com.google.accompanist.insets.statusBarsPadding
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun QuickTimer(onNavigateTimerStart: () -> Unit, onNavBack: () -> Unit) {
-    val context = LocalContext.current
+fun QuickTimer(onNavigateTimerStart: (noteWithData: NoteWithItems) -> Unit, onNavBack: () -> Unit) {
     var timeValue by rememberSaveable { mutableStateOf(0) }
     val formattedTimerLength = String.format(
         "%01d:%02d:%02d",
@@ -35,6 +34,7 @@ fun QuickTimer(onNavigateTimerStart: () -> Unit, onNavBack: () -> Unit) {
     Scaffold(
         topBar = {
             SmallTopAppBar(
+                modifier = Modifier.statusBarsPadding(),
                 title = {
                     Text(text = "Quick Timer")
                 },
@@ -182,15 +182,12 @@ fun QuickTimer(onNavigateTimerStart: () -> Unit, onNavBack: () -> Unit) {
                 Button(
                     onClick = {
                         if (timeValue != 0) {
-                            TimerService.initTimerService(
-                                NoteItem(title = "Timer"),
-                                listOf(DataItem(time = timeValue))
+                            onNavigateTimerStart(
+                                NoteWithItems(
+                                    NoteItem(title = "Timer"),
+                                    listOf(DataItem(time = timeValue))
+                                )
                             )
-                            onNavigateTimerStart()
-                            Intent(context, TimerService::class.java).also {
-                                it.action = "ACTION_START_OR_RESUME_SERVICE"
-                                context.startService(it)
-                            }
                         }
                     },
                     colors = ButtonDefaults.buttonColors(

@@ -1,7 +1,5 @@
 package com.augustbyrne.tas.ui.notes
 
-import android.content.Intent
-import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -28,27 +26,30 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.augustbyrne.tas.data.db.entities.NoteItem
+import com.augustbyrne.tas.data.db.entities.NoteWithItems
 import com.augustbyrne.tas.ui.components.EditExpandedNoteHeaderDialog
 import com.augustbyrne.tas.ui.components.MainNavDrawer
 import com.augustbyrne.tas.ui.components.RadioItemsDialog
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
 import com.augustbyrne.tas.util.SortType
+import com.augustbyrne.tas.util.TimerState
 import com.google.accompanist.insets.statusBarsPadding
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavigateTimerStart: () -> Unit, onNavSettings: () -> Unit, onNavQuickTimer: () -> Unit) {
+fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavigateTimerStart: (noteWithItems: NoteWithItems) -> Unit, onNavSettings: () -> Unit, onNavQuickTimer: () -> Unit) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val scrollBehavior = remember { TopAppBarDefaults.pinnedScrollBehavior() }
     val sortType by myViewModel.sortTypeFlow.observeAsState(initial = SortType.Default)
-    val sortedNotes by myViewModel.sortedAllNotesWithItems(sortType)
-        .observeAsState(initial = null)
+    val sortedNotes by myViewModel.sortedAllNotesWithItems(sortType).observeAsState(initial = null)
+    val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
+
     LaunchedEffect(Unit) {
         drawerState.snapTo(DrawerValue.Closed)
     }
@@ -98,21 +99,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                         }
                     }
                 )
-            },
-            floatingActionButton = {
-                FloatingActionButton(
-                    onClick = {
-                        myViewModel.saveListPosition(LazyListState())
-                        myViewModel.openEditDialog = true
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Add,
-                        contentDescription = "New note"
-                    )
-                }
-            },
-            floatingActionButtonPosition = FabPosition.End
+            }
         ) {
             // our list with build in nested scroll support that will notify us about its scroll
             LazyColumn(
@@ -142,20 +129,8 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                             onNavigate(notesWithData.note.id)
                         }
                     ) {
-                        if (!notesWithData.dataItems.isNullOrEmpty()) {
-                            myViewModel.saveListPosition(listState)
-                            TimerService.initTimerService(
-                                notesWithData.note,
-                                notesWithData.dataItems
-                            )
-                            onNavigateTimerStart()
-                            Intent(context, TimerService::class.java).also {
-                                it.action = "ACTION_START_OR_RESUME_SERVICE"
-                                context.startService(it)
-                            }
-                        } else {
-                            Toast.makeText(context, "Empty activity", Toast.LENGTH_SHORT).show()
-                        }
+                        myViewModel.saveListPosition(listState)
+                        onNavigateTimerStart(notesWithData)
                     }
                 }
                 if (sortedNotes?.isEmpty() == true) {
@@ -211,6 +186,25 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                     }
                 }
             }
+            Box(
+                modifier = Modifier.fillMaxSize().padding(
+                    end = 16.dp,
+                    bottom = if (timerState != TimerState.Stopped) 88.dp else 16.dp
+                )
+            ) {
+                FloatingActionButton(
+                    modifier = Modifier.align(Alignment.BottomEnd),
+                    onClick = {
+                        myViewModel.saveListPosition(LazyListState())
+                        myViewModel.openEditDialog = true
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Add,
+                        contentDescription = "New note"
+                    )
+                }
+            }
         }
     }
 }
@@ -223,13 +217,12 @@ fun NoteItemUI (
     onClickStart: () -> Unit
     ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         onClick = onClickItem,
         indication = rememberRipple(),
         shape = androidx.compose.material.MaterialTheme.shapes.medium.copy(CornerSize(12.dp)),
         backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-        elevation = 1.dp
+        elevation = 2.dp
     ) {
         Column(
             modifier = Modifier

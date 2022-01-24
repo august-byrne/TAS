@@ -2,10 +2,7 @@ package com.augustbyrne.tas.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.icons.Icons
@@ -26,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.accompanist.insets.statusBarsPadding
 
 /*
 @ExperimentalPagerApi
@@ -164,24 +162,26 @@ fun MainNavDrawer(drawerState: DrawerState, onNavSettings: () -> Unit, onNavTime
         drawerState = drawerState,
         gesturesEnabled = true,
         drawerContent = {
-            Text(
-                modifier = Modifier.padding(vertical = 16.dp, horizontal = 24.dp),
-                text = "TAS",
-                style = MaterialTheme.typography.titleLarge
-            )
-            ItemButton(
-                modifier = Modifier.padding(end = 8.dp),
-                icon = Icons.Rounded.Timer,
-                text = "Quick Timer",
-                onClick = onNavTimer
-            )
-            Divider(modifier = Modifier.padding(top = 8.dp))
-            ItemButton(
-                modifier = Modifier.padding(end = 8.dp),
-                icon = Icons.Rounded.Settings,
-                text = "Settings",
-                onClick = onNavSettings
-            )
+            Column(modifier = Modifier.statusBarsPadding().fillMaxSize()) {
+                Text(
+                    modifier = Modifier.padding(vertical = 16.dp, horizontal = 24.dp),
+                    text = "TAS",
+                    style = MaterialTheme.typography.titleLarge
+                )
+                ItemButton(
+                    modifier = Modifier.padding(end = 8.dp),
+                    icon = Icons.Rounded.Timer,
+                    text = "Quick Timer",
+                    onClick = onNavTimer
+                )
+                Divider(modifier = Modifier.padding(top = 8.dp))
+                ItemButton(
+                    modifier = Modifier.padding(end = 8.dp),
+                    icon = Icons.Rounded.Settings,
+                    text = "Settings",
+                    onClick = onNavSettings
+                )
+            }
         },
         content = content
     )

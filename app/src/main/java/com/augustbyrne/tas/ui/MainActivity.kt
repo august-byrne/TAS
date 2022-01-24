@@ -14,6 +14,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Snackbar
 import androidx.compose.material.SnackbarHost
 import androidx.compose.material.SnackbarHostState
@@ -31,6 +32,8 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -43,12 +46,12 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.augustbyrne.tas.R
-import com.augustbyrne.tas.ui.components.orange
 import com.augustbyrne.tas.ui.notes.NoteViewModel
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
 import com.augustbyrne.tas.ui.values.Blue40
 import com.augustbyrne.tas.ui.values.Blue90
+import com.augustbyrne.tas.ui.values.special400
 import com.augustbyrne.tas.util.BatteryLevelReceiver
 import com.augustbyrne.tas.util.DarkMode
 import com.augustbyrne.tas.util.TimerState
@@ -127,16 +130,24 @@ class MainActivity : AppCompatActivity() {
                         Column(
                             verticalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            NavGraph(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
-                                viewModel = myViewModel,
-                                coroutineScope = coroutineScope,
-                                navController = navController,
-                                snackbarState = snackbarHostState
-                            )
-                            CollapsedTimer(navController, navBackStackEntry)
+                            Box(modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                            ) {
+                                NavGraph(
+                                    modifier = Modifier.fillMaxSize(),
+                                    viewModel = myViewModel,
+                                    coroutineScope = coroutineScope,
+                                    navController = navController,
+                                    snackbarState = snackbarHostState
+                                )
+                                CollapsedTimer(
+                                    Modifier.align(Alignment.BottomCenter),
+                                    navController,
+                                    navBackStackEntry
+                                )
+                            }
+
                             if (adState) {
                                 AndroidView(
                                     modifier = Modifier.fillMaxWidth(),
@@ -190,7 +201,7 @@ class MainActivity : AppCompatActivity() {
 }
 
 @Composable
-fun CollapsedTimer(navController: NavController, navBackStackEntry: NavBackStackEntry?) {
+fun CollapsedTimer(modifier: Modifier = Modifier, navController: NavController, navBackStackEntry: NavBackStackEntry?) {
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     if (timerState != TimerState.Stopped && navBackStackEntry?.destination?.id != navController.findDestination(
             "note_timer"
@@ -201,118 +212,118 @@ fun CollapsedTimer(navController: NavController, navBackStackEntry: NavBackStack
         val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(1L)
         val icon =
             if (timerState == TimerState.Running) Icons.Default.Pause else Icons.Default.PlayArrow
-        val bgColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
-        Column(
-            modifier = Modifier
-                .wrapContentHeight()
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .clickable(
-                    onClick = { navController.navigate("note_timer") },
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = rememberRipple()
-                ),
-            verticalArrangement = Arrangement.SpaceEvenly
+        Box(
+            modifier = modifier
+                .padding(8.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .alpha(0.9f)
         ) {
-            Canvas(
-                Modifier
+            Column(
+                modifier = Modifier
                     .wrapContentHeight()
                     .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.inverseSurface)
+                    .clickable(
+                        onClick = { navController.navigate("note_timer") },
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple()
+                    ),
+                verticalArrangement = Arrangement.SpaceEvenly
             ) {
-                val progressLine =
-                    size.width * (1f - (timerLengthMilli.toFloat() / totalTimerLengthMilli.toFloat()))
-                drawLine(
-                    color = bgColor,
-                    strokeWidth = 4.dp.toPx(),
-                    cap = StrokeCap.Square,
-                    start = Offset(y = 2.dp.toPx(), x = 0f),
-                    end = Offset(y = 2.dp.toPx(), x = size.width)
-                )
-                drawLine(
-                    color = orange,
-                    strokeWidth = 4.dp.toPx(),
-                    cap = StrokeCap.Square,
-                    start = Offset(y = 2.dp.toPx(), x = 0f),
-                    end = Offset(
-                        y = 2.dp.toPx(),
-                        x = progressLine
-                    )
-                )
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(
+                Row(
                     modifier = Modifier
                         .padding(8.dp)
-                        .wrapContentHeight()
-                        .weight(1f)
+                        .fillMaxWidth()
+                        .wrapContentHeight(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = TimerService.currentNote.title,
-                        style = MaterialTheme.typography.titleLarge,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Text(
-                        text = TimerService.currentNoteItems[itemIndex].activity,
-                        style = MaterialTheme.typography.bodyLarge,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-                Row(
-                    modifier = Modifier.wrapContentSize()
-                ) {
-                    TextButton(
-                        onClick = {
-                            if (timerLengthMilli > totalTimerLengthMilli - 5000L) {
-                                TimerService.modifyTimer(itemIndex - 1)
-                            } else {
-                                TimerService.modifyTimer(itemIndex)
-                            }
-                        }
+                    Column(
+                        modifier = Modifier
+                            .wrapContentHeight()
+                            .weight(1f)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.SkipPrevious,
-                            contentDescription = "back to previous item",
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        Text(
+                            text = TimerService.currentNote.title,
+                            style = MaterialTheme.typography.titleLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            color = MaterialTheme.colorScheme.inverseOnSurface
+                        )
+                        Text(
+                            text = TimerService.currentNoteItems[itemIndex].activity,
+                            style = MaterialTheme.typography.bodyLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            color = MaterialTheme.colorScheme.inverseOnSurface
                         )
                     }
-                    TextButton(
-                        onClick = {
-                            if (timerLengthMilli != 0L) {
-                                if (timerState == TimerState.Running) { // Clicked Pause
-                                    TimerService.pauseTimer(timerLengthMilli)
-                                } else { // Clicked Start
-                                    TimerService.startTimer(itemIndex)
+                    Row(
+                        modifier = Modifier.wrapContentSize()
+                    ) {
+                        TextButton(
+                            onClick = {
+                                if (timerLengthMilli > totalTimerLengthMilli - 5000L) {
+                                    TimerService.modifyTimer(itemIndex - 1)
+                                } else {
+                                    TimerService.modifyTimer(itemIndex)
                                 }
                             }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SkipPrevious,
+                                contentDescription = "back to previous item",
+                                tint = MaterialTheme.colorScheme.inverseOnSurface
+                            )
                         }
-                    ) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = "Start or Pause",
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                    TextButton(
-                        onClick = {
-                            TimerService.modifyTimer(itemIndex + 1)
+                        TextButton(
+                            onClick = {
+                                if (timerLengthMilli != 0L) {
+                                    if (timerState == TimerState.Running) { // Clicked Pause
+                                        TimerService.pauseTimer(timerLengthMilli)
+                                    } else { // Clicked Start
+                                        TimerService.startTimer(itemIndex)
+                                    }
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = "Start or Pause",
+                                tint = MaterialTheme.colorScheme.inverseOnSurface
+                            )
                         }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.SkipNext,
-                            contentDescription = "skip to next item",
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+                        TextButton(
+                            onClick = {
+                                TimerService.modifyTimer(itemIndex + 1)
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SkipNext,
+                                contentDescription = "skip to next item",
+                                tint = MaterialTheme.colorScheme.inverseOnSurface
+                            )
+                        }
                     }
+                }
+                Canvas(
+                    Modifier
+                        .wrapContentHeight()
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                ) {
+                    val progressLine =
+                        size.width * (1f - (timerLengthMilli.toFloat() / totalTimerLengthMilli.toFloat()))
+                    drawLine(
+                        color = special400,
+                        strokeWidth = 4.dp.toPx(),
+                        cap = StrokeCap.Square,
+                        start = Offset(y = 0f, x = 0f),
+                        end = Offset(
+                            y = 0f,
+                            x = progressLine
+                        )
+                    )
                 }
             }
         }

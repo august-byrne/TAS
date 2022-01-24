@@ -1,9 +1,12 @@
 package com.augustbyrne.tas.ui
 
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.material.SnackbarDuration
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -14,11 +17,13 @@ import com.augustbyrne.tas.ui.notes.NoteListUI
 import com.augustbyrne.tas.ui.notes.NoteViewModel
 import com.augustbyrne.tas.ui.timer.NoteTimer
 import com.augustbyrne.tas.ui.timer.QuickTimer
+import com.augustbyrne.tas.ui.timer.TimerService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
 fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineScope: CoroutineScope, navController: NavHostController, snackbarState: SnackbarHostState) {
+    val context = LocalContext.current
     NavHost(
         modifier = modifier,
         navController = navController,
@@ -30,8 +35,18 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
                 { noteId: Int ->
                     navController.navigate("note_expanded/$noteId")
                 },
-                {
-                    navController.navigate("note_timer")
+                { noteWithData ->
+                    if (!noteWithData.dataItems.isNullOrEmpty()) {
+                        TimerService.initTimerServiceValues(noteWithData)
+                        navController.navigate("note_timer")
+                        TimerService.startTimer()
+                        Intent(context, TimerService::class.java).also {
+                            it.action = "ACTION_START_OR_RESUME_SERVICE"
+                            context.startService(it)
+                        }
+                    } else {
+                        Toast.makeText(context, "Empty activity", Toast.LENGTH_SHORT).show()
+                    }
                 },
                 {
                     navController.navigate("settings")
@@ -54,8 +69,16 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
             ExpandedNoteUI(
                 noteId,
                 viewModel,
-                {
-                    navController.navigate("note_timer")
+                { noteWithData, index ->
+                    if (!noteWithData.dataItems.isNullOrEmpty()) {
+                        TimerService.initTimerServiceValues(noteWithData)
+                        navController.navigate("note_timer")
+                        TimerService.startTimer(index)
+                        Intent(context, TimerService::class.java).also {
+                            it.action = "ACTION_START_OR_RESUME_SERVICE"
+                            context.startService(it)
+                        }
+                    }
                 },
                 {
                     navController.popBackStack()
@@ -82,8 +105,14 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
         }
         composable("general_timer") {
             QuickTimer(
-                {
+                { noteWithData ->
+                    TimerService.initTimerServiceValues(noteWithData)
                     navController.navigate("note_timer")
+                    TimerService.startTimer()
+                    Intent(context, TimerService::class.java).also {
+                        it.action = "ACTION_START_OR_RESUME_SERVICE"
+                        context.startService(it)
+                    }
                 },
                 {
                     navController.popBackStack()
