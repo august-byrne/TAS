@@ -36,17 +36,20 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
                 { noteId: Int ->
                     navController.navigate("note_expanded/$noteId")
                 },
-                { noteWithData ->
-                    if (!noteWithData.dataItems.isNullOrEmpty()) {
-                        TimerService.initTimerServiceValues(noteWithData)
-                        navController.navigate("note_timer")
-                        TimerService.startTimer()
-                        Intent(context, TimerService::class.java).also {
-                            it.action = "ACTION_START_OR_RESUME_SERVICE"
-                            context.startService(it)
+                { noteId ->
+                    coroutineScope.launch {
+                        val noteWithItems = viewModel.getStaticNoteWithItemsById(noteId)
+                        if (noteWithItems.dataItems.isNotEmpty()) {
+                            TimerService.initTimerServiceValues(noteWithItems)
+                            navController.navigate("note_timer")
+                            TimerService.startTimer()
+                            Intent(context, TimerService::class.java).also {
+                                it.action = "ACTION_START_OR_RESUME_SERVICE"
+                                context.startService(it)
+                            }
+                        } else {
+                            Toast.makeText(context, "Empty activity", Toast.LENGTH_SHORT).show()
                         }
-                    } else {
-                        Toast.makeText(context, "Empty activity", Toast.LENGTH_SHORT).show()
                     }
                 },
                 {
@@ -70,9 +73,9 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
             ExpandedNoteUI(
                 noteId,
                 viewModel,
-                { noteWithData, index ->
-                    if (!noteWithData.dataItems.isNullOrEmpty()) {
-                        TimerService.initTimerServiceValues(noteWithData)
+                { noteWithItems, index ->
+                    if (!noteWithItems.dataItems.isNullOrEmpty()) {
+                        TimerService.initTimerServiceValues(noteWithItems)
                         navController.navigate("note_timer")
                         TimerService.startTimer(index)
                         Intent(context, TimerService::class.java).also { intent ->
@@ -134,8 +137,8 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
         }
         composable("general_timer") {
             QuickTimer(
-                { noteWithData ->
-                    TimerService.initTimerServiceValues(noteWithData)
+                { noteWithItems ->
+                    TimerService.initTimerServiceValues(noteWithItems)
                     navController.navigate("note_timer")
                     TimerService.startTimer()
                     Intent(context, TimerService::class.java).also {

@@ -25,6 +25,9 @@ interface NoteDao {
     @Update
     suspend fun updateNote(note: NoteItem)
 
+    @Update
+    suspend fun updateNotes(items: List<NoteItem>)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertDataItem(item: DataItem): Long
 
@@ -50,5 +53,12 @@ interface NoteDao {
     @Transaction
     @Query("SELECT * FROM note_table WHERE id = :key ORDER BY `id` DESC")
     fun getNoteWithItems(key: Int): Flow<NoteWithItems>
+
+    @Transaction
+    @Query("SELECT * FROM note_table WHERE id = :key ORDER BY `id` DESC")
+    suspend fun getNoteWithItemsSync(key: Int): NoteWithItems
+
+    @Query("SELECT COUNT(*) FROM note_table")
+    suspend fun getNumberOfNotes(): Int
 
 }

@@ -60,26 +60,39 @@ class NoteViewModel @Inject constructor(
             repo.upsertData(dataItems)
         }
 
+    fun updateAllNotes(items: MutableList<NoteItem>) =
+        CoroutineScope(Dispatchers.Main).launch {
+            items.replaceAll {
+                it.copy(
+                    order = items.lastIndex - items.indexOf(it)
+                )
+            }
+            repo.updateNotes(items)
+        }
+
     fun deleteNote(id: Int) = CoroutineScope(Dispatchers.Main).launch {
         repo.cascadeDeleteNote(id)
     }
 
     suspend fun deleteDataItem(id: Int) = repo.deleteDataItem(id)
 
-    fun sortedAllNotesWithItems(sortType: SortType): LiveData<List<NoteWithItems>> =
-        repo.allNotesWithItems.map { list ->
+    fun sortedAllNotes(sortType: SortType?): LiveData<List<NoteItem>?> =
+        repo.allNotes.map { list ->
             when (sortType) {
                 SortType.Creation -> {
-                    list.sortedByDescending { it.note.creation_date }
+                    list.sortedByDescending { it.creation_date }
                 }
                 SortType.LastEdited -> {
-                    list.sortedByDescending { it.note.last_edited_on }
+                    list.sortedByDescending { it.last_edited_on }
                 }
                 SortType.Order -> {
-                    list.sortedByDescending { it.note.order }
+                    list.sortedByDescending { it.order }
                 }
                 SortType.Default -> {
                     list
+                }
+                else -> {
+                    null
                 }
             }
         }.asLiveData()
@@ -88,6 +101,13 @@ class NoteViewModel @Inject constructor(
         repo.getNoteWithItemsById(id).map { value ->
             NoteWithItems(value.note, value.dataItems.sortedByDescending { it.order })
         }.asLiveData()
+
+    suspend fun getStaticNoteWithItemsById(id: Int): NoteWithItems =
+        repo.getNoteWithItemsByIdSynchronous(id).apply {
+            dataItems.sortedByDescending { it.order }
+        }
+
+    suspend fun getNumberOfNotes(): Int = repo.getNumberOfNotes()
 
     /**
      * PreferenceManager DataStore Preferences Here

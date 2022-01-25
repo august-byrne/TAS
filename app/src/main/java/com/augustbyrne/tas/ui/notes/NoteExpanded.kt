@@ -46,7 +46,7 @@ private val myDateTimeFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStart: (noteWithData: NoteWithItems, index: Int) -> Unit, onDeleteNote: (noteWithItems: NoteWithItems) -> Unit, onCloneNote: (noteWithItems: NoteWithItems) -> Unit, onNavBack: (noteWithData: NoteWithItems) -> Unit) {
+fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStart: (noteWithItems: NoteWithItems, index: Int) -> Unit, onDeleteNote: (noteWithItems: NoteWithItems) -> Unit, onCloneNote: (noteWithItems: NoteWithItems) -> Unit, onNavBack: (noteWithItems: NoteWithItems) -> Unit) {
     val coroutineScope = rememberCoroutineScope()
     val noteWithItems by myViewModel.getNoteWithItemsById(noteId)
         .observeAsState(NoteWithItems(NoteItem(), listOf()))

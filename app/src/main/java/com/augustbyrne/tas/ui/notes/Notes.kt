@@ -3,8 +3,7 @@ package com.augustbyrne.tas.ui.notes
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
@@ -25,7 +24,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.augustbyrne.tas.data.db.entities.NoteItem
-import com.augustbyrne.tas.data.db.entities.NoteWithItems
 import com.augustbyrne.tas.ui.components.EditExpandedNoteHeaderDialog
 import com.augustbyrne.tas.ui.components.MainNavDrawer
 import com.augustbyrne.tas.ui.components.RadioItemsDialog
@@ -35,17 +33,22 @@ import com.augustbyrne.tas.util.SortType
 import com.augustbyrne.tas.util.TimerState
 import com.google.accompanist.insets.statusBarsPadding
 import kotlinx.coroutines.launch
+import org.burnoutcrew.reorderable.detectReorderAfterLongPress
+import org.burnoutcrew.reorderable.draggedItem
+import org.burnoutcrew.reorderable.rememberReorderState
+import org.burnoutcrew.reorderable.reorderable
 import java.time.LocalDateTime
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Unit, onNavigateTimerStart: (noteWithItems: NoteWithItems) -> Unit, onNavSettings: () -> Unit, onNavQuickTimer: () -> Unit) {
+fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Unit, onNavigateTimerStart: (noteId: Int) -> Unit, onNavSettings: () -> Unit, onNavQuickTimer: () -> Unit) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val listState = rememberLazyListState()
+    val state = rememberReorderState()
     val coroutineScope = rememberCoroutineScope()
     val scrollBehavior = remember { TopAppBarDefaults.pinnedScrollBehavior() }
-    val sortType by myViewModel.sortTypeFlow.observeAsState(initial = SortType.Default)
-    val sortedNotes by myViewModel.sortedAllNotesWithItems(sortType).observeAsState(initial = null)
+    val sortType by myViewModel.sortTypeFlow.observeAsState()
+    val sortedNotes by myViewModel.sortedAllNotes(sortType).observeAsState()
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
 
     LaunchedEffect(Unit) {
@@ -101,34 +104,56 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
         ) {
             // our list with build in nested scroll support that will notify us about its scroll
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .reorderable(
+                        state = state,
+                        onMove = { from, to ->
+                            if (!sortedNotes.isNullOrEmpty()) {
+                                Collections.swap(sortedNotes!!, from.index, to.index)
+                            }
+                        }, onDragEnd = { from, to ->
+                            if (from >= 0 && to >= 0 && !sortedNotes.isNullOrEmpty()) {
+                                myViewModel.updateAllNotes(sortedNotes!!.toMutableList())
+                            }
+                            if (sortType != SortType.Order) {
+                                coroutineScope.launch {
+                                    myViewModel.setSortType(SortType.Order)
+                                }
+                            }
+                        }
+
+                    ),
+                state = state.listState,
                 contentPadding = PaddingValues(
                     start = 8.dp,
                     end = 8.dp,
                     top = 8.dp,
-                    bottom =  if (timerState != TimerState.Stopped) 160.dp else 88.dp
+                    bottom = if (timerState != TimerState.Stopped) 160.dp else 88.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 coroutineScope.launch {
                     myViewModel.loadListPosition().run {
-                        listState.scrollToItem(
+                        state.listState.scrollToItem(
                             firstVisibleItemIndex,
                             firstVisibleItemScrollOffset
                         )
                     }
                 }
-                items(sortedNotes ?: listOf()) { notesWithData ->
+                itemsIndexed(sortedNotes ?: listOf()) { index, note ->
                     NoteItemUI(
-                        note = notesWithData.note,
+                        modifier = Modifier
+                            .draggedItem(state.offsetByIndex(index))
+                            .detectReorderAfterLongPress(state),
+                        note = note,
                         onClickItem = {
-                            myViewModel.saveListPosition(listState)
-                            onNavigateToItem(notesWithData.note.id)
+                            myViewModel.saveListPosition(state.listState)
+                            onNavigateToItem(note.id)
                         }
                     ) {
-                        myViewModel.saveListPosition(listState)
-                        onNavigateTimerStart(notesWithData)
+                        myViewModel.saveListPosition(state.listState)
+                        onNavigateTimerStart(note.id)
                     }
                 }
                 if (sortedNotes?.isEmpty() == true) {
@@ -147,11 +172,11 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
             Box(modifier = Modifier.fillMaxSize()) {
                 myViewModel.apply {
                     if (openSortPopup) {
-                        saveListPosition(listState)
+                        saveListPosition(state.listState)
                         RadioItemsDialog(
                             title = "Sort by",
                             radioItemNames = listOf("Creation date", "Last edited", "Custom"),
-                            currentState = sortType.type,
+                            currentState = sortType?.type,
                             onClickItem = {
                                 coroutineScope.launch {
                                     setSortType(SortType.getType(it))
@@ -172,7 +197,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
                                             0,
                                             LocalDateTime.now(),
                                             LocalDateTime.now(),
-                                            0,
+                                            myViewModel.getNumberOfNotes(),
                                             returnedValue.title,
                                             returnedValue.description
                                         )
@@ -210,12 +235,13 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun NoteItemUI (
+    modifier: Modifier = Modifier,
     note: NoteItem,
     onClickItem: () -> Unit,
     onClickStart: () -> Unit
     ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         onClick = onClickItem,
         indication = rememberRipple(),
         shape = androidx.compose.material.MaterialTheme.shapes.medium.copy(CornerSize(12.dp)),
@@ -284,6 +310,6 @@ fun NoteItemUITest() {
         creation_date = LocalDateTime.now()
     )
     AppTheme {
-        NoteItemUI(note, {}) {}
+        NoteItemUI(Modifier, note, {}) {}
     }
 }
