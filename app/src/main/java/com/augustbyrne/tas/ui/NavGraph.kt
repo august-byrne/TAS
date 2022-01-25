@@ -20,6 +20,7 @@ import com.augustbyrne.tas.ui.timer.QuickTimer
 import com.augustbyrne.tas.ui.timer.TimerService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 
 @Composable
 fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineScope: CoroutineScope, navController: NavHostController, snackbarState: SnackbarHostState) {
@@ -74,14 +75,16 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
                         TimerService.initTimerServiceValues(noteWithData)
                         navController.navigate("note_timer")
                         TimerService.startTimer(index)
-                        Intent(context, TimerService::class.java).also {
-                            it.action = "ACTION_START_OR_RESUME_SERVICE"
-                            context.startService(it)
+                        Intent(context, TimerService::class.java).also { intent ->
+                            intent.action = "ACTION_START_OR_RESUME_SERVICE"
+                            context.startService(intent)
                         }
                     }
                 },
-                {
+                { noteWithItems ->
+                    viewModel.tempSavedNote = noteWithItems
                     navController.popBackStack()
+                    viewModel.deleteNote(noteId)
                     coroutineScope.launch {
                         snackbarState.showSnackbar(
                             message = "Note deleted.",
@@ -90,8 +93,34 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
                         )
                     }
                 },
-                {
+                { noteWithItems ->
+                    noteWithItems.apply {
+                        if (note.title.isEmpty() && note.description.isEmpty() && dataItems.isNullOrEmpty()) {
+                            viewModel.upsertNoteAndData(
+                                note.run {
+                                    copy(
+                                        id = 0,
+                                        title = title.plus(" - copy"),
+                                        last_edited_on = LocalDateTime.now(),
+                                        creation_date = LocalDateTime.now()
+                                    )
+                                },
+                                dataItems.mapTo(mutableListOf()) { dataItem ->
+                                    dataItem.copy(id = 0)
+                                }
+                            )
+                        }
+                    }
                     navController.popBackStack()
+                },
+                { noteWithItems ->
+                    navController.popBackStack()
+                    noteWithItems.apply {
+                        if (note.title.isEmpty() && note.description.isEmpty() && dataItems.isNullOrEmpty()) {
+                            viewModel.deleteNote(note.id)
+                            Toast.makeText(context, "Removed empty note", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 }
             )
         }

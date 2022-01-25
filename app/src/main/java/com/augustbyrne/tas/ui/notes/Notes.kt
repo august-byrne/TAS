@@ -20,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -40,11 +39,10 @@ import java.time.LocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, onNavigateTimerStart: (noteWithItems: NoteWithItems) -> Unit, onNavSettings: () -> Unit, onNavQuickTimer: () -> Unit) {
+fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Unit, onNavigateTimerStart: (noteWithItems: NoteWithItems) -> Unit, onNavSettings: () -> Unit, onNavQuickTimer: () -> Unit) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
     val scrollBehavior = remember { TopAppBarDefaults.pinnedScrollBehavior() }
     val sortType by myViewModel.sortTypeFlow.observeAsState(initial = SortType.Default)
     val sortedNotes by myViewModel.sortedAllNotesWithItems(sortType).observeAsState(initial = null)
@@ -109,7 +107,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                     start = 8.dp,
                     end = 8.dp,
                     top = 8.dp,
-                    bottom = 88.dp
+                    bottom =  if (timerState != TimerState.Stopped) 160.dp else 88.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -126,7 +124,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                         note = notesWithData.note,
                         onClickItem = {
                             myViewModel.saveListPosition(listState)
-                            onNavigate(notesWithData.note.id)
+                            onNavigateToItem(notesWithData.note.id)
                         }
                     ) {
                         myViewModel.saveListPosition(listState)
@@ -168,7 +166,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigate: (noteId: Int) -> Unit, on
                             onDismissRequest = { openEditDialog = false }
                         ) { returnedValue ->
                             coroutineScope.launch {
-                                onNavigate(
+                                onNavigateToItem(
                                     myViewModel.upsert(
                                         NoteItem(
                                             0,

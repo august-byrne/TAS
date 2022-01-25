@@ -1,6 +1,5 @@
 package com.augustbyrne.tas.ui.notes
 
-import android.widget.Toast
 import androidx.compose.animation.rememberSplineBasedDecay
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,7 +19,6 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -48,8 +46,7 @@ private val myDateTimeFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStart: (noteWithData: NoteWithItems, index: Int) -> Unit, onDeleteNote: () -> Unit, onNavBack: () -> Unit) {
-    val context = LocalContext.current
+fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStart: (noteWithData: NoteWithItems, index: Int) -> Unit, onDeleteNote: (noteWithItems: NoteWithItems) -> Unit, onCloneNote: (noteWithItems: NoteWithItems) -> Unit, onNavBack: (noteWithData: NoteWithItems) -> Unit) {
     val coroutineScope = rememberCoroutineScope()
     val noteWithItems by myViewModel.getNoteWithItemsById(noteId)
         .observeAsState(NoteWithItems(NoteItem(), listOf()))
@@ -71,37 +68,16 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                 note = noteWithItems.note,
                 scrollBehavior = scrollBehavior,
                 onNavBack = {
-                    onNavBack()
-                    noteWithItems.apply {
-                        if (note.title.isEmpty() && note.description.isEmpty() && dataItems.isNullOrEmpty()) {
-                            myViewModel.deleteNote(note.id)
-                            Toast.makeText(context, "Removed empty note", Toast.LENGTH_SHORT).show()
-                        }
-                    }
+                    onNavBack(noteWithItems)
                 },
                 onClickStart = {
                     onNavigateTimerStart(noteWithItems, 0)
                 },
                 onDeleteNote = {
-                    myViewModel.tempSavedNote = noteWithItems
-                    onDeleteNote()
-                    myViewModel.deleteNote(noteId)
+                    onDeleteNote(noteWithItems)
                 },
                 onCloneNote = {
-                    myViewModel.upsertNoteAndData(
-                        noteWithItems.note.run {
-                            copy(
-                                id = 0,
-                                title = title.plus(" - copy"),
-                                last_edited_on = LocalDateTime.now(),
-                                creation_date = LocalDateTime.now()
-                            )
-                        },
-                        noteWithItems.dataItems.mapTo(mutableListOf()) { dataItem ->
-                            dataItem.copy(id = 0)
-                        }
-                    )
-                    onNavBack()
+                    onCloneNote(noteWithItems)
                 }
             )
         }
@@ -125,7 +101,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                     }
                 }
             ),
-            contentPadding = PaddingValues(bottom = 88.dp),
+            contentPadding = PaddingValues(bottom =  if (timerState != TimerState.Stopped) 160.dp else 88.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             item {
