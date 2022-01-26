@@ -193,6 +193,9 @@ fun EditExpandedNoteHeaderDialog(initialValue: NoteItem = NoteItem(), onDismissR
                         onDone = {
                             focusManager.moveFocus(FocusDirection.Next)
                         }
+                    ),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = MaterialTheme.colorScheme.outline
                     )
                 )
                 Text(
@@ -224,6 +227,9 @@ fun EditExpandedNoteHeaderDialog(initialValue: NoteItem = NoteItem(), onDismissR
                             )
                             focusManager.clearFocus()
                         }
+                    ),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = MaterialTheme.colorScheme.outline
                     )
                 )
                 Text(
@@ -332,6 +338,9 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
                         onDone = {
                             focusManager.moveFocus(FocusDirection.Next)
                         }
+                    ),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = MaterialTheme.colorScheme.outline
                     )
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -362,6 +371,9 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
                             focusManager.clearFocus()
                         }
                     ),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = MaterialTheme.colorScheme.outline
+                    )
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 TextButton(
