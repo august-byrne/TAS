@@ -52,7 +52,7 @@ interface NoteDao {
 
     @Transaction
     @Query("SELECT * FROM note_table WHERE id = :key ORDER BY `id` DESC")
-    fun getNoteWithItems(key: Int): Flow<NoteWithItems>
+    fun getNoteWithItems(key: Int): Flow<NoteWithItems?>
 
     @Transaction
     @Query("SELECT * FROM note_table WHERE id = :key ORDER BY `id` DESC")

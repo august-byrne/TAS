@@ -101,7 +101,7 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                     }
                 }
             ),
-            contentPadding = PaddingValues(bottom =  if (timerState != TimerState.Stopped) 160.dp else 88.dp),
+            contentPadding = PaddingValues(bottom = if (timerState != TimerState.Stopped) 160.dp else 88.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             item {

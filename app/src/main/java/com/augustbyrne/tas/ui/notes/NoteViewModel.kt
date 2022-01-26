@@ -98,8 +98,12 @@ class NoteViewModel @Inject constructor(
         }.asLiveData()
 
     fun getNoteWithItemsById(id: Int): LiveData<NoteWithItems> =
-        repo.getNoteWithItemsById(id).map { value ->
-            NoteWithItems(value.note, value.dataItems.sortedByDescending { it.order })
+        repo.getNoteWithItemsById(id).map { value: NoteWithItems? ->
+            if (value != null) {
+                NoteWithItems(value.note, value.dataItems.sortedByDescending { it.order })
+            } else {
+                NoteWithItems(NoteItem(), listOf())
+            }
         }.asLiveData()
 
     suspend fun getStaticNoteWithItemsById(id: Int): NoteWithItems =

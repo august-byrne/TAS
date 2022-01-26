@@ -120,7 +120,7 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
                     navController.popBackStack()
                     noteWithItems.apply {
                         if (note.title.isEmpty() && note.description.isEmpty() && dataItems.isNullOrEmpty()) {
-                            viewModel.deleteNote(note.id)
+                            viewModel.deleteNote(noteId)
                             Toast.makeText(context, "Removed empty note", Toast.LENGTH_SHORT).show()
                         }
                     }
