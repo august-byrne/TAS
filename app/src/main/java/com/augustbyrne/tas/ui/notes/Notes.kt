@@ -244,7 +244,7 @@ fun NoteItemUI (
         modifier = modifier.fillMaxWidth(),
         onClick = onClickItem,
         indication = rememberRipple(),
-        shape = androidx.compose.material.MaterialTheme.shapes.medium.copy(CornerSize(12.dp)),
+        shape = androidx.compose.material.MaterialTheme.shapes.medium.copy(CornerSize(16.dp)),
         backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
         elevation = 2.dp
     ) {
@@ -258,9 +258,7 @@ fun NoteItemUI (
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.titleLarge,
-                text = if (note.title.isNotBlank()) {
-                    note.title
-                } else {
+                text = note.title.ifBlank {
                     "Title"
                 }
             )
@@ -276,9 +274,7 @@ fun NoteItemUI (
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodyMedium,
-                    text = if (note.description.isNotBlank()) {
-                        note.description
-                    } else {
+                    text = note.description.ifBlank {
                         "Description"
                     }
                 )

@@ -7,7 +7,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.icons.Icons
@@ -191,7 +190,6 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                         }
                     }
                 )
-                Divider(modifier = Modifier.padding(horizontal = 8.dp))
             }
             noteWithItems.note.creation_date?.let {
                 item {
@@ -250,10 +248,12 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
             }
         }
         Box(
-            modifier = Modifier.fillMaxSize().padding(
-                end = 16.dp,
-                bottom = if (timerState != TimerState.Stopped) 88.dp else 16.dp
-            )
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    end = 16.dp,
+                    bottom = if (timerState != TimerState.Stopped) 88.dp else 16.dp
+                )
         ) {
             ExtendedFloatingActionButton(
                 modifier = Modifier.align(Alignment.BottomEnd),
@@ -288,7 +288,7 @@ fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, 
                     .fillMaxWidth(),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                text = if (note.title.isNotEmpty()) note.title else "Add title here"
+                text = note.title.ifEmpty { "Add title" }
             )
         },
         navigationIcon = {
@@ -303,8 +303,13 @@ fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, 
         },
         actions = {
             var expanded by remember { mutableStateOf(false) }
-            IconButton(onClick = onClickStart) {
+            FilledTonalButton(
+                modifier = Modifier.height(38.dp),
+                onClick = onClickStart,
+                contentPadding = PaddingValues(0.dp)
+            ) {
                 Icon(
+                    modifier = Modifier.wrapContentSize(),
                     imageVector = Icons.Rounded.PlayArrow,
                     contentDescription = "Play"
                 )
@@ -344,23 +349,33 @@ fun DataItemUI (
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .wrapContentHeight()
+            .background(MaterialTheme.colorScheme.primaryContainer)
             .clickable(
                 onClick = { onClickToEdit() },
                 interactionSource = remember { MutableInteractionSource() },
                 indication = rememberRipple()
-            )
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
+            ),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = "Activity:")
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .wrapContentHeight()
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .padding(top = 16.dp, start = 16.dp, end = 8.dp, bottom = 16.dp)
+        ) {
             Text(text = dataItem.activity)
         }
-        Spacer(modifier = Modifier.width(8.dp))
-        Column {
-            Text(text = "Time:")
+        Row(
+            modifier = Modifier.wrapContentSize(),
+            verticalAlignment = Alignment.Top
+        ) {
             Text(
+                modifier = Modifier
+                    .wrapContentSize()
+                    .padding(top = 16.dp, start = 8.dp, end = 4.dp, bottom = 16.dp),
                 text = dataItem.time.toString() +
                         when (dataItem.unit) {
                             0 -> {
@@ -382,38 +397,41 @@ fun DataItemUI (
                             ""
                         }
             )
-        }
-        Spacer(modifier = Modifier.width(8.dp))
-        Box {
-            IconButton(onClick = { itemExpanded = true }) {
-                Icon(
-                    imageVector = Icons.Rounded.MoreVert,
-                    contentDescription = "Menu"
+            Box(
+                modifier = Modifier
+                    .wrapContentSize()
+                    .padding(top = 4.dp),
+            ) {
+                IconButton(onClick = { itemExpanded = true }) {
+                    Icon(
+                        imageVector = Icons.Rounded.MoreVert,
+                        contentDescription = "Menu"
+                    )
+                }
+                DropdownMenu(
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+                    expanded = itemExpanded,
+                    onDismissRequest = { itemExpanded = false },
+                    content = {
+                        DropdownMenuItem(
+                            onClick = {
+                                itemExpanded = false
+                                onClickStart()
+                            }
+                        ) {
+                            Text("Start from Here")
+                        }
+                        DropdownMenuItem(
+                            onClick = {
+                                itemExpanded = false
+                                onClickDelete()
+                            }
+                        ) {
+                            Text("Delete Item")
+                        }
+                    }
                 )
             }
-            DropdownMenu(
-                modifier = Modifier.background(MaterialTheme.colorScheme.surface),
-                expanded = itemExpanded,
-                onDismissRequest = { itemExpanded = false },
-                content = {
-                    DropdownMenuItem(
-                        onClick = {
-                            itemExpanded = false
-                            onClickStart()
-                        }
-                    ) {
-                        Text("Start from Here")
-                    }
-                    DropdownMenuItem(
-                        onClick = {
-                            itemExpanded = false
-                            onClickDelete()
-                        }
-                    ) {
-                        Text("Delete Item")
-                    }
-                }
-            )
         }
     }
 }

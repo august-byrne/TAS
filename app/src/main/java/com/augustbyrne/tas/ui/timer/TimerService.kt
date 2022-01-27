@@ -112,13 +112,13 @@ class TimerService : LifecycleService() {
 
         startForeground(NOTIFICATION_ID, notificationBuilder.build())
 
-        finalBeep.observe(this, {
+        finalBeep.observe(this) {
             if (it) {
                 Toast.makeText(this, "Timed Activity Complete", Toast.LENGTH_SHORT).show()
             }
-        })
+        }
 
-        itemIndex.observe(this, { index ->
+        itemIndex.observe(this) { index ->
             notificationBuilder
                 .setContentTitle(currentNote.title)
                 .setContentText(currentNoteItems[index].activity)
@@ -134,9 +134,9 @@ class TimerService : LifecycleService() {
             if (internalTimerState != TimerState.Stopped) {
                 notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
             }
-        })
+        }
 
-        timerState.observe(this, { timerState ->
+        timerState.observe(this) { timerState ->
             when (timerState) {
                 TimerState.Stopped -> {
                     stopForeground(true)
@@ -164,7 +164,7 @@ class TimerService : LifecycleService() {
                 else -> {
                 }
             }
-        })
+        }
     }
 
     private fun getMainActivityPendingIntent() = PendingIntent.getActivity(

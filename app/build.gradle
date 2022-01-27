@@ -31,8 +31,8 @@ android {
         applicationId "com.augustbyrne.tas"
         minSdkVersion 26
         targetSdkVersion 31
-        versionCode 13
-        versionName "1.6.3"
+        versionCode 14
+        versionName "1.6.4"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions {
             annotationProcessorOptions {
@@ -69,7 +69,7 @@ android {
         jvmTarget = "11"
     }
     composeOptions {
-        kotlinCompilerExtensionVersion "1.2.0-alpha01"
+        kotlinCompilerExtensionVersion "1.2.0-alpha02"
     }
     packagingOptions {
         resources.excludes += "DebugProbesKt.bin"
@@ -80,7 +80,7 @@ dependencies {
     def room_version = "2.4.1"
     def lifecycle_version = "2.4.0"
     def hilt_version = '2.40.5'
-    def compose_version = '1.2.0-alpha01'
+    def compose_version = '1.2.0-alpha02'
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     //implementation("com.google.devtools.ksp:symbol-processing-api:1.5.31-1.0.0")
     //implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
@@ -126,10 +126,10 @@ dependencies {
     implementation 'com.google.android.material:material:1.6.0-alpha02'
 
     // Material 3 You Design
-    implementation "androidx.compose.material3:material3:1.0.0-alpha03"
+    implementation "androidx.compose.material3:material3:1.0.0-alpha04"
 
     // Compose Compiler
-    implementation "androidx.compose.compiler:compiler:1.2.0-alpha01"
+    implementation "androidx.compose.compiler:compiler:$compose_version"
     // Compose UI
     implementation "androidx.compose.ui:ui:$compose_version"
     // Tooling support (Previews, etc.)
@@ -151,8 +151,8 @@ dependencies {
     implementation "androidx.compose.runtime:runtime:$compose_version"
     implementation "androidx.compose.runtime:runtime-livedata:$compose_version"
     // Compose Navigation Integration
-    implementation "androidx.navigation:navigation-compose:2.4.0-rc01"
-    implementation "androidx.navigation:navigation-common:2.4.0-rc01"
+    implementation "androidx.navigation:navigation-compose:2.4.0"
+    implementation "androidx.navigation:navigation-common:2.4.0"
 
     // Accompanist Components (temp)
     //implementation 'com.google.accompanist:accompanist-pager:0.21.3-beta'
@@ -169,7 +169,7 @@ dependencies {
     kapt "com.google.dagger:hilt-compiler:$hilt_version"
     kapt "com.google.dagger:hilt-android-compiler:$hilt_version"
     //implementation 'androidx.hilt:hilt-navigation-fragment:1.0.0'
-    implementation 'androidx.hilt:hilt-navigation-compose:1.0.0-rc01'
+    implementation 'androidx.hilt:hilt-navigation-compose:1.0.0'
 
     // A Jetpack Compose modifier enabling reordering in a LazyList
     implementation "org.burnoutcrew.composereorderable:reorderable:0.7.4"

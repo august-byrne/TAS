@@ -288,6 +288,8 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
     }
     var timeError by rememberSaveable { mutableStateOf(false) }
     var activityError by rememberSaveable { mutableStateOf(false) }
+    val activityMaxChars = 36
+    val timeMaxChars = 5
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -313,21 +315,26 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
             )
         },
         text = {
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 OutlinedTextField(
                     label = { Text("Activity") },
-                    modifier = Modifier
-                        .weight(0.5f)
-                        .focusRequester(focusRequester),
+                    modifier = Modifier.focusRequester(focusRequester),
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
                     singleLine = true,
                     value = activityFieldValue,
                     onValueChange = {
-                        activityFieldValue = it
+                        if (it.text.length <= activityMaxChars) {
+                            activityFieldValue = it
+                        }
+                    },
+                    trailingIcon = {
+                        Text(
+                            text = "${activityFieldValue.text.length}/$activityMaxChars"
+                        )
                     },
                     isError = activityError,
                     keyboardOptions = KeyboardOptions(
@@ -343,85 +350,100 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
                         focusedBorderColor = MaterialTheme.colorScheme.outline
                     )
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                OutlinedTextField(
-                    label = { Text("Time") },
+                Row(
                     modifier = Modifier
-                        .weight(0.25f),
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
-                    singleLine = true,
-                    value = timeFieldValue,
-                    onValueChange = {
-                        timeFieldValue = it
-                    },
-                    isError = timeError,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Done
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            onAccepted(
-                                initialDataItem.copy(
-                                    activity = activityFieldValue.text,
-                                    time = timeFieldValue.text.toInt(),
-                                    unit = timeUnitValue
-                                )
-                            )
-                            focusManager.clearFocus()
-                        }
-                    ),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        focusedBorderColor = MaterialTheme.colorScheme.outline
-                    )
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                TextButton(
-                    onClick = {
-                        focusManager.clearFocus()
-                        expanded = true
-                    },
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSecondaryContainer)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text =
-                        when (timeUnitValue) {
-                            0 -> "sec"
-                            1 -> "min"
-                            2 -> "hr"
-                            else -> "unit"
-                        }
-                    )
-                    Icon(
-                        imageVector = if (expanded) {
-                            Icons.Rounded.ArrowDropUp
-                        } else {
-                            Icons.Rounded.ArrowDropDown
-                        },
-                        contentDescription = "time increment selector"
-                    )
-                    DropdownMenu(
-                        modifier = Modifier.background(MaterialTheme.colorScheme.background),
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.End
                     ) {
-                        DropdownMenuItem(onClick = {
-                            expanded = false
-                            timeUnitValue = 0
-                        }) {
-                            Text(text = "seconds")
-                        }
-                        DropdownMenuItem(onClick = {
-                            expanded = false
-                            timeUnitValue = 1
-                        }) {
-                            Text(text = "minutes")
-                        }
-                        DropdownMenuItem(onClick = {
-                            expanded = false
-                            timeUnitValue = 2
-                        }) {
-                            Text(text = "hours")
+                        OutlinedTextField(
+                            label = { Text("Time") },
+                            textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
+                            singleLine = true,
+                            value = timeFieldValue,
+                            onValueChange = {
+                                if (it.text.length <= timeMaxChars) {
+                                    timeFieldValue = it
+                                }
+                            },
+                            trailingIcon = {
+                                Text(
+                                    text = "${timeFieldValue.text.length}/$timeMaxChars"
+                                )
+                            },
+                            isError = timeError,
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Done
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    onAccepted(
+                                        initialDataItem.copy(
+                                            activity = activityFieldValue.text,
+                                            time = timeFieldValue.text.toInt(),
+                                            unit = timeUnitValue
+                                        )
+                                    )
+                                    focusManager.clearFocus()
+                                }
+                            ),
+                            colors = TextFieldDefaults.outlinedTextFieldColors(
+                                focusedBorderColor = MaterialTheme.colorScheme.outline
+                            )
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    TextButton(
+                        onClick = {
+                            focusManager.clearFocus()
+                            expanded = true
+                        },
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSecondaryContainer)
+                    ) {
+                        Text(
+                            text =
+                            when (timeUnitValue) {
+                                0 -> "sec"
+                                1 -> "min"
+                                2 -> "hr"
+                                else -> "unit"
+                            }
+                        )
+                        Icon(
+                            imageVector = if (expanded) {
+                                Icons.Rounded.ArrowDropUp
+                            } else {
+                                Icons.Rounded.ArrowDropDown
+                            },
+                            contentDescription = "time increment selector"
+                        )
+                        DropdownMenu(
+                            modifier = Modifier.background(MaterialTheme.colorScheme.background),
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            DropdownMenuItem(onClick = {
+                                expanded = false
+                                timeUnitValue = 0
+                            }) {
+                                Text(text = "seconds")
+                            }
+                            DropdownMenuItem(onClick = {
+                                expanded = false
+                                timeUnitValue = 1
+                            }) {
+                                Text(text = "minutes")
+                            }
+                            DropdownMenuItem(onClick = {
+                                expanded = false
+                                timeUnitValue = 2
+                            }) {
+                                Text(text = "hours")
+                            }
                         }
                     }
                 }
@@ -462,6 +484,7 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
  * A flexible Dialog which populates the given list of names.
  * Returns the index of the clicked item.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RadioItemsDialog(title: String, radioItemNames: List<String>,currentState: Int? = null, onClickItem: (Int) -> Unit, onDismissRequest: () -> Unit) {
     AlertDialog(

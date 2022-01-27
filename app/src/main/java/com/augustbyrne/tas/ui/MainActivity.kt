@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity() {
             AppTheme(darkTheme = isAppDark) {
                 // Update the status bar to be translucent
                 val systemUiController = rememberSystemUiController()
-                SideEffect {
+                LaunchedEffect(navBackStackEntry, isAppDark) {
                     systemUiController.setStatusBarColor(
                         color = Color.Transparent,
                         darkIcons = navBackStackEntry?.destination?.id == navController.findDestination(
