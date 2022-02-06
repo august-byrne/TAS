@@ -32,10 +32,7 @@ import com.augustbyrne.tas.ui.values.AppTheme
 import com.augustbyrne.tas.util.TimerState
 import com.google.accompanist.insets.statusBarsPadding
 import kotlinx.coroutines.launch
-import org.burnoutcrew.reorderable.detectReorderAfterLongPress
-import org.burnoutcrew.reorderable.draggedItem
-import org.burnoutcrew.reorderable.rememberReorderState
-import org.burnoutcrew.reorderable.reorderable
+import org.burnoutcrew.reorderable.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -48,7 +45,7 @@ private val myDateTimeFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle
 fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStart: (noteWithItems: NoteWithItems, index: Int) -> Unit, onDeleteNote: (noteWithItems: NoteWithItems) -> Unit, onCloneNote: (noteWithItems: NoteWithItems) -> Unit, onNavBack: (noteWithItems: NoteWithItems) -> Unit) {
     val coroutineScope = rememberCoroutineScope()
     val noteWithItems by myViewModel.getNoteWithItemsById(noteId)
-        .observeAsState(NoteWithItems(NoteItem(), listOf()))
+        .observeAsState(initial = NoteWithItems(NoteItem(), listOf()))
     val prevTimeType by myViewModel.lastUsedTimeUnitFlow.observeAsState(initial = 0)
     val decayAnimationSpec = rememberSplineBasedDecay<Float>()
     val scrollBehavior = remember(decayAnimationSpec) {
@@ -176,9 +173,9 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
             itemsIndexed(noteWithItems.dataItems) { index: Int, item: DataItem ->
                 DataItemUI(
                     modifier = Modifier
-                        .draggedItem(state.offsetByIndex(index.plus(2)))
-                        .detectReorderAfterLongPress(state),
+                        .draggedItem(state.offsetByIndex(index.plus(2))),
                     dataItem = item,
+                    state = state,
                     onClickToEdit = { myViewModel.initialDialogDataItem = item },
                     onClickStart = {
                         onNavigateTimerStart(noteWithItems, index)
@@ -325,10 +322,16 @@ fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, 
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
                 content = {
-                    DropdownMenuItem(onClick = onCloneNote) {
+                    DropdownMenuItem(onClick = {
+                        expanded = false
+                        onCloneNote()
+                    }) {
                         Text("Clone note")
                     }
-                    DropdownMenuItem(onClick = onDeleteNote) {
+                    DropdownMenuItem(onClick = {
+                        expanded = false
+                        onDeleteNote()
+                    }) {
                         Text("Delete")
                     }
                 }
@@ -341,6 +344,7 @@ fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, 
 fun DataItemUI (
     modifier: Modifier = Modifier,
     dataItem: DataItem,
+    state: ReorderableState,
     onClickToEdit: () -> Unit,
     onClickStart: () -> Unit,
     onClickDelete: () -> Unit
@@ -350,88 +354,90 @@ fun DataItemUI (
         modifier = modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .background(MaterialTheme.colorScheme.primaryContainer)
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.75f))
             .clickable(
                 onClick = { onClickToEdit() },
                 interactionSource = remember { MutableInteractionSource() },
                 indication = rememberRipple()
-            ),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top
+            )
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
+        Icon(
+            modifier = Modifier
+                .detectReorder(state)
+                .clickable{}
+                .padding(8.dp),
+            imageVector = Icons.Rounded.DragHandle,
+            contentDescription = "drag and drop icon"
+        )
         Box(
             modifier = Modifier
                 .weight(1f)
                 .wrapContentHeight()
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(top = 16.dp, start = 16.dp, end = 8.dp, bottom = 16.dp)
         ) {
             Text(text = dataItem.activity)
         }
-        Row(
-            modifier = Modifier.wrapContentSize(),
-            verticalAlignment = Alignment.Top
-        ) {
-            Text(
-                modifier = Modifier
-                    .wrapContentSize()
-                    .padding(top = 16.dp, start = 8.dp, end = 4.dp, bottom = 16.dp),
-                text = dataItem.time.toString() +
-                        when (dataItem.unit) {
-                            0 -> {
-                                " second"
-                            }
-                            1 -> {
-                                " minute"
-                            }
-                            2 -> {
-                                " hour"
-                            }
-                            else -> {
-                                " unit"
-                            }
-                        } +
-                        if (dataItem.time != 1) {
-                            "s"
-                        } else {
-                            ""
+        Spacer(modifier = Modifier.padding(horizontal = 16.dp))
+        Text(
+            modifier = Modifier
+                .wrapContentSize(),
+            text = dataItem.time.toString() +
+                    when (dataItem.unit) {
+                        0 -> {
+                            " second"
                         }
-            )
-            Box(
-                modifier = Modifier
-                    .wrapContentSize()
-                    .padding(top = 4.dp),
-            ) {
-                IconButton(onClick = { itemExpanded = true }) {
-                    Icon(
-                        imageVector = Icons.Rounded.MoreVert,
-                        contentDescription = "Menu"
-                    )
-                }
-                DropdownMenu(
-                    modifier = Modifier.background(MaterialTheme.colorScheme.surface),
-                    expanded = itemExpanded,
-                    onDismissRequest = { itemExpanded = false },
-                    content = {
-                        DropdownMenuItem(
-                            onClick = {
-                                itemExpanded = false
-                                onClickStart()
-                            }
-                        ) {
-                            Text("Start from Here")
+                        1 -> {
+                            " minute"
                         }
-                        DropdownMenuItem(
-                            onClick = {
-                                itemExpanded = false
-                                onClickDelete()
-                            }
-                        ) {
-                            Text("Delete Item")
+                        2 -> {
+                            " hour"
                         }
+                        else -> {
+                            " unit"
+                        }
+                    } +
+                    if (dataItem.time != 1) {
+                        "s"
+                    } else {
+                        ""
                     }
+        )
+        Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+        Box(
+            modifier = Modifier
+                .wrapContentSize()
+                .align(Alignment.Top),
+        ) {
+            IconButton(onClick = { itemExpanded = true }) {
+                Icon(
+                    imageVector = Icons.Rounded.MoreVert,
+                    contentDescription = "Menu"
                 )
             }
+            DropdownMenu(
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+                expanded = itemExpanded,
+                onDismissRequest = { itemExpanded = false },
+                content = {
+                    DropdownMenuItem(
+                        onClick = {
+                            itemExpanded = false
+                            onClickStart()
+                        }
+                    ) {
+                        Text("Start from Here")
+                    }
+                    DropdownMenuItem(
+                        onClick = {
+                            itemExpanded = false
+                            onClickDelete()
+                        }
+                    ) {
+                        Text("Delete Item")
+                    }
+                }
+            )
         }
     }
 }
@@ -448,6 +454,6 @@ fun DataItemUITest() {
         unit = 1
     )
     AppTheme {
-        DataItemUI(Modifier, dataItem, {}, {}, {})
+        DataItemUI(Modifier, dataItem, rememberReorderState(), {}, {}, {})
     }
 }

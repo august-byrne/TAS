@@ -32,7 +32,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -216,13 +215,12 @@ fun CollapsedTimer(modifier: Modifier = Modifier, navController: NavController, 
             modifier = modifier
                 .padding(8.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .alpha(0.9f)
         ) {
             Column(
                 modifier = Modifier
                     .wrapContentHeight()
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.inverseSurface)
+                    .background(MaterialTheme.colorScheme.inverseSurface.copy(alpha = 0.9f))
                     .clickable(
                         onClick = { navController.navigate("note_timer") },
                         interactionSource = remember { MutableInteractionSource() },

@@ -98,7 +98,7 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
                 },
                 { noteWithItems ->
                     noteWithItems.apply {
-                        if (note.title.isEmpty() && note.description.isEmpty() && dataItems.isNullOrEmpty()) {
+                        if (note.title.isNotEmpty()) {
                             viewModel.upsertNoteAndData(
                                 note.run {
                                     copy(
@@ -112,9 +112,11 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
                                     dataItem.copy(id = 0)
                                 }
                             )
+                            navController.popBackStack()
+                        } else {
+                            Toast.makeText(context, "Add a title to this note to clone", Toast.LENGTH_SHORT).show()
                         }
                     }
-                    navController.popBackStack()
                 },
                 { noteWithItems ->
                     navController.popBackStack()

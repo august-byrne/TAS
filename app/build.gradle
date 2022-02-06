@@ -155,11 +155,9 @@ dependencies {
     implementation "androidx.navigation:navigation-common:2.4.0"
 
     // Accompanist Components (temp)
-    //implementation 'com.google.accompanist:accompanist-pager:0.21.3-beta'
-    //implementation 'com.google.accompanist:accompanist-pager-indicators:0.21.3-beta'
-    implementation 'com.google.accompanist:accompanist-flowlayout:0.24.0-alpha'
-    implementation 'com.google.accompanist:accompanist-systemuicontroller:0.24.0-alpha'
-    implementation 'com.google.accompanist:accompanist-insets:0.24.0-alpha'
+    implementation 'com.google.accompanist:accompanist-flowlayout:0.24.1-alpha'
+    implementation 'com.google.accompanist:accompanist-systemuicontroller:0.24.1-alpha'
+    implementation 'com.google.accompanist:accompanist-insets:0.24.1-alpha'
 
     // UI Tests
     //androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"

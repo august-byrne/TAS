@@ -1,5 +1,6 @@
 package com.augustbyrne.tas.ui.components
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -26,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
@@ -35,6 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.augustbyrne.tas.data.db.entities.DataItem
 import com.augustbyrne.tas.data.db.entities.NoteItem
+import com.google.android.material.timepicker.MaterialTimePicker
+import kotlin.math.pow
 
 /**
  * A reusable Dialog with a single text entry field that follows Material Design 3 specifications
@@ -72,9 +76,11 @@ fun EditOneFieldDialog(headerName: String, fieldName: String? = null, initialVal
             Text(headerName)
         },
         text = {
-            Column(modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+            ) {
                 OutlinedTextField(
                     modifier = Modifier.focusRequester(focusRequester = focusRequester),
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
@@ -268,6 +274,7 @@ fun EditExpandedNoteHeaderDialog(initialValue: NoteItem = NoteItem(), onDismissR
 @Composable
 fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, onAccepted: (returnedValue: DataItem) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     val newItem = remember { initialDataItem.id == 0 }
     var timeUnitValue by remember { mutableStateOf(initialDataItem.unit) }
     var activityFieldValue by remember {
@@ -288,7 +295,7 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
     }
     var timeError by rememberSaveable { mutableStateOf(false) }
     var activityError by rememberSaveable { mutableStateOf(false) }
-    val activityMaxChars = 36
+    val activityMaxChars = 42
     val timeMaxChars = 5
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
@@ -350,9 +357,9 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
                         focusedBorderColor = MaterialTheme.colorScheme.outline
                     )
                 )
+                MaterialTimePicker()
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(
@@ -461,8 +468,18 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
                 onClick = {
                     activityError = activityFieldValue.text.isEmpty()
                     timeFieldValue.text.toIntOrNull().let {
-                        timeError = it == null || it == 0
+                        timeError = if (it != null && it * 60f.pow(timeUnitValue) > 86400) {
+                            Toast.makeText(
+                                context,
+                                "Time is longer than 24 hours",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            true
+                        } else {
+                            it == null || it == 0
+                        }
                     }
+
                     if (!activityError && !timeError) {
                         onAccepted(
                             initialDataItem.copy(
