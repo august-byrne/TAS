@@ -9,8 +9,6 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
@@ -433,24 +431,27 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
                             expanded = expanded,
                             onDismissRequest = { expanded = false }
                         ) {
-                            DropdownMenuItem(onClick = {
-                                expanded = false
-                                timeUnitValue = 0
-                            }) {
-                                Text(text = "seconds")
-                            }
-                            DropdownMenuItem(onClick = {
-                                expanded = false
-                                timeUnitValue = 1
-                            }) {
-                                Text(text = "minutes")
-                            }
-                            DropdownMenuItem(onClick = {
-                                expanded = false
-                                timeUnitValue = 2
-                            }) {
-                                Text(text = "hours")
-                            }
+                            DropdownMenuItem(
+                                text = { Text(text = "seconds") },
+                                onClick = {
+                                    expanded = false
+                                    timeUnitValue = 0
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(text = "minutes") },
+                                onClick = {
+                                    expanded = false
+                                    timeUnitValue = 1
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(text = "hours") },
+                                onClick = {
+                                    expanded = false
+                                    timeUnitValue = 2
+                                }
+                            )
                         }
                     }
                 }
@@ -471,7 +472,7 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
                         timeError = if (it != null && it * 60f.pow(timeUnitValue) > 86400) {
                             Toast.makeText(
                                 context,
-                                "Time is longer than 24 hours",
+                                "Must be less than 24 hours",
                                 Toast.LENGTH_SHORT
                             ).show()
                             true

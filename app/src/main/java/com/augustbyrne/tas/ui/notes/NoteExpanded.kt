@@ -7,8 +7,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material.ripple.rememberRipple
@@ -322,18 +320,20 @@ fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, 
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
                 content = {
-                    DropdownMenuItem(onClick = {
-                        expanded = false
-                        onCloneNote()
-                    }) {
-                        Text("Clone note")
-                    }
-                    DropdownMenuItem(onClick = {
-                        expanded = false
-                        onDeleteNote()
-                    }) {
-                        Text("Delete")
-                    }
+                    DropdownMenuItem(
+                        text =  { Text("Clone note") },
+                        onClick = {
+                            expanded = false
+                            onCloneNote()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text =  { Text("Delete") },
+                        onClick = {
+                            expanded = false
+                            onDeleteNote()
+                        }
+                    )
                 }
             )
         }
@@ -421,21 +421,19 @@ fun DataItemUI (
                 onDismissRequest = { itemExpanded = false },
                 content = {
                     DropdownMenuItem(
+                        text = { Text("Start from Here") },
                         onClick = {
                             itemExpanded = false
                             onClickStart()
                         }
-                    ) {
-                        Text("Start from Here")
-                    }
+                    )
                     DropdownMenuItem(
+                        text = { Text("Delete Item") },
                         onClick = {
                             itemExpanded = false
                             onClickDelete()
                         }
-                    ) {
-                        Text("Delete Item")
-                    }
+                    )
                 }
             )
         }

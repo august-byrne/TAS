@@ -1,17 +1,17 @@
 package com.augustbyrne.tas.ui.notes
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.Sort
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -210,10 +210,12 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
                 }
             }
             Box(
-                modifier = Modifier.fillMaxSize().padding(
-                    end = 16.dp,
-                    bottom = if (timerState != TimerState.Stopped) 88.dp else 16.dp
-                )
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        end = 16.dp,
+                        bottom = if (timerState != TimerState.Stopped) 88.dp else 16.dp
+                    )
             ) {
                 FloatingActionButton(
                     modifier = Modifier.align(Alignment.BottomEnd),
@@ -232,7 +234,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun NoteItemUI (
     modifier: Modifier = Modifier,
@@ -240,13 +242,20 @@ fun NoteItemUI (
     onClickItem: () -> Unit,
     onClickStart: () -> Unit
     ) {
+    val interactionSource = remember { MutableInteractionSource() }
     Card(
-        modifier = modifier.fillMaxWidth(),
-        onClick = onClickItem,
-        indication = rememberRipple(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClickItem
+            ),
+        interactionSource = interactionSource,
         shape = androidx.compose.material.MaterialTheme.shapes.medium.copy(CornerSize(16.dp)),
-        backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-        elevation = 2.dp
+        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        //elevation = CardElevation.//(2.dp)
     ) {
         Column(
             modifier = Modifier
