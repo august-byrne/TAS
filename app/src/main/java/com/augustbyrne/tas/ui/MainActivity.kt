@@ -16,18 +16,13 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Snackbar
-import androidx.compose.material.SnackbarHost
-import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.ripple.rememberRipple
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -48,8 +43,6 @@ import com.augustbyrne.tas.R
 import com.augustbyrne.tas.ui.notes.NoteViewModel
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
-import com.augustbyrne.tas.ui.values.Blue40
-import com.augustbyrne.tas.ui.values.Blue90
 import com.augustbyrne.tas.ui.values.special400
 import com.augustbyrne.tas.util.BatteryLevelReceiver
 import com.augustbyrne.tas.util.DarkMode
@@ -121,47 +114,31 @@ class MainActivity : AppCompatActivity() {
                     navigateToTimerIfNeeded(intent, navController)
                 }
                 ProvideWindowInsets {
-                    Box(
+                    Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .navigationBarsPadding()
+                            .navigationBarsPadding(),
+                        verticalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        Column(
-                            verticalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            Box(modifier = Modifier
+                        Box(
+                            modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f)
-                            ) {
-                                NavGraph(
-                                    modifier = Modifier.fillMaxSize(),
-                                    viewModel = myViewModel,
-                                    coroutineScope = coroutineScope,
-                                    navController = navController,
-                                    snackbarState = snackbarHostState
-                                )
-                                CollapsedTimer(
-                                    Modifier.align(Alignment.BottomCenter),
-                                    navController,
-                                    navBackStackEntry
-                                )
-                            }
-
-                            if (adState) {
-                                AndroidView(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    factory = { context ->
-                                        AdView(context).apply {
-                                            adSize = adaptiveAdSize
-                                            adUnitId = context.getString(R.string.banner_ad_unit_id)
-                                            loadAd(AdRequest.Builder().build())
-                                        }
-                                    }
-                                )
-                            }
+                        ) {
+                            NavGraph(
+                                modifier = Modifier.fillMaxSize(),
+                                viewModel = myViewModel,
+                                coroutineScope = coroutineScope,
+                                navController = navController,
+                                snackbarState = snackbarHostState
+                            )
+                            CollapsedTimer(
+                                Modifier.align(Alignment.BottomCenter),
+                                navController,
+                                navBackStackEntry
+                            )
                         }
                         DefaultSnackbar(
-                            modifier = Modifier.align(Alignment.BottomCenter),
                             snackbarHostState = snackbarHostState,
                             onClickUndo = {
                                 snackbarHostState.currentSnackbarData?.dismiss()
@@ -173,6 +150,18 @@ class MainActivity : AppCompatActivity() {
                                 }
                             }
                         )
+                        if (adState) {
+                            AndroidView(
+                                modifier = Modifier.fillMaxWidth(),
+                                factory = { context ->
+                                    AdView(context).apply {
+                                        adSize = adaptiveAdSize
+                                        adUnitId = context.getString(R.string.banner_ad_unit_id)
+                                        loadAd(AdRequest.Builder().build())
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -330,8 +319,8 @@ fun CollapsedTimer(modifier: Modifier = Modifier, navController: NavController, 
 
 @Composable
 fun DefaultSnackbar(
-    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
+    snackbarHostState: SnackbarHostState,
     onClickUndo: () -> Unit
 ) {
     SnackbarHost(
@@ -339,12 +328,12 @@ fun DefaultSnackbar(
         hostState = snackbarHostState
     ) { snackBarData ->
         Snackbar(
-            modifier = Modifier.padding(8.dp),
+            backgroundColor = MaterialTheme.colorScheme.primaryContainer,
             action = {
-                snackBarData.actionLabel?.let { actionLabel ->
+                snackBarData.visuals.actionLabel?.let { actionLabel ->
                     TextButton(onClick = onClickUndo) {
                         Text(
-                            color = Blue40,
+                            color = MaterialTheme.colorScheme.primary,
                             text = actionLabel
                         )
                     }
@@ -352,8 +341,8 @@ fun DefaultSnackbar(
             }
         ) {
             Text(
-                color = Blue90,
-                text = snackBarData.message
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                text = snackBarData.visuals.message
             )
         }
     }

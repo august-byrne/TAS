@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
@@ -243,7 +243,7 @@ fun NoteItemUI (
     onClickStart: () -> Unit
     ) {
     val interactionSource = remember { MutableInteractionSource() }
-    Card(
+    ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable(
@@ -252,10 +252,9 @@ fun NoteItemUI (
                 onClick = onClickItem
             ),
         interactionSource = interactionSource,
-        shape = androidx.compose.material.MaterialTheme.shapes.medium.copy(CornerSize(16.dp)),
+        shape = RoundedCornerShape(16.dp),
         containerColor = MaterialTheme.colorScheme.surfaceVariant,
         contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-        //elevation = CardElevation.//(2.dp)
     ) {
         Column(
             modifier = Modifier

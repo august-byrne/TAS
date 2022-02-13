@@ -2,8 +2,8 @@ package com.augustbyrne.tas.ui
 
 import android.content.Intent
 import android.widget.Toast
-import androidx.compose.material.SnackbarDuration
-import androidx.compose.material.SnackbarHostState
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -82,6 +82,8 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
                             intent.action = "ACTION_START_OR_RESUME_SERVICE"
                             context.startService(intent)
                         }
+                    } else {
+                        Toast.makeText(context, "Empty activity", Toast.LENGTH_SHORT).show()
                     }
                 },
                 { noteWithItems ->
@@ -114,7 +116,7 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
                             )
                             navController.popBackStack()
                         } else {
-                            Toast.makeText(context, "Add a title to this note to clone", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Add a title to clone", Toast.LENGTH_SHORT).show()
                         }
                     }
                 },
