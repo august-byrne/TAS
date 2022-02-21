@@ -21,7 +21,7 @@ class Converters {
  */
 
 enum class TimerState {
-    Stopped, Paused, Running
+    Stopped, Paused, Running, Delayed
 }
 
 /**

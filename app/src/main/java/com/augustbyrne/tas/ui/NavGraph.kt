@@ -42,7 +42,7 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
                         if (noteWithItems.dataItems.isNotEmpty()) {
                             TimerService.initTimerServiceValues(noteWithItems)
                             navController.navigate("note_timer")
-                            TimerService.startTimer()
+                            TimerService.delayedStart()
                             Intent(context, TimerService::class.java).also {
                                 it.action = "ACTION_START_OR_RESUME_SERVICE"
                                 context.startService(it)
@@ -77,7 +77,7 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
                     if (!noteWithItems.dataItems.isNullOrEmpty()) {
                         TimerService.initTimerServiceValues(noteWithItems)
                         navController.navigate("note_timer")
-                        TimerService.startTimer(index)
+                        TimerService.delayedStart(itemIndex = index)
                         Intent(context, TimerService::class.java).also { intent ->
                             intent.action = "ACTION_START_OR_RESUME_SERVICE"
                             context.startService(intent)
@@ -144,7 +144,7 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
                 { noteWithItems ->
                     TimerService.initTimerServiceValues(noteWithItems)
                     navController.navigate("note_timer")
-                    TimerService.startTimer()
+                    TimerService.delayedStart()
                     Intent(context, TimerService::class.java).also {
                         it.action = "ACTION_START_OR_RESUME_SERVICE"
                         context.startService(it)

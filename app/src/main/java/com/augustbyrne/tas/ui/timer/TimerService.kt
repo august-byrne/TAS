@@ -161,6 +161,9 @@ class TimerService : LifecycleService() {
                     startForeground(NOTIFICATION_ID, notificationBuilder.build())
                     //notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
                 }
+                TimerState.Delayed -> {
+                    stopForeground(true)
+                }
                 else -> {
                 }
             }
@@ -246,6 +249,21 @@ class TimerService : LifecycleService() {
             }.start()
         }
 
+        fun delayedStart(length: Int = 5, itemIndex: Int = 0) {
+            setTimerLength(length * 1000L)
+            setTimerState(TimerState.Delayed)
+            timer = object : CountDownTimer(length * 1000L, 1000L) {
+                override fun onTick(millisUntilFinished: Long) {
+                    setTimerLength(millisUntilFinished)
+                }
+
+                override fun onFinish() {
+                    beeper.startTone(ToneGenerator.TONE_PROP_BEEP, 200)
+                    startTimer(itemIndex)
+                }
+            }.start()
+        }
+
         fun stopTimer(index: Int = 0) {
             timer?.cancel()
             setTimerState(TimerState.Stopped)
@@ -271,9 +289,11 @@ class TimerService : LifecycleService() {
         }
 
         fun pauseTimer(currentTimerLength: Long) {
-            timer?.cancel()
-            setTimerState(TimerState.Paused)
-            tempSavedTimerLengthMilli = currentTimerLength
+            if (currentTimerLength != 0L) {
+                timer?.cancel()
+                setTimerState(TimerState.Paused)
+                tempSavedTimerLengthMilli = currentTimerLength
+            }
         }
 
         private var tempSavedTimerLengthMilli = 0L

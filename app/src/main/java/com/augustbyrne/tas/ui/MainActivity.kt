@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ActivityInfo
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -31,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -98,6 +100,11 @@ class MainActivity : AppCompatActivity() {
                 DarkMode.System -> systemDarkMode
                 DarkMode.Off -> false
                 DarkMode.On -> true
+            }
+            if (navBackStackEntry?.destination?.id == navController.findDestination("note_timer")!!.id) {
+                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            } else {
+                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
             AppTheme(darkTheme = isAppDark) {
                 // Update the status bar to be translucent
@@ -191,9 +198,10 @@ class MainActivity : AppCompatActivity() {
 @Composable
 fun CollapsedTimer(modifier: Modifier = Modifier, navController: NavController, navBackStackEntry: NavBackStackEntry?) {
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
-    if (timerState != TimerState.Stopped && navBackStackEntry?.destination?.id != navController.findDestination(
-            "note_timer"
-        )!!.id
+    if (timerState != TimerState.Stopped &&
+        navBackStackEntry?.destination?.id != navController.findDestination("note_timer")!!.id &&
+        navBackStackEntry?.destination?.id != navController.findDestination("settings")!!.id &&
+        navBackStackEntry?.destination?.id != navController.findDestination("general_timer")!!.id
     ) {
         val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
         val itemIndex: Int by TimerService.itemIndex.observeAsState(0)
@@ -217,100 +225,119 @@ fun CollapsedTimer(modifier: Modifier = Modifier, navController: NavController, 
                     ),
                 verticalArrangement = Arrangement.SpaceEvenly
             ) {
-                Row(
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .fillMaxWidth()
-                        .wrapContentHeight(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(
+                if (timerState == TimerState.Delayed) {
+                    Text(
                         modifier = Modifier
-                            .wrapContentHeight()
-                            .weight(1f)
-                    ) {
-                        Text(
-                            text = TimerService.currentNote.title,
-                            style = MaterialTheme.typography.titleLarge,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            color = MaterialTheme.colorScheme.inverseOnSurface
-                        )
-                        Text(
-                            text = TimerService.currentNoteItems[itemIndex].activity,
-                            style = MaterialTheme.typography.bodyLarge,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            color = MaterialTheme.colorScheme.inverseOnSurface
-                        )
-                    }
+                            .padding(8.dp)
+                            .fillMaxWidth()
+                            .wrapContentHeight(),
+                        text = "Timer starting in ${
+                            (timerLengthMilli.div(1000) + 1).coerceIn(
+                                0,
+                                5
+                            )
+                        }",
+                        style = MaterialTheme.typography.titleLarge,
+                        maxLines = 1,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.inverseOnSurface
+                    )
+                } else {
                     Row(
-                        modifier = Modifier.wrapContentSize()
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .fillMaxWidth()
+                            .wrapContentHeight(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        TextButton(
-                            onClick = {
-                                if (timerLengthMilli > totalTimerLengthMilli - 5000L) {
-                                    TimerService.modifyTimer(itemIndex - 1)
-                                } else {
-                                    TimerService.modifyTimer(itemIndex)
-                                }
-                            }
+                        Column(
+                            modifier = Modifier
+                                .wrapContentHeight()
+                                .weight(1f)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.SkipPrevious,
-                                contentDescription = "back to previous item",
-                                tint = MaterialTheme.colorScheme.inverseOnSurface
+                            Text(
+                                text = TimerService.currentNote.title,
+                                style = MaterialTheme.typography.titleLarge,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                color = MaterialTheme.colorScheme.inverseOnSurface
+                            )
+                            Text(
+                                text = TimerService.currentNoteItems[itemIndex].activity,
+                                style = MaterialTheme.typography.bodyLarge,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                color = MaterialTheme.colorScheme.inverseOnSurface
                             )
                         }
-                        TextButton(
-                            onClick = {
-                                if (timerLengthMilli != 0L) {
-                                    if (timerState == TimerState.Running) { // Clicked Pause
-                                        TimerService.pauseTimer(timerLengthMilli)
-                                    } else { // Clicked Start
-                                        TimerService.startTimer(itemIndex)
+                        Row(
+                            modifier = Modifier.wrapContentSize()
+                        ) {
+                            TextButton(
+                                onClick = {
+                                    if (timerLengthMilli > totalTimerLengthMilli - 5000L) {
+                                        TimerService.modifyTimer(itemIndex - 1)
+                                    } else {
+                                        TimerService.modifyTimer(itemIndex)
                                     }
                                 }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.SkipPrevious,
+                                    contentDescription = "back to previous item",
+                                    tint = MaterialTheme.colorScheme.inverseOnSurface
+                                )
                             }
-                        ) {
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = "Start or Pause",
-                                tint = MaterialTheme.colorScheme.inverseOnSurface
-                            )
-                        }
-                        TextButton(
-                            onClick = {
-                                TimerService.modifyTimer(itemIndex + 1)
+                            TextButton(
+                                onClick = {
+                                    if (timerLengthMilli != 0L) {
+                                        if (timerState == TimerState.Running) { // Clicked Pause
+                                            TimerService.pauseTimer(timerLengthMilli)
+                                        } else { // Clicked Start
+                                            TimerService.startTimer(itemIndex)
+                                        }
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = "Start or Pause",
+                                    tint = MaterialTheme.colorScheme.inverseOnSurface
+                                )
                             }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.SkipNext,
-                                contentDescription = "skip to next item",
-                                tint = MaterialTheme.colorScheme.inverseOnSurface
-                            )
+                            TextButton(
+                                onClick = {
+                                    TimerService.modifyTimer(itemIndex + 1)
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.SkipNext,
+                                    contentDescription = "skip to next item",
+                                    tint = MaterialTheme.colorScheme.inverseOnSurface
+                                )
+                            }
                         }
                     }
-                }
-                Canvas(
-                    Modifier
-                        .wrapContentHeight()
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                ) {
-                    val progressLine =
-                        size.width * (1f - (timerLengthMilli.toFloat() / totalTimerLengthMilli.toFloat()))
-                    drawLine(
-                        color = special400,
-                        strokeWidth = 4.dp.toPx(),
-                        cap = StrokeCap.Square,
-                        start = Offset(y = 0f, x = 0f),
-                        end = Offset(
-                            y = 0f,
-                            x = progressLine
+                    Canvas(
+                        Modifier
+                            .wrapContentHeight()
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        val progressLine =
+                            size.width * (1f - (timerLengthMilli.toFloat() / totalTimerLengthMilli.toFloat()))
+                        drawLine(
+                            color = special400,
+                            strokeWidth = 4.dp.toPx(),
+                            cap = StrokeCap.Square,
+                            start = Offset(y = 0f, x = 0f),
+                            end = Offset(
+                                y = 0f,
+                                x = progressLine
+                            )
                         )
-                    )
+                    }
                 }
             }
         }

@@ -145,7 +145,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
         }
         BatteryLevelReceiver.lowBattery = batteryPct != null && batteryPct <= 15
     }
-    ThemedBackground(timerTheme, progressInMilli)
+    ThemedBackground(timerTheme)
     Column(
         modifier = Modifier
             .fillMaxSize(),
@@ -207,122 +207,139 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                 actionIconContentColor = Color.Black
             )
         )
-        Column(
-            modifier = Modifier
-                .padding(8.dp)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceEvenly
-        ) {
-            if (BatteryLevelReceiver.lowBattery == true) {
-                Text(style = MaterialTheme.typography.titleMedium, text = "LOW BATTERY MODE")
-            }
-            DeterminateProgressBar(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight(),
-                enabled = timerTheme != TimerTheme.VaporWave && BatteryLevelReceiver.lowBattery != true,
-                progressInMilli = progressInMilli
-            ) {
-                TimerText(
-                    enabled = timerTheme != TimerTheme.VaporWave,
-                    timerState = timerState,
-                    timerLengthMilli = timerLengthMilli,
-                    totalTimerLengthMilli = totalTimerLengthMilli
-                )
-            }
-            if (TimerService.currentNoteItems.size != 1) {
-                FlowRow(
-                    mainAxisSize = SizeMode.Expand,
-                    mainAxisAlignment = FlowMainAxisAlignment.Center,
-                    mainAxisSpacing = 0.dp,
-                    crossAxisAlignment = FlowCrossAxisAlignment.Start,
-                    crossAxisSpacing = 8.dp
-                ) {
-                    for (dataItemIndex in TimerService.currentNoteItems.indices) {
-                        Icon(
-                            modifier = Modifier
-                                .wrapContentSize()
-                                .scale(0.64f)
-                                .clip(CircleShape)
-                                .clickable(
-                                    onClick = { TimerService.modifyTimer(dataItemIndex) },
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = rememberRipple()
-                                )
-                                .padding(4.dp),
-                            imageVector = Icons.Default.Circle,
-                            contentDescription = "item marker",
-                            tint = if (itemIndex == dataItemIndex) Color.Green else Color.DarkGray
-                        )
-                    }
-                }
-            }
-            Text(
-                modifier = Modifier
-                    .wrapContentSize()
-                    .padding(8.dp),
-                text = TimerService.currentNoteItems[itemIndex].activity,
-                style = MaterialTheme.typography.headlineSmall
-            )
-            Row(
+        if (timerState != TimerState.Delayed) {
+            Column(
                 modifier = Modifier
                     .padding(8.dp)
-                    .fillMaxWidth()
-                    .wrapContentHeight(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
+                    .fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceEvenly
             ) {
-                TextButton(
-                    onClick = {
-                        if (timerLengthMilli > totalTimerLengthMilli - 5000L) {
-                            TimerService.modifyTimer(itemIndex - 1)
-                        } else {
-                            TimerService.modifyTimer(itemIndex)
-                        }
-                    },
-                    colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
+                if (BatteryLevelReceiver.lowBattery == true) {
+                    Text(style = MaterialTheme.typography.titleMedium, text = "LOW BATTERY MODE")
+                }
+                DeterminateProgressBar(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight(),
+                    enabled = timerTheme != TimerTheme.VaporWave && BatteryLevelReceiver.lowBattery != true,
+                    progressInMilli = progressInMilli
                 ) {
-                    Icon(
-                        modifier = Modifier
-                            .scale(1.5f)
-                            .padding(8.dp),
-                        imageVector = Icons.Default.SkipPrevious,
-                        contentDescription = "back to previous item"
+                    TimerText(
+                        enabled = timerTheme != TimerTheme.VaporWave,
+                        timerState = timerState,
+                        timerLengthMilli = timerLengthMilli,
+                        totalTimerLengthMilli = totalTimerLengthMilli
                     )
                 }
-                PlayPauseStopButtons(
-                    timerState = timerState,
-                    onClickStartPause = {
-                        if (timerLengthMilli != 0L) {
+                if (TimerService.currentNoteItems.size != 1) {
+                    FlowRow(
+                        mainAxisSize = SizeMode.Expand,
+                        mainAxisAlignment = FlowMainAxisAlignment.Center,
+                        mainAxisSpacing = 0.dp,
+                        crossAxisAlignment = FlowCrossAxisAlignment.Start,
+                        crossAxisSpacing = 8.dp
+                    ) {
+                        for (dataItemIndex in TimerService.currentNoteItems.indices) {
+                            Icon(
+                                modifier = Modifier
+                                    .wrapContentSize()
+                                    .scale(0.64f)
+                                    .clip(CircleShape)
+                                    .clickable(
+                                        onClick = { TimerService.modifyTimer(dataItemIndex) },
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = rememberRipple()
+                                    )
+                                    .padding(4.dp),
+                                imageVector = Icons.Default.Circle,
+                                contentDescription = "item marker",
+                                tint = if (itemIndex == dataItemIndex) Color.Green else Color.DarkGray
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.wrapContentSize(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            modifier = Modifier
+                                .wrapContentSize()
+                                .padding(8.dp),
+                            text = TimerService.currentNoteItems[itemIndex].activity,
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                        TextButton(
+                            onClick = {
+                                TimerService.modifyTimer(itemIndex)
+                            },
+                            colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
+                        ) {
+                            Icon(
+                                modifier = Modifier
+                                    .scale(1.25f)
+                                    .padding(8.dp),
+                                imageVector = Icons.Default.Replay,
+                                contentDescription = "restart current item"
+                            )
+                        }
+                    }
+                }
+                Row(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .fillMaxWidth()
+                        .wrapContentHeight(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(
+                        onClick = {
+                            TimerService.modifyTimer(itemIndex - 1)
+                        },
+                        colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
+                    ) {
+                        Icon(
+                            modifier = Modifier
+                                .scale(1.5f)
+                                .padding(8.dp),
+                            imageVector = Icons.Default.SkipPrevious,
+                            contentDescription = "back to previous item"
+                        )
+                    }
+                    PlayPauseStopButtons(
+                        timerState = timerState,
+                        onClickStartPause = {
                             if (timerState == TimerState.Running) {
                                 // Pause is Clicked
                                 TimerService.pauseTimer(timerLengthMilli)
                             } else {
                                 // Start is Clicked
-                                TimerService.startTimer(itemIndex)
+                                if (timerState == TimerState.Stopped) {
+                                    TimerService.delayedStart(itemIndex)
+                                } else {
+                                    TimerService.startTimer(itemIndex)
+                                }
                             }
-                        }
-                    },
-                    onClickStop = {
-                        if (timerLengthMilli != 0L) {
+                        },
+                        onClickStop = {
                             TimerService.stopTimer(itemIndex)
                         }
-                    }
-                )
-                TextButton(
-                    onClick = {
-                        TimerService.modifyTimer(itemIndex + 1)
-                    },
-                    colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
-                ) {
-                    Icon(
-                        modifier = Modifier
-                            .scale(1.5f)
-                            .padding(8.dp),
-                        imageVector = Icons.Default.SkipNext,
-                        contentDescription = "skip to next item"
                     )
+                    TextButton(
+                        onClick = {
+                            TimerService.modifyTimer(itemIndex + 1)
+                        },
+                        colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
+                    ) {
+                        Icon(
+                            modifier = Modifier
+                                .scale(1.5f)
+                                .padding(8.dp),
+                            imageVector = Icons.Default.SkipNext,
+                            contentDescription = "skip to next item"
+                        )
+                    }
                 }
             }
         }
@@ -363,7 +380,10 @@ private fun PlayPauseStopButtons(timerState: TimerState, onClickStartPause: () -
         Button(
             modifier = Modifier.padding(8.dp),
             onClick = onClickStartPause,
-            colors = ButtonDefaults.buttonColors(containerColor = tint, contentColor = Color.Black)
+            colors = ButtonDefaults.buttonColors(
+                containerColor = tint,
+                contentColor = Color.Black
+            )
         ) {
             Icon(icon, contentDescription = "Start or Pause")
         }
@@ -375,7 +395,10 @@ private fun PlayPauseStopButtons(timerState: TimerState, onClickStartPause: () -
             Button(
                 modifier = Modifier.padding(8.dp),
                 onClick = onClickStop,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Red, contentColor = Color.Black)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Red,
+                    contentColor = Color.Black
+                )
             ) {
                 Icon(Icons.Default.Stop, contentDescription = "Stop")
             }

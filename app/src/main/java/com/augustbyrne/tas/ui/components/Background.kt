@@ -6,6 +6,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -31,10 +33,11 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 @Composable
-fun ThemedBackground(timerTheme: TimerTheme, progressInMilli: Long, modifier: Modifier = Modifier) {
+fun ThemedBackground(timerTheme: TimerTheme) {
     val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
     val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(1L)
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
+    val progressInMilli: Long = 1000L - timerLengthMilli.times(1000L).div(totalTimerLengthMilli)
     Box(modifier = Modifier.fillMaxSize()) {
         when (timerTheme) {
             TimerTheme.Original -> {
@@ -93,7 +96,7 @@ fun ThemedBackground(timerTheme: TimerTheme, progressInMilli: Long, modifier: Mo
                     }
                     bubbleInfos
                 }
-                Canvas(modifier = modifier.fillMaxSize()) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
                     val brushBackground = Brush.verticalGradient(
                         listOf(colorFirst, colorSecond, colorThird),
                         0f,
@@ -120,7 +123,7 @@ fun ThemedBackground(timerTheme: TimerTheme, progressInMilli: Long, modifier: Mo
                 }
             }
             TimerTheme.VaporWave -> {
-                Canvas(modifier = modifier.fillMaxSize()) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
                     val brushTopBackground = Brush.verticalGradient(
                         listOf(pink200, pink100),
                         0f,
@@ -199,12 +202,26 @@ fun ThemedBackground(timerTheme: TimerTheme, progressInMilli: Long, modifier: Mo
                         ),
                         contentDescription = "sun"
                     )
-                    TimerText(
-                        modifier = Modifier.align(Alignment.Center),
-                        timerState = timerState,
-                        timerLengthMilli = timerLengthMilli,
-                        totalTimerLengthMilli = totalTimerLengthMilli
-                    )
+                    if (timerState != TimerState.Delayed) {
+                        TimerText(
+                            modifier = Modifier.align(Alignment.Center),
+                            timerState = timerState,
+                            timerLengthMilli = timerLengthMilli,
+                            totalTimerLengthMilli = totalTimerLengthMilli
+                        )
+                    } else {
+                        Column(
+                            modifier = Modifier.wrapContentSize().align(Alignment.Center),
+                            verticalArrangement = Arrangement.SpaceEvenly,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(style = MaterialTheme.typography.displayMedium, text = "Starting in")
+                            Text(
+                                style = MaterialTheme.typography.displayMedium,
+                                text = (timerLengthMilli.div(1000) + 1).coerceIn(0, 5).toString()
+                            )
+                        }
+                    }
                 }
                 Image(
                     modifier = Modifier
@@ -298,6 +315,21 @@ fun ThemedBackground(timerTheme: TimerTheme, progressInMilli: Long, modifier: Mo
                     painter = painterResource(id = R.drawable.vapor_wave_palm),
                     contentScale = ContentScale.Fit,
                     contentDescription = "right tree"
+                )
+            }
+        }
+    }
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (timerState == TimerState.Delayed && timerTheme != TimerTheme.VaporWave) {
+            Column(
+                modifier = Modifier.wrapContentSize().align(Alignment.Center),
+                verticalArrangement = Arrangement.SpaceEvenly,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(style = MaterialTheme.typography.displayMedium, text = "Starting in")
+                Text(
+                    style = MaterialTheme.typography.displayMedium,
+                    text = (timerLengthMilli.div(1000) + 1).coerceIn(0, 5).toString()
                 )
             }
         }
