@@ -217,6 +217,7 @@ class TimerService : LifecycleService() {
         private var finalBeep: MutableLiveData<Boolean> = MutableLiveData(false)
         private val beeper: ToneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
         private var timer: CountDownTimer? = null
+        private var delayedTimer: CountDownTimer? = null
 
         //takes care of all time unit (and some timer state) manipulation
         fun startTimer(itemIndex: Int = 0) {
@@ -252,13 +253,14 @@ class TimerService : LifecycleService() {
         fun delayedStart(length: Int = 5, itemIndex: Int = 0) {
             setTimerLength(length * 1000L)
             setTimerState(TimerState.Delayed)
-            timer = object : CountDownTimer(length * 1000L, 1000L) {
+            delayedTimer = object : CountDownTimer(length * 1000L, 1000L) {
                 override fun onTick(millisUntilFinished: Long) {
                     setTimerLength(millisUntilFinished)
                 }
 
                 override fun onFinish() {
                     beeper.startTone(ToneGenerator.TONE_PROP_BEEP, 200)
+                    delayedTimer?.cancel()
                     startTimer(itemIndex)
                 }
             }.start()

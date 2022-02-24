@@ -315,7 +315,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                             } else {
                                 // Start is Clicked
                                 if (timerState == TimerState.Stopped) {
-                                    TimerService.delayedStart(itemIndex)
+                                    TimerService.delayedStart(itemIndex = itemIndex)
                                 } else {
                                     TimerService.startTimer(itemIndex)
                                 }
