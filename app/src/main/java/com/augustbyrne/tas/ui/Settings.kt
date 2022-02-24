@@ -96,7 +96,8 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
                         DarkMode.Off -> "Off"
                         DarkMode.On -> "On"
                     },
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray)
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
                 )
             }
             Column(
@@ -124,7 +125,8 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
                         TimerTheme.Vibrant -> "Vibrant"
                         TimerTheme.VaporWave -> "Vaporwave"
                     },
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray)
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
                 )
             }
             Divider(modifier = Modifier.fillMaxWidth())
@@ -213,118 +215,6 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
                     },
                     onDismissRequest = { showDarkModeDialog = false }
                 )
-/*                AlertDialog(
-                    onDismissRequest = {
-                        showDarkModeDialog = false
-                    },
-                    properties = DialogProperties(
-                        dismissOnBackPress = true,
-                        dismissOnClickOutside = true
-                    ),
-                    title = {
-                        Text("Dark mode")
-                    },
-                    text = {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .wrapContentHeight(),
-                            verticalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(CornerSize(30.dp)))
-                                    .clickable(
-                                        onClick = {
-                                            showDarkModeDialog = false
-                                            localCoroutineScope.launch {
-                                                myViewModel.setIsDarkTheme(DarkMode.System)
-                                            }
-                                        },
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = rememberRipple()
-                                    ),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                RadioButton(
-                                    selected = darkModeState == DarkMode.System,
-                                    onClick = {
-                                        showDarkModeDialog = false
-                                        localCoroutineScope.launch {
-                                            myViewModel.setIsDarkTheme(DarkMode.System)
-                                        }
-                                    }
-                                )
-                                Spacer(Modifier.width(16.dp))
-                                Text(text = "Follow system", style = MaterialTheme.typography.bodyLarge)
-                            }
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(CornerSize(30.dp)))
-                                    .clickable(
-                                        onClick = {
-                                            showDarkModeDialog = false
-                                            localCoroutineScope.launch {
-                                                myViewModel.setIsDarkTheme(DarkMode.Off)
-                                            }
-                                        },
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = rememberRipple()
-                                    ),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                RadioButton(
-                                    selected = darkModeState == DarkMode.Off,
-                                    onClick = {
-                                        showDarkModeDialog = false
-                                        localCoroutineScope.launch {
-                                            myViewModel.setIsDarkTheme(DarkMode.Off)
-                                        }
-                                    }
-                                )
-                                Spacer(Modifier.width(16.dp))
-                                Text(text = "Off", style = MaterialTheme.typography.bodyLarge)
-                            }
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(CornerSize(30.dp)))
-                                    .clickable(
-                                        onClick = {
-                                            showDarkModeDialog = false
-                                            localCoroutineScope.launch {
-                                                myViewModel.setIsDarkTheme(DarkMode.On)
-                                            }
-                                        },
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = rememberRipple()
-                                    ),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                RadioButton(
-                                    selected = darkModeState == DarkMode.On,
-                                    onClick = {
-                                        showDarkModeDialog = false
-                                        localCoroutineScope.launch {
-                                            myViewModel.setIsDarkTheme(DarkMode.On)
-                                        }
-                                    }
-                                )
-                                Spacer(Modifier.width(16.dp))
-                                Text(text = "On", style = MaterialTheme.typography.bodyLarge)
-                            }
-                        }
-                    },
-                    confirmButton = {
-                        TextButton(
-                            onClick = { showDarkModeDialog = false }
-                        ) {
-                            Text("Cancel")
-                        }
-                    }
-                )*/
             }
         }
     }

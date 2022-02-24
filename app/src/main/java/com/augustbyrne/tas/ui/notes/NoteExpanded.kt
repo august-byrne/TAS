@@ -40,7 +40,14 @@ private val myDateTimeFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStart: (noteWithItems: NoteWithItems, index: Int) -> Unit, onDeleteNote: (noteWithItems: NoteWithItems) -> Unit, onCloneNote: (noteWithItems: NoteWithItems) -> Unit, onNavBack: (noteWithItems: NoteWithItems) -> Unit) {
+fun ExpandedNoteUI (
+    noteId: Int,
+    myViewModel: NoteViewModel,
+    onNavigateTimerStart: (noteWithItems: NoteWithItems, index: Int) -> Unit,
+    onDeleteNote: (noteWithItems: NoteWithItems) -> Unit,
+    onCloneNote: (noteWithItems: NoteWithItems) -> Unit,
+    onNavBack: (noteWithItems: NoteWithItems) -> Unit
+) {
     val coroutineScope = rememberCoroutineScope()
     val noteWithItems by myViewModel.getNoteWithItemsById(noteId)
         .observeAsState(initial = NoteWithItems(NoteItem(), listOf()))
@@ -175,7 +182,17 @@ fun ExpandedNoteUI (noteId: Int, myViewModel: NoteViewModel, onNavigateTimerStar
                     dataItem = item,
                     state = state,
                     onClickToEdit = { myViewModel.initialDialogDataItem = item },
-                    onClickStart = {
+                    onClickCloneItem = {
+                        coroutineScope.launch {
+                            myViewModel.upsertDataItem(item.copy(id = 0, order = 0))
+                            myViewModel.updateNote(
+                                noteWithItems.note.copy(
+                                    last_edited_on = LocalDateTime.now()
+                                )
+                            )
+                        }
+                    },
+                    onClickStartFromHere = {
                         onNavigateTimerStart(noteWithItems, index)
                     },
                     onClickDelete = {
@@ -346,7 +363,8 @@ fun DataItemUI (
     dataItem: DataItem,
     state: ReorderableState,
     onClickToEdit: () -> Unit,
-    onClickStart: () -> Unit,
+    onClickCloneItem: () -> Unit,
+    onClickStartFromHere: () -> Unit,
     onClickDelete: () -> Unit
 ) {
     var itemExpanded by remember { mutableStateOf(false) }
@@ -421,10 +439,17 @@ fun DataItemUI (
                 onDismissRequest = { itemExpanded = false },
                 content = {
                     DropdownMenuItem(
+                        text = { Text("Clone Item") },
+                        onClick = {
+                            itemExpanded = false
+                            onClickCloneItem()
+                        }
+                    )
+                    DropdownMenuItem(
                         text = { Text("Start from Here") },
                         onClick = {
                             itemExpanded = false
-                            onClickStart()
+                            onClickStartFromHere()
                         }
                     )
                     DropdownMenuItem(
@@ -452,6 +477,6 @@ fun DataItemUITest() {
         unit = 1
     )
     AppTheme {
-        DataItemUI(Modifier, dataItem, rememberReorderState(), {}, {}, {})
+        DataItemUI(Modifier, dataItem, rememberReorderState(), {}, {}, {}, {})
     }
 }

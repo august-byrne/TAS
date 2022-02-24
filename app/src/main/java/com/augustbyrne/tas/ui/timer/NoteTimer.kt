@@ -36,7 +36,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.augustbyrne.tas.ui.components.AutoSizingText
 import com.augustbyrne.tas.ui.components.RadioItemsDialog
-import com.augustbyrne.tas.ui.components.ThemedBackground
 import com.augustbyrne.tas.ui.notes.NoteViewModel
 import com.augustbyrne.tas.ui.values.blue500
 import com.augustbyrne.tas.ui.values.orange500

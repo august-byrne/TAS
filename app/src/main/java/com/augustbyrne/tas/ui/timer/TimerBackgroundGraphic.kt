@@ -1,4 +1,4 @@
-package com.augustbyrne.tas.ui.components
+package com.augustbyrne.tas.ui.timer
 
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.*
@@ -24,8 +24,6 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import com.augustbyrne.tas.R
-import com.augustbyrne.tas.ui.timer.TimerService
-import com.augustbyrne.tas.ui.timer.TimerText
 import com.augustbyrne.tas.ui.values.*
 import com.augustbyrne.tas.util.TimerState
 import com.augustbyrne.tas.util.TimerTheme
