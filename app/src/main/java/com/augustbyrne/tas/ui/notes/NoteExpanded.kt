@@ -92,10 +92,8 @@ fun ExpandedNoteUI (
             modifier = Modifier.reorderable(
                 state = state,
                 onMove = { from, to ->
-                    if (to.index >= 2 && to.index <= noteWithItems.dataItems.lastIndex + 2) {
-                        if (!noteWithItems.dataItems.isNullOrEmpty()) {
-                            Collections.swap(noteWithItems.dataItems, from.index - 2, to.index - 2)
-                        }
+                    if (to.index in 2..noteWithItems.dataItems.lastIndex + 2 && from.index in 2..noteWithItems.dataItems.lastIndex + 2 && !noteWithItems.dataItems.isNullOrEmpty()) {
+                        Collections.swap(noteWithItems.dataItems, from.index - 2, to.index - 2)
                     }
                 }, onDragEnd = { from, to ->
                     if (from >= 0 && to >= 0) {
