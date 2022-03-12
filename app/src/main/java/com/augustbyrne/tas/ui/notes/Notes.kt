@@ -251,7 +251,6 @@ fun NoteItemUI (
                 indication = null,
                 onClick = onClickItem
             ),
-        interactionSource = interactionSource,
         shape = RoundedCornerShape(16.dp),
         containerColor = MaterialTheme.colorScheme.surfaceVariant,
         contentColor = MaterialTheme.colorScheme.onSurfaceVariant

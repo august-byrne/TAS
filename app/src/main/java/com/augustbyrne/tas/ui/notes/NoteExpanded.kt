@@ -2,21 +2,24 @@ package com.augustbyrne.tas.ui.notes
 
 import androidx.compose.animation.rememberSplineBasedDecay
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -58,6 +61,7 @@ fun ExpandedNoteUI (
     }
     val state = rememberReorderState()
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
+    var noteInfoToggle by rememberSaveable { mutableStateOf(true) }
 
     Scaffold(
         modifier = Modifier
@@ -155,11 +159,12 @@ fun ExpandedNoteUI (
                     modifier = Modifier
                         .fillMaxWidth()
                         .wrapContentHeight()
-                        .padding(16.dp),
+                        .padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
+                        modifier = Modifier.padding(8.dp),
                         text = "${noteWithItems.dataItems.size} item" +
                                 if (noteWithItems.dataItems.size != 1) {
                                     "s"
@@ -167,12 +172,22 @@ fun ExpandedNoteUI (
                                     ""
                                 }
                     )
-                    noteWithItems.note.last_edited_on?.let {
-                        Text(
-                            text = "last edited: ${it.format(myDateTimeFormat)}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+                    Text(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .clickable { noteInfoToggle = !noteInfoToggle }
+                            .padding(8.dp),
+                        text = if (noteInfoToggle && noteWithItems.note.last_edited_on != null) {
+                            noteWithItems.note.last_edited_on?.let {
+                                "last edited: ${it.format(myDateTimeFormat)}"
+                            } ?: ""
+                        } else {
+                            noteWithItems.note.creation_date?.let {
+                                "created: ${it.format(myDateTimeFormat)}"
+                            } ?: ""
+                        },
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             }
             itemsIndexed(noteWithItems.dataItems) { index: Int, item: DataItem ->
@@ -203,16 +218,28 @@ fun ExpandedNoteUI (
                     }
                 )
             }
-            noteWithItems.note.creation_date?.let {
-                item {
-                    Text(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        textAlign = TextAlign.End,
-                        style = MaterialTheme.typography.bodyMedium,
-                        text = "created: ${it.format(myDateTimeFormat)}"
+            item {
+                Row(
+                    modifier = Modifier
+                        .wrapContentSize()
+                        .padding(vertical = 8.dp)
+                        .clip(CircleShape)
+                        .clickable {
+                            myViewModel.initialDialogDataItem = DataItem(
+                                parent_id = noteId,
+                                unit = prevTimeType
+                            )
+                        }
+                        .border(1.dp, MaterialTheme.colorScheme.onSurface, CircleShape),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        modifier = Modifier.padding(8.dp),
+                        imageVector = Icons.Rounded.Add,
+                        contentDescription = "New item"
                     )
+                    Text(text = "Add item")
+                    Spacer(Modifier.padding(horizontal = 8.dp))
                 }
             }
         }
@@ -258,33 +285,6 @@ fun ExpandedNoteUI (
                     }
                 }
             }
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(
-                    end = 16.dp,
-                    bottom = if (timerState != TimerState.Stopped) 88.dp else 16.dp
-                )
-        ) {
-            ExtendedFloatingActionButton(
-                modifier = Modifier.align(Alignment.BottomEnd),
-                text = {
-                    Text(text = "Add activity")
-                },
-                icon = {
-                    Icon(
-                        imageVector = Icons.Rounded.Add,
-                        contentDescription = "New item"
-                    )
-                },
-                onClick = {
-                    myViewModel.initialDialogDataItem = DataItem(
-                        parent_id = noteId,
-                        unit = prevTimeType
-                    )
-                }
-            )
         }
     }
 }
@@ -384,7 +384,7 @@ fun DataItemUI (
         Icon(
             modifier = Modifier
                 .detectReorder(state)
-                .clickable{}
+                .clickable {}
                 .padding(8.dp),
             imageVector = Icons.Rounded.DragHandle,
             contentDescription = "drag and drop icon"

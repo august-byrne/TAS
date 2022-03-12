@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.augustbyrne.tas.data.db.entities.DataItem
 import com.augustbyrne.tas.data.db.entities.NoteItem
-import com.google.android.material.timepicker.MaterialTimePicker
 import kotlin.math.pow
 
 /**
@@ -293,7 +292,7 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
     }
     var timeError by rememberSaveable { mutableStateOf(false) }
     var activityError by rememberSaveable { mutableStateOf(false) }
-    val activityMaxChars = 42
+    val activityMaxChars = 50
     val timeMaxChars = 5
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
@@ -303,6 +302,7 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
         keyboardController?.show()
     }
     AlertDialog(
+        modifier = Modifier.wrapContentSize(),
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(
             dismissOnBackPress = true,
@@ -322,14 +322,16 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
         text = {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .height(160.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 OutlinedTextField(
                     label = { Text("Activity") },
-                    modifier = Modifier.focusRequester(focusRequester),
+                    modifier = Modifier.requiredHeightIn(min = TextFieldDefaults.MinHeight, max = TextFieldDefaults.MinHeight * 3).focusRequester(focusRequester),
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
-                    singleLine = true,
+                    maxLines = 3,
+                    //singleLine = true,
                     value = activityFieldValue,
                     onValueChange = {
                         if (it.text.length <= activityMaxChars) {
@@ -355,9 +357,8 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
                         focusedBorderColor = MaterialTheme.colorScheme.outline
                     )
                 )
-                MaterialTimePicker()
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().requiredHeight(TextFieldDefaults.MinHeight),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(

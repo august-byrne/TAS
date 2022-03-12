@@ -31,8 +31,8 @@ android {
         applicationId "com.augustbyrne.tas"
         minSdkVersion 26
         targetSdkVersion 31
-        versionCode 18
-        versionName "1.7.1"
+        versionCode 19
+        versionName "1.7.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions {
             annotationProcessorOptions {
@@ -69,7 +69,7 @@ android {
         jvmTarget = "11"
     }
     composeOptions {
-        kotlinCompilerExtensionVersion "1.2.0-alpha04"
+        kotlinCompilerExtensionVersion "1.2.0-alpha05"
     }
     packagingOptions {
         resources.excludes += "DebugProbesKt.bin"
@@ -80,7 +80,7 @@ dependencies {
     def room_version = "2.4.2"
     def lifecycle_version = "2.4.1"
     def hilt_version = '2.41'
-    def compose_version = '1.2.0-alpha04'
+    def compose_version = '1.2.0-alpha05'
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     //implementation("com.google.devtools.ksp:symbol-processing-api:1.5.31-1.0.0")
     //implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
@@ -95,7 +95,7 @@ dependencies {
     implementation "androidx.activity:activity-ktx:1.4.0"
 
     // Google Ads
-    implementation 'com.google.android.gms:play-services-ads:20.5.0'
+    implementation 'com.google.android.gms:play-services-ads:20.6.0'
 
     // Lifecycle Components
     // Service
@@ -123,10 +123,10 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0'
 
     // New Material Design
-    implementation 'com.google.android.material:material:1.6.0-alpha02'
+    implementation 'com.google.android.material:material:1.6.0-alpha03'
 
     // Material 3 You Design
-    implementation "androidx.compose.material3:material3:1.0.0-alpha06"
+    implementation "androidx.compose.material3:material3:1.0.0-alpha07"
 
     // Compose Compiler
     implementation "androidx.compose.compiler:compiler:$compose_version"
