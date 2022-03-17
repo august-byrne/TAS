@@ -25,7 +25,6 @@ import com.augustbyrne.tas.ui.notes.NoteViewModel
 import com.augustbyrne.tas.ui.values.blue500
 import com.augustbyrne.tas.util.DarkMode
 import com.augustbyrne.tas.util.TimerTheme
-import com.google.accompanist.insets.statusBarsPadding
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

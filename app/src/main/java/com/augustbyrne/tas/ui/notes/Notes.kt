@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.augustbyrne.tas.data.db.entities.NoteItem
+import com.augustbyrne.tas.ui.components.AutoSizingText
 import com.augustbyrne.tas.ui.components.EditExpandedNoteHeaderDialog
 import com.augustbyrne.tas.ui.components.MainNavDrawer
 import com.augustbyrne.tas.ui.components.RadioItemsDialog
@@ -31,7 +32,6 @@ import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
 import com.augustbyrne.tas.util.SortType
 import com.augustbyrne.tas.util.TimerState
-import com.google.accompanist.insets.statusBarsPadding
 import kotlinx.coroutines.launch
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
 import org.burnoutcrew.reorderable.draggedItem
@@ -73,7 +73,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
                     modifier = Modifier.statusBarsPadding(),
                     scrollBehavior = scrollBehavior,
                     title = {
-                        Text("Timed Activity System")
+                        AutoSizingText(text = "Timed Activity System")
                     },
                     navigationIcon = {
                         IconButton(

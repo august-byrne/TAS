@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.sp
 import com.augustbyrne.tas.data.db.entities.DataItem
 import com.augustbyrne.tas.data.db.entities.NoteItem
 import com.augustbyrne.tas.data.db.entities.NoteWithItems
-import com.google.accompanist.insets.statusBarsPadding
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -49,8 +49,6 @@ import com.augustbyrne.tas.ui.values.special400
 import com.augustbyrne.tas.util.BatteryLevelReceiver
 import com.augustbyrne.tas.util.DarkMode
 import com.augustbyrne.tas.util.TimerState
-import com.google.accompanist.insets.ProvideWindowInsets
-import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
@@ -120,55 +118,53 @@ class MainActivity : AppCompatActivity() {
                 LaunchedEffect(Unit) {
                     navigateToTimerIfNeeded(intent, navController)
                 }
-                ProvideWindowInsets {
-                    Column(
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .navigationBarsPadding(),
+                    verticalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Box(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .navigationBarsPadding(),
-                        verticalArrangement = Arrangement.SpaceEvenly
+                            .fillMaxWidth()
+                            .weight(1f)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                        ) {
-                            NavGraph(
-                                modifier = Modifier.fillMaxSize(),
-                                viewModel = myViewModel,
-                                coroutineScope = coroutineScope,
-                                navController = navController,
-                                snackbarState = snackbarHostState
-                            )
-                            CollapsedTimer(
-                                Modifier.align(Alignment.BottomCenter),
-                                navController,
-                                navBackStackEntry
-                            )
+                        NavGraph(
+                            modifier = Modifier.fillMaxSize(),
+                            viewModel = myViewModel,
+                            coroutineScope = coroutineScope,
+                            navController = navController,
+                            snackbarState = snackbarHostState
+                        )
+                        CollapsedTimer(
+                            Modifier.align(Alignment.BottomCenter),
+                            navController,
+                            navBackStackEntry
+                        )
+                    }
+                    DefaultSnackbar(
+                        snackbarHostState = snackbarHostState,
+                        onClickUndo = {
+                            snackbarHostState.currentSnackbarData?.dismiss()
+                            myViewModel.apply {
+                                tempSavedNote?.let {
+                                    upsertNoteAndData(it.note, it.dataItems.toMutableList())
+                                    tempSavedNote = null
+                                }
+                            }
                         }
-                        DefaultSnackbar(
-                            snackbarHostState = snackbarHostState,
-                            onClickUndo = {
-                                snackbarHostState.currentSnackbarData?.dismiss()
-                                myViewModel.apply {
-                                    tempSavedNote?.let {
-                                        upsertNoteAndData(it.note, it.dataItems.toMutableList())
-                                        tempSavedNote = null
-                                    }
+                    )
+                    if (adState) {
+                        AndroidView(
+                            modifier = Modifier.fillMaxWidth(),
+                            factory = { context ->
+                                AdView(context).apply {
+                                    adSize = adaptiveAdSize
+                                    adUnitId = context.getString(R.string.banner_ad_unit_id)
+                                    loadAd(AdRequest.Builder().build())
                                 }
                             }
                         )
-                        if (adState) {
-                            AndroidView(
-                                modifier = Modifier.fillMaxWidth(),
-                                factory = { context ->
-                                    AdView(context).apply {
-                                        adSize = adaptiveAdSize
-                                        adUnitId = context.getString(R.string.banner_ad_unit_id)
-                                        loadAd(AdRequest.Builder().build())
-                                    }
-                                }
-                            )
-                        }
                     }
                 }
             }

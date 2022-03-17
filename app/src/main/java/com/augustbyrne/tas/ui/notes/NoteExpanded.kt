@@ -31,7 +31,6 @@ import com.augustbyrne.tas.ui.components.EditExpandedNoteHeaderDialog
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
 import com.augustbyrne.tas.util.TimerState
-import com.google.accompanist.insets.statusBarsPadding
 import kotlinx.coroutines.launch
 import org.burnoutcrew.reorderable.*
 import java.time.LocalDateTime
@@ -91,6 +90,9 @@ fun ExpandedNoteUI (
             state = state.listState,
             modifier = Modifier.reorderable(
                 state = state,
+                canDragOver = { itemPosition ->
+                    itemPosition.index in 2..noteWithItems.dataItems.lastIndex + 2
+                },
                 onMove = { from, to ->
                     if (to.index in 2..noteWithItems.dataItems.lastIndex + 2 && from.index in 2..noteWithItems.dataItems.lastIndex + 2 && !noteWithItems.dataItems.isNullOrEmpty()) {
                         Collections.swap(noteWithItems.dataItems, from.index - 2, to.index - 2)
@@ -116,7 +118,7 @@ fun ExpandedNoteUI (
                     Text(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 16.dp, start = 16.dp),
+                            .padding(top = 16.dp, start = 16.dp, end = 16.dp),
                         style = MaterialTheme.typography.bodyLarge,
                         maxLines = 4,
                         text = noteWithItems.note.description
@@ -382,7 +384,6 @@ fun DataItemUI (
         Icon(
             modifier = Modifier
                 .detectReorder(state)
-                .clickable {}
                 .padding(8.dp),
             imageVector = Icons.Rounded.DragHandle,
             contentDescription = "drag and drop icon"

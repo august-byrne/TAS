@@ -47,7 +47,6 @@ import com.google.accompanist.flowlayout.FlowCrossAxisAlignment
 import com.google.accompanist.flowlayout.FlowMainAxisAlignment
 import com.google.accompanist.flowlayout.FlowRow
 import com.google.accompanist.flowlayout.SizeMode
-import com.google.accompanist.insets.statusBarsPadding
 import kotlinx.coroutines.launch
 
 @Composable
