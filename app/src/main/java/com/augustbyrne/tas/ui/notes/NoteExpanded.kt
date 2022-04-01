@@ -53,7 +53,7 @@ fun ExpandedNoteUI (
     val coroutineScope = rememberCoroutineScope()
     val noteWithItems by myViewModel.getNoteWithItemsById(noteId)
         .observeAsState(initial = NoteWithItems(NoteItem(), listOf()))
-    val prevTimeType by myViewModel.lastUsedTimeUnitFlow.observeAsState(initial = 0)
+    val prevTimeType by myViewModel.lastUsedTimeUnitLiveData.observeAsState(initial = 0)
     val decayAnimationSpec = rememberSplineBasedDecay<Float>()
     val scrollBehavior = remember(decayAnimationSpec) {
         TopAppBarDefaults.exitUntilCollapsedScrollBehavior(decayAnimationSpec)
@@ -73,9 +73,6 @@ fun ExpandedNoteUI (
                 scrollBehavior = scrollBehavior,
                 onNavBack = {
                     onNavBack(noteWithItems)
-                },
-                onClickStart = {
-                    onNavigateTimerStart(noteWithItems, 0)
                 },
                 onDeleteNote = {
                     onDeleteNote(noteWithItems)
@@ -286,18 +283,37 @@ fun ExpandedNoteUI (
                 }
             }
         }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    end = 16.dp,
+                    bottom = if (timerState != TimerState.Stopped) 88.dp else 16.dp
+                )
+        ) {
+            FloatingActionButton(
+                modifier = Modifier.align(Alignment.BottomEnd),
+                onClick = { onNavigateTimerStart(noteWithItems, 0) },
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.PlayArrow,
+                    contentDescription = "Play note"
+                )
+            }
+        }
     }
 }
 
 @Composable
-fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, onNavBack: () -> Unit, onClickStart: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit) {
-    MediumTopAppBar(
+fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, onNavBack: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit) {
+    SmallTopAppBar(
         modifier = Modifier.statusBarsPadding(),
         scrollBehavior = scrollBehavior,
         title = {
             Text(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 text = note.title.ifEmpty { "Add title" }
@@ -315,7 +331,7 @@ fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, 
         },
         actions = {
             var expanded by remember { mutableStateOf(false) }
-            FilledTonalButton(
+/*            FilledTonalButton(
                 modifier = Modifier.height(38.dp),
                 onClick = onClickStart,
                 contentPadding = PaddingValues(0.dp)
@@ -325,7 +341,7 @@ fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, 
                     imageVector = Icons.Rounded.PlayArrow,
                     contentDescription = "Play"
                 )
-            }
+            }*/
             IconButton(onClick = { expanded = true }) {
                 Icon(
                     imageVector = Icons.Rounded.MoreVert,
@@ -338,14 +354,14 @@ fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, 
                 onDismissRequest = { expanded = false },
                 content = {
                     DropdownMenuItem(
-                        text =  { Text("Clone note") },
+                        text = { Text("Clone note") },
                         onClick = {
                             expanded = false
                             onCloneNote()
                         }
                     )
                     DropdownMenuItem(
-                        text =  { Text("Delete") },
+                        text = { Text("Delete") },
                         onClick = {
                             expanded = false
                             onDeleteNote()

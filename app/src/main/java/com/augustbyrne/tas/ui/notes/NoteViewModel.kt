@@ -116,26 +116,32 @@ class NoteViewModel @Inject constructor(
     /**
      * PreferenceManager DataStore Preferences Here
      */
-    val showAdsFlow: LiveData<Boolean> = preferences.showAdsFlow.asLiveData()
+    val showAdsLiveData: LiveData<Boolean> = preferences.showAdsFlow.asLiveData()
     suspend fun setShowAds(value: Boolean) = preferences.setShowAds(value)
 
-    val isDarkThemeFlow: LiveData<DarkMode> =
+    val isDarkThemeLiveData: LiveData<DarkMode> =
         preferences.isDarkThemeFlow.map { DarkMode.getMode(it) }.asLiveData()
 
     suspend fun setIsDarkTheme(value: DarkMode) = preferences.setIsDarkTheme(value.mode)
 
-    val timerThemeFlow: LiveData<TimerTheme> =
+    val timerThemeLiveData: LiveData<TimerTheme> =
         preferences.timerThemeFlow.map { TimerTheme.getTheme(it) }.asLiveData()
 
     suspend fun setTimerTheme(value: TimerTheme) = preferences.setTimerTheme(value.theme)
 
-    val sortTypeFlow: LiveData<SortType> =
+    val sortTypeLiveData: LiveData<SortType> =
         preferences.sortTypeFlow.map { SortType.getType(it) }.asLiveData()
 
     suspend fun setSortType(value: SortType) = preferences.setSortType(value.type)
 
-    val lastUsedTimeUnitFlow: LiveData<Int> = preferences.lastUsedTimeUnitFlow.asLiveData()
+    val lastUsedTimeUnitLiveData: LiveData<Int> = preferences.lastUsedTimeUnitFlow.asLiveData()
     suspend fun setLastUsedTimeUnit(value: Int) = preferences.setLastUsedTimeUnit(value)
+
+    val vibrationLiveData: LiveData<Boolean> = preferences.vibrationFlow.asLiveData()
+    suspend fun setVibration(value: Boolean) = preferences.setVibration(value)
+
+    val startDelayPrefLiveData: LiveData<Int> = preferences.startDelay.asLiveData()
+    suspend fun setStartDelayPref(value: Int) = preferences.setStartDelay(value)
 
     /**
      * Other Cross-Composable Variables Here

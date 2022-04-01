@@ -24,6 +24,10 @@ enum class TimerState {
     Stopped, Paused, Running, Delayed
 }
 
+enum class CompletionType {
+    Normal, Final
+}
+
 /**
  * Stored Enum Classes
  */

@@ -9,6 +9,7 @@ import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.rememberSplineBasedDecay
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -42,6 +43,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.augustbyrne.tas.R
+import com.augustbyrne.tas.ui.components.MainBottomNavBar
 import com.augustbyrne.tas.ui.notes.NoteViewModel
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
@@ -72,6 +74,7 @@ class MainActivity : AppCompatActivity() {
 
     private val batteryLevelReceiver = BatteryLevelReceiver()
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -87,8 +90,8 @@ class MainActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
-            val adState by myViewModel.showAdsFlow.observeAsState(initial = true)
-            val darkModeState by myViewModel.isDarkThemeFlow.observeAsState(initial = DarkMode.System)
+            val adState by myViewModel.showAdsLiveData.observeAsState(initial = true)
+            val darkModeState by myViewModel.isDarkThemeLiveData.observeAsState(initial = DarkMode.System)
             val navController = rememberNavController()
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val snackbarHostState = remember { SnackbarHostState() }
@@ -104,6 +107,8 @@ class MainActivity : AppCompatActivity() {
             } else {
                 window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
+            val decayAnimationSpec = rememberSplineBasedDecay<Float>()
+            val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(decayAnimationSpec)
             AppTheme(darkTheme = isAppDark) {
                 // Update the status bar to be translucent
                 val systemUiController = rememberSystemUiController()
@@ -134,7 +139,8 @@ class MainActivity : AppCompatActivity() {
                             viewModel = myViewModel,
                             coroutineScope = coroutineScope,
                             navController = navController,
-                            snackbarState = snackbarHostState
+                            snackbarState = snackbarHostState,
+                            scrollBehavior = scrollBehavior
                         )
                         CollapsedTimer(
                             Modifier.align(Alignment.BottomCenter),
@@ -142,6 +148,7 @@ class MainActivity : AppCompatActivity() {
                             navBackStackEntry
                         )
                     }
+                    MainBottomNavBar(navBackStackEntry, navController, scrollBehavior)
                     DefaultSnackbar(
                         snackbarHostState = snackbarHostState,
                         onClickUndo = {

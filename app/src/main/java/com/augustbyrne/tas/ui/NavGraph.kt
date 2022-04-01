@@ -4,7 +4,10 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
@@ -23,8 +26,9 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
 @Composable
-fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineScope: CoroutineScope, navController: NavHostController, snackbarState: SnackbarHostState) {
+fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineScope: CoroutineScope, navController: NavHostController, snackbarState: SnackbarHostState, scrollBehavior: TopAppBarScrollBehavior) {
     val context = LocalContext.current
+    val delayedStartPrefState by viewModel.startDelayPrefLiveData.observeAsState(initial = 5)
     NavHost(
         modifier = modifier,
         navController = navController,
@@ -42,7 +46,7 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
                         if (noteWithItems.dataItems.isNotEmpty()) {
                             TimerService.initTimerServiceValues(noteWithItems)
                             navController.navigate("note_timer")
-                            TimerService.delayedStart()
+                            TimerService.delayedStart(length = delayedStartPrefState)
                             Intent(context, TimerService::class.java).also {
                                 it.action = "ACTION_START_OR_RESUME_SERVICE"
                                 context.startService(it)
@@ -52,12 +56,7 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
                         }
                     }
                 },
-                {
-                    navController.navigate("settings")
-                },
-                {
-                    navController.navigate("general_timer")
-                }
+                scrollBehavior
             )
         }
         composable(
@@ -77,7 +76,7 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
                     if (!noteWithItems.dataItems.isNullOrEmpty()) {
                         TimerService.initTimerServiceValues(noteWithItems)
                         navController.navigate("note_timer")
-                        TimerService.delayedStart(itemIndex = index)
+                        TimerService.delayedStart(length = delayedStartPrefState, itemIndex = index)
                         Intent(context, TimerService::class.java).also { intent ->
                             intent.action = "ACTION_START_OR_RESUME_SERVICE"
                             context.startService(intent)
@@ -144,7 +143,7 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
                 { noteWithItems ->
                     TimerService.initTimerServiceValues(noteWithItems)
                     navController.navigate("note_timer")
-                    TimerService.delayedStart()
+                    TimerService.delayedStart(length = delayedStartPrefState)
                     Intent(context, TimerService::class.java).also {
                         it.action = "ACTION_START_OR_RESUME_SERVICE"
                         context.startService(it)

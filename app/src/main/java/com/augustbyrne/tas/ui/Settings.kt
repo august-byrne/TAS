@@ -4,8 +4,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
+import androidx.compose.material.Switch
+import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.rounded.ArrowDropDown
+import androidx.compose.material.icons.rounded.ArrowDropUp
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -36,24 +39,17 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
     var showAdHiderPopup by rememberSaveable { mutableStateOf(false) }
     var showDarkModeDialog by rememberSaveable { mutableStateOf(false) }
     var showTimerThemeDialog by rememberSaveable { mutableStateOf(false) }
-    val darkModeState by myViewModel.isDarkThemeFlow.observeAsState(initial = DarkMode.System)
-    val timerThemeState by myViewModel.timerThemeFlow.observeAsState(initial = TimerTheme.Original)
+    val darkModeState by myViewModel.isDarkThemeLiveData.observeAsState(initial = DarkMode.System)
+    val timerThemeState by myViewModel.timerThemeLiveData.observeAsState(initial = TimerTheme.Original)
+    val vibrationState by myViewModel.vibrationLiveData.observeAsState(initial = true)
+    val startDelayState by myViewModel.startDelayPrefLiveData.observeAsState(initial = 5)
+    var expanded by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
             SmallTopAppBar(
                 modifier = Modifier.statusBarsPadding(),
                 title = {
                     Text(text = "Settings")
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onNavBack
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                        )
-                    }
                 }
             )
         }
@@ -127,6 +123,119 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.Gray
                 )
+            }
+            Divider(modifier = Modifier.fillMaxWidth())
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(16.dp),
+                text = "Timer",
+                style = MaterialTheme.typography.titleSmall,
+                color = blue500
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .clickable(
+                        onClick = {
+                            localCoroutineScope.launch {
+                                myViewModel.setVibration(!vibrationState)
+                            }
+                        },
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple()
+                    ),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    modifier = Modifier
+                        .wrapContentSize()
+                        .padding(16.dp),
+                    text = "Vibrate",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Switch(
+                    modifier = Modifier.padding(end = 14.dp),
+                    checked = vibrationState,
+                    onCheckedChange = {
+                        localCoroutineScope.launch {
+                            myViewModel.setVibration(!vibrationState)
+                        }
+                    },
+                    colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.primary, checkedTrackColor = MaterialTheme.colorScheme.primaryContainer)
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .clickable(
+                        onClick = { expanded = true },
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple()
+                    ),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    modifier = Modifier
+                        .wrapContentSize()
+                        .padding(16.dp),
+                    text = "Start Delay",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                TextButton(
+                    modifier = Modifier.padding(4.dp),
+                    onClick = {
+                        expanded = true
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSecondaryContainer)
+                ) {
+                    Text(
+                        text = if (startDelayState >= 1) {
+                            "$startDelayState sec"
+                        } else {
+                            "None"
+                        }
+                    )
+                    Icon(
+                        imageVector = if (expanded) {
+                            Icons.Rounded.ArrowDropUp
+                        } else {
+                            Icons.Rounded.ArrowDropDown
+                        },
+                        contentDescription = "time increment selector"
+                    )
+                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                        DropdownMenuItem(text = { Text("None") }, onClick = {
+                            expanded = false
+                            localCoroutineScope.launch {
+                                myViewModel.setStartDelayPref(0)
+                            }
+                        })
+                        DropdownMenuItem(text = { Text("3 sec") }, onClick = {
+                            expanded = false
+                            localCoroutineScope.launch {
+                                myViewModel.setStartDelayPref(3)
+                            }
+                        })
+                        DropdownMenuItem(text = { Text("5 sec") }, onClick = {
+                            expanded = false
+                            localCoroutineScope.launch {
+                                myViewModel.setStartDelayPref(5)
+                            }
+                        })
+                        DropdownMenuItem(text = { Text("10 sec") }, onClick = {
+                            expanded = false
+                            localCoroutineScope.launch {
+                                myViewModel.setStartDelayPref(10)
+                            }
+                        })
+                    }
+                }
             }
             Divider(modifier = Modifier.fillMaxWidth())
             Text(

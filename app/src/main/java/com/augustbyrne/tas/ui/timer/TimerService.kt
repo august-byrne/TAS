@@ -13,21 +13,22 @@ import android.graphics.drawable.Icon
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.media.session.MediaSession
-import android.os.Build
-import android.os.CountDownTimer
+import android.os.*
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.asLiveData
 import com.augustbyrne.tas.R
+import com.augustbyrne.tas.data.PreferenceManager
 import com.augustbyrne.tas.data.db.entities.DataItem
 import com.augustbyrne.tas.data.db.entities.NoteItem
 import com.augustbyrne.tas.data.db.entities.NoteWithItems
 import com.augustbyrne.tas.ui.MainActivity
 import com.augustbyrne.tas.ui.values.yellow100
+import com.augustbyrne.tas.util.CompletionType
 import com.augustbyrne.tas.util.TimerState
 import kotlin.math.pow
 
@@ -43,15 +44,11 @@ class TimerService : LifecycleService() {
                     if (isFirstRun) {
                         startForegroundService()
                         isFirstRun = false
-                    } //else {
-                    //Timber.d("Resuming service...")
-                    //}
+                    }
                 }
                 ACTION_PAUSE_SERVICE -> {
-                    //Timber.d("Paused service")
                 }
                 ACTION_STOP_SERVICE -> {
-                    //Timber.d("Stopped service")
                 }
             }
         }
@@ -94,7 +91,6 @@ class TimerService : LifecycleService() {
             getNotificationPendingIntent("PAUSE", index)
         )
 
-
         val notificationBuilder = Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setAutoCancel(false)
             .setOngoing(true)
@@ -112,9 +108,44 @@ class TimerService : LifecycleService() {
 
         startForeground(NOTIFICATION_ID, notificationBuilder.build())
 
-        finalBeep.observe(this) {
-            if (it) {
-                Toast.makeText(this, "Timed Activity Complete", Toast.LENGTH_SHORT).show()
+        val vibratorService = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+        } else {
+            getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        }
+        val vibration = PreferenceManager(applicationContext).vibrationFlow.asLiveData()
+
+        vibration.observe(this) { vibrateOn ->
+            completionType.observe(this) { done: CompletionType ->
+                when (done) {
+                    CompletionType.Normal -> {
+                        beeper.startTone(ToneGenerator.TONE_PROP_BEEP, 200)
+                        if (vibrateOn) {
+                            vibratorService.vibrate(
+                                VibrationEffect.createOneShot(
+                                    500,
+                                    VibrationEffect.DEFAULT_AMPLITUDE
+                                )
+                            )
+                        }
+                    }
+                    CompletionType.Final -> {
+                        Toast.makeText(this, "Timed Activity Complete", Toast.LENGTH_SHORT).show()
+                        beeper.startTone(ToneGenerator.TONE_PROP_BEEP2, 400)
+                        if (vibrateOn) {
+                            vibratorService.vibrate(
+                                VibrationEffect.createWaveform(
+                                    longArrayOf(
+                                        0L,
+                                        200L,
+                                        300L,
+                                        500L
+                                    ), -1
+                                )
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -191,7 +222,6 @@ class TimerService : LifecycleService() {
             FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE
         )
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun createNotificationChannel(notificationManager: NotificationManager) {
         val channel = NotificationChannel(
             NOTIFICATION_CHANNEL_ID,
@@ -214,7 +244,7 @@ class TimerService : LifecycleService() {
         var currentNote by mutableStateOf(NoteItem())
         var currentNoteItems = mutableStateListOf<DataItem>()
 
-        private var finalBeep: MutableLiveData<Boolean> = MutableLiveData(false)
+        private var completionType = MutableLiveData(CompletionType.Normal)
         private val beeper: ToneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
         private var timer: CountDownTimer? = null
         private var delayedTimer: CountDownTimer? = null
@@ -238,12 +268,10 @@ class TimerService : LifecycleService() {
 
                 override fun onFinish() {
                     if (itemIndex < currentNoteItems.lastIndex) {
-                        finalBeep.value = false
-                        beeper.startTone(ToneGenerator.TONE_PROP_BEEP, 200)
+                        completionType.value = CompletionType.Normal
                         startTimer(itemIndex.inc())
                     } else {
-                        finalBeep.value = true
-                        beeper.startTone(ToneGenerator.TONE_PROP_BEEP2, 400)
+                        completionType.value = CompletionType.Final
                         stopTimer()
                     }
                 }
@@ -251,19 +279,23 @@ class TimerService : LifecycleService() {
         }
 
         fun delayedStart(length: Int = 5, itemIndex: Int = 0) {
-            setTimerLength(length * 1000L)
-            setTimerState(TimerState.Delayed)
-            delayedTimer = object : CountDownTimer(length * 1000L, 1000L) {
-                override fun onTick(millisUntilFinished: Long) {
-                    setTimerLength(millisUntilFinished)
-                }
+            if (length <= 0) {
+                startTimer(itemIndex)
+            } else {
+                setTimerLength(length * 1000L)
+                setTimerState(TimerState.Delayed)
+                delayedTimer = object : CountDownTimer(length * 1000L, 1000L) {
+                    override fun onTick(millisUntilFinished: Long) {
+                        setTimerLength(millisUntilFinished)
+                    }
 
-                override fun onFinish() {
-                    beeper.startTone(ToneGenerator.TONE_PROP_BEEP, 200)
-                    delayedTimer?.cancel()
-                    startTimer(itemIndex)
-                }
-            }.start()
+                    override fun onFinish() {
+                        CompletionType.Normal
+                        delayedTimer?.cancel()
+                        startTimer(itemIndex)
+                    }
+                }.start()
+            }
         }
 
         fun stopTimer(index: Int = 0) {
@@ -308,13 +340,9 @@ class TimerService : LifecycleService() {
             stopTimer(index)
         }
 
-        // LiveData holds state which is observed by the UI
-        // (state flows down from ViewModel)
         private var serviceTimerLength: MutableLiveData<Long> = MutableLiveData(1L)
         val timerLengthMilli: LiveData<Long> = serviceTimerLength
 
-        // setTimerLength is an event we're defining that the UI can invoke
-        // (events flow up from UI)
         fun setTimerLength(timerLength: Long) {
             if (timerLength >= 0L) {
                 serviceTimerLength.value = timerLength

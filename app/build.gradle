@@ -69,7 +69,7 @@ android {
         jvmTarget = "11"
     }
     composeOptions {
-        kotlinCompilerExtensionVersion "1.2.0-alpha05"
+        kotlinCompilerExtensionVersion "1.2.0-alpha06"
     }
     packagingOptions {
         resources.excludes += "DebugProbesKt.bin"
@@ -80,7 +80,7 @@ dependencies {
     def room_version = "2.4.2"
     def lifecycle_version = "2.4.1"
     def hilt_version = '2.41'
-    def compose_version = '1.2.0-alpha05'
+    def compose_version = '1.2.0-alpha06'
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     //implementation("com.google.devtools.ksp:symbol-processing-api:1.5.31-1.0.0")
     //implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
@@ -123,10 +123,10 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0'
 
     // New Material Design
-    implementation 'com.google.android.material:material:1.6.0-alpha03'
+    implementation 'com.google.android.material:material:1.6.0-beta01'
 
     // Material 3 You Design
-    implementation "androidx.compose.material3:material3:1.0.0-alpha07"
+    implementation "androidx.compose.material3:material3:1.0.0-alpha08"
 
     // Compose Compiler
     implementation "androidx.compose.compiler:compiler:$compose_version"
@@ -155,8 +155,8 @@ dependencies {
     implementation "androidx.navigation:navigation-common:2.4.1"
 
     // Accompanist Components (temp)
-    implementation 'com.google.accompanist:accompanist-flowlayout:0.24.4-alpha'
-    implementation 'com.google.accompanist:accompanist-systemuicontroller:0.24.4-alpha'
+    implementation 'com.google.accompanist:accompanist-flowlayout:0.24.5-alpha'
+    implementation 'com.google.accompanist:accompanist-systemuicontroller:0.24.5-alpha'
 
     // UI Tests
     //androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"

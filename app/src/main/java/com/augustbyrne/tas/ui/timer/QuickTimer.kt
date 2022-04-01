@@ -3,7 +3,6 @@ package com.augustbyrne.tas.ui.timer
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -36,11 +35,6 @@ fun QuickTimer(onNavigateTimerStart: (noteWithData: NoteWithItems) -> Unit, onNa
                 modifier = Modifier.statusBarsPadding(),
                 title = {
                     Text(text = "Quick Timer")
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavBack) {
-                        Icon(imageVector = Icons.Rounded.ArrowBack, contentDescription = "back")
-                    }
                 }
             )
         }

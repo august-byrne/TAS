@@ -121,7 +121,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
     val context = LocalContext.current
     val localCoroutineScope = rememberCoroutineScope()
     var showTimerThemeDialog by rememberSaveable { mutableStateOf(false) }
-    val savedTimerTheme by myViewModel.timerThemeFlow.observeAsState(initial = TimerTheme.Vibrant)
+    val savedTimerTheme by myViewModel.timerThemeLiveData.observeAsState(initial = TimerTheme.Vibrant)
     val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     val itemIndex: Int by TimerService.itemIndex.observeAsState(0)
@@ -132,6 +132,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
     } else {
         savedTimerTheme
     }
+    val delayedStartPrefState by myViewModel.startDelayPrefLiveData.observeAsState(initial = 5)
     LaunchedEffect(Unit) {
         val batteryStatus: Intent? = IntentFilter(Intent.ACTION_BATTERY_CHANGED).let { ifilter ->
             context.registerReceiver(null, ifilter)
@@ -155,6 +156,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
             title = {
                 AutoSizingText(
                     modifier = Modifier.fillMaxWidth(0.9F),
+                    textStyle = LocalTextStyle.current.copy(color = Color.Black),
                     text = TimerService.currentNote.title
                 )
             },
@@ -256,10 +258,12 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                             )
                         }
                     }
-                    Row(
-                        modifier = Modifier.wrapContentSize(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                }
+                Row(
+                    modifier = Modifier.wrapContentSize(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (TimerService.currentNoteItems[itemIndex].activity.isNotBlank()) {
                         Text(
                             modifier = Modifier
                                 .wrapContentSize()
@@ -267,20 +271,20 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                             text = TimerService.currentNoteItems[itemIndex].activity,
                             style = MaterialTheme.typography.headlineSmall
                         )
-                        TextButton(
-                            onClick = {
-                                TimerService.modifyTimer(itemIndex)
-                            },
-                            colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
-                        ) {
-                            Icon(
-                                modifier = Modifier
-                                    .scale(1.25f)
-                                    .padding(8.dp),
-                                imageVector = Icons.Default.Replay,
-                                contentDescription = "restart current item"
-                            )
-                        }
+                    }
+                    TextButton(
+                        onClick = {
+                            TimerService.modifyTimer(itemIndex)
+                        },
+                        colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
+                    ) {
+                        Icon(
+                            modifier = Modifier
+                                .scale(1.25f)
+                                .padding(8.dp),
+                            imageVector = Icons.Default.Replay,
+                            contentDescription = "restart current item"
+                        )
                     }
                 }
                 Row(
@@ -314,7 +318,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                             } else {
                                 // Start is Clicked
                                 if (timerState == TimerState.Stopped) {
-                                    TimerService.delayedStart(itemIndex = itemIndex)
+                                    TimerService.delayedStart(length = delayedStartPrefState, itemIndex = itemIndex)
                                 } else {
                                     TimerService.startTimer(itemIndex)
                                 }
