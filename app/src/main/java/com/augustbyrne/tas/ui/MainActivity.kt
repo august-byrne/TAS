@@ -93,9 +93,8 @@ class MainActivity : AppCompatActivity() {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val snackbarHostState = remember { SnackbarHostState() }
             val coroutineScope = rememberCoroutineScope()
-            val systemDarkMode = isSystemInDarkTheme()
             val isAppDark = when (darkModeState) {
-                DarkMode.System -> systemDarkMode
+                DarkMode.System -> isSystemInDarkTheme()
                 DarkMode.Off -> false
                 DarkMode.On -> true
             }
@@ -104,7 +103,8 @@ class MainActivity : AppCompatActivity() {
             } else {
                 window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
-            val scrollBehavior = remember { ClassicEnterAlwaysScrollBehavior() }
+            // Not using remember allows scrollBehavior to reset when we leave the home composable
+            val scrollBehavior = ClassicEnterAlwaysScrollBehavior()
             AppTheme(darkTheme = isAppDark) {
                 // Update the status bar to be translucent
                 val systemUiController = rememberSystemUiController()

@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.augustbyrne.tas.ui.components.AutoSizingText
@@ -267,8 +268,11 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                         Text(
                             modifier = Modifier
                                 .wrapContentSize()
+                                .weight(1f)
                                 .padding(8.dp),
                             text = TimerService.currentNoteItems[itemIndex].activity,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.headlineMedium
                         )
                     }
@@ -288,6 +292,8 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                 if (itemIndex + 1 <= TimerService.currentNoteItems.lastIndex) {
                     Text(
                         text = "Next up: ${TimerService.currentNoteItems[itemIndex + 1].activity}",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.titleLarge
                         )
                 }

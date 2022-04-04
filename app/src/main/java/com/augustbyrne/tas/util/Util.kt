@@ -1,6 +1,5 @@
 package com.augustbyrne.tas.util
 
-import android.util.Log
 import androidx.compose.animation.core.AnimationState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateTo
@@ -155,7 +154,6 @@ class ClassicEnterAlwaysScrollBehavior(
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 if (!canScroll()) return Offset.Zero
                 velocityTracker.addPosition(System.currentTimeMillis(), available)
-                Log.d("VELOCITY", "Velocity measurement taken")
                 val newOffset = (offset + available.y)
                 val coerced = newOffset.coerceIn(minimumValue = offsetLimit, maximumValue = 0f)
                 return if (newOffset == coerced) {
@@ -164,6 +162,7 @@ class ClassicEnterAlwaysScrollBehavior(
                     // Consume only the scroll on the Y axis.
                     available.copy(x = 0f)
                 } else {
+                    offset = coerced // added to reduce glitching
                     Offset.Zero
                 }
             }
@@ -191,11 +190,11 @@ class ClassicEnterAlwaysScrollBehavior(
             }
 
             override suspend fun onPreFling(available: Velocity): Velocity {
-                val realVelocity = velocityTracker.calculateVelocity().y
+                val realVelocity = velocityTracker.calculateVelocity()
                 velocityTracker.resetTracking()
                 // trash our fling velocity when it bugs out (using a
                 // real pointer velocity measurement as reference for this)
-                return if (realVelocity.sign != -available.y.sign && realVelocity != 0.0f) {
+                return if (realVelocity.y.sign != -available.y.sign && realVelocity.y != 0.0f) {
                     Velocity(x = 0f, y = available.y)
                 } else {
                     super.onPreFling(available)
