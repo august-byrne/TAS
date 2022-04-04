@@ -30,6 +30,7 @@ import com.augustbyrne.tas.ui.components.RadioItemsDialog
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.util.SortType
 import com.augustbyrne.tas.util.TimerState
+import com.augustbyrne.tas.util.classicSystemBarScrollBehavior
 import kotlinx.coroutines.launch
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
 import org.burnoutcrew.reorderable.draggedItem
@@ -54,8 +55,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             SmallTopAppBar(
-                modifier = Modifier.statusBarsPadding(),
-                scrollBehavior = scrollBehavior,
+                modifier = Modifier.statusBarsPadding().classicSystemBarScrollBehavior(scrollBehavior),
                 title = {
                     AutoSizingText(text = "Timed Activity System")
                 },

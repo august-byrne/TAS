@@ -269,7 +269,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                                 .wrapContentSize()
                                 .padding(8.dp),
                             text = TimerService.currentNoteItems[itemIndex].activity,
-                            style = MaterialTheme.typography.headlineSmall
+                            style = MaterialTheme.typography.headlineMedium
                         )
                     }
                     TextButton(
@@ -279,13 +279,17 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                         colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
                     ) {
                         Icon(
-                            modifier = Modifier
-                                .scale(1.25f)
-                                .padding(8.dp),
+                            modifier = Modifier.scale(1.25f),
                             imageVector = Icons.Default.Replay,
                             contentDescription = "restart current item"
                         )
                     }
+                }
+                if (itemIndex + 1 <= TimerService.currentNoteItems.lastIndex) {
+                    Text(
+                        text = "Next up: ${TimerService.currentNoteItems[itemIndex + 1].activity}",
+                        style = MaterialTheme.typography.titleLarge
+                        )
                 }
                 Row(
                     modifier = Modifier

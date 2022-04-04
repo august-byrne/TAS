@@ -116,7 +116,7 @@ class TimerService : LifecycleService() {
         val vibration = PreferenceManager(applicationContext).vibrationFlow.asLiveData()
 
         vibration.observe(this) { vibrateOn ->
-            completionType.observe(this) { done: CompletionType ->
+            completionType.observe(this) { done: CompletionType? ->
                 when (done) {
                     CompletionType.Normal -> {
                         beeper.startTone(ToneGenerator.TONE_PROP_BEEP, 200)
@@ -128,6 +128,7 @@ class TimerService : LifecycleService() {
                                 )
                             )
                         }
+                        completionType.value = null
                     }
                     CompletionType.Final -> {
                         Toast.makeText(this, "Timed Activity Complete", Toast.LENGTH_SHORT).show()
@@ -144,7 +145,9 @@ class TimerService : LifecycleService() {
                                 )
                             )
                         }
+                        completionType.value = null
                     }
+                    else -> {}
                 }
             }
         }
@@ -244,7 +247,7 @@ class TimerService : LifecycleService() {
         var currentNote by mutableStateOf(NoteItem())
         var currentNoteItems = mutableStateListOf<DataItem>()
 
-        private var completionType = MutableLiveData(CompletionType.Normal)
+        private var completionType: MutableLiveData<CompletionType?> = MutableLiveData(null)
         private val beeper: ToneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
         private var timer: CountDownTimer? = null
         private var delayedTimer: CountDownTimer? = null

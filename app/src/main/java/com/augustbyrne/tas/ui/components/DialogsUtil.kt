@@ -468,12 +468,19 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
         confirmButton = {
             TextButton(
                 onClick = {
-                    activityError = activityFieldValue.text.isEmpty()
+                    activityError = activityFieldValue.text.isBlank()
+                    if (activityError) {
+                        Toast.makeText(
+                            context,
+                            "Activity name is empty",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                     timeFieldValue.text.toIntOrNull().let {
                         timeError = if (it != null && it * 60f.pow(timeUnitValue) > 86400) {
                             Toast.makeText(
                                 context,
-                                "Must be less than 24 hours",
+                                "Time length is over 24 hours",
                                 Toast.LENGTH_SHORT
                             ).show()
                             true

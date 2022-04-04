@@ -1,6 +1,5 @@
 package com.augustbyrne.tas.ui.notes
 
-import androidx.compose.animation.rememberSplineBasedDecay
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,7 +29,9 @@ import com.augustbyrne.tas.ui.components.EditDataItemDialog
 import com.augustbyrne.tas.ui.components.EditExpandedNoteHeaderDialog
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
+import com.augustbyrne.tas.util.ClassicEnterAlwaysScrollBehavior
 import com.augustbyrne.tas.util.TimerState
+import com.augustbyrne.tas.util.classicSystemBarScrollBehavior
 import kotlinx.coroutines.launch
 import org.burnoutcrew.reorderable.*
 import java.time.LocalDateTime
@@ -54,10 +55,7 @@ fun ExpandedNoteUI (
     val noteWithItems by myViewModel.getNoteWithItemsById(noteId)
         .observeAsState(initial = NoteWithItems(NoteItem(), listOf()))
     val prevTimeType by myViewModel.lastUsedTimeUnitLiveData.observeAsState(initial = 0)
-    val decayAnimationSpec = rememberSplineBasedDecay<Float>()
-    val scrollBehavior = remember(decayAnimationSpec) {
-        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(decayAnimationSpec)
-    }
+    val scrollBehavior = remember { ClassicEnterAlwaysScrollBehavior() }
     val state = rememberReorderState()
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     var noteInfoToggle by rememberSaveable { mutableStateOf(true) }
@@ -309,8 +307,8 @@ fun ExpandedNoteUI (
 @Composable
 fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, onNavBack: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit) {
     SmallTopAppBar(
-        modifier = Modifier.statusBarsPadding(),
-        scrollBehavior = scrollBehavior,
+        modifier = Modifier.statusBarsPadding().classicSystemBarScrollBehavior(scrollBehavior),
+        //scrollBehavior = scrollBehavior,
         title = {
             Text(
                 modifier = Modifier.fillMaxWidth(),
@@ -331,17 +329,6 @@ fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, 
         },
         actions = {
             var expanded by remember { mutableStateOf(false) }
-/*            FilledTonalButton(
-                modifier = Modifier.height(38.dp),
-                onClick = onClickStart,
-                contentPadding = PaddingValues(0.dp)
-            ) {
-                Icon(
-                    modifier = Modifier.wrapContentSize(),
-                    imageVector = Icons.Rounded.PlayArrow,
-                    contentDescription = "Play"
-                )
-            }*/
             IconButton(onClick = { expanded = true }) {
                 Icon(
                     imageVector = Icons.Rounded.MoreVert,

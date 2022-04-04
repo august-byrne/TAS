@@ -9,7 +9,6 @@ import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.animation.rememberSplineBasedDecay
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -48,9 +47,7 @@ import com.augustbyrne.tas.ui.notes.NoteViewModel
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
 import com.augustbyrne.tas.ui.values.special400
-import com.augustbyrne.tas.util.BatteryLevelReceiver
-import com.augustbyrne.tas.util.DarkMode
-import com.augustbyrne.tas.util.TimerState
+import com.augustbyrne.tas.util.*
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
@@ -107,8 +104,7 @@ class MainActivity : AppCompatActivity() {
             } else {
                 window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
-            val decayAnimationSpec = rememberSplineBasedDecay<Float>()
-            val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(decayAnimationSpec)
+            val scrollBehavior = remember { ClassicEnterAlwaysScrollBehavior() }
             AppTheme(darkTheme = isAppDark) {
                 // Update the status bar to be translucent
                 val systemUiController = rememberSystemUiController()
@@ -135,7 +131,7 @@ class MainActivity : AppCompatActivity() {
                             .weight(1f)
                     ) {
                         NavGraph(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier.fillMaxSize(),//.nestedScroll(scrollBehavior.nestedScrollConnection),
                             viewModel = myViewModel,
                             coroutineScope = coroutineScope,
                             navController = navController,
@@ -148,7 +144,7 @@ class MainActivity : AppCompatActivity() {
                             navBackStackEntry
                         )
                     }
-                    MainBottomNavBar(navBackStackEntry, navController, scrollBehavior)
+                    MainBottomNavBar(navBackStackEntry, navController, Modifier.classicSystemBarScrollBehavior(scrollBehavior, false))
                     DefaultSnackbar(
                         snackbarHostState = snackbarHostState,
                         onClickUndo = {
