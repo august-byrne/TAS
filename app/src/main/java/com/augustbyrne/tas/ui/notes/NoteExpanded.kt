@@ -83,24 +83,27 @@ fun ExpandedNoteUI (
     ) {
         LazyColumn(
             state = state.listState,
-            modifier = Modifier.reorderable(
-                state = state,
-                canDragOver = { itemPosition ->
-                    itemPosition.index in 2..noteWithItems.dataItems.lastIndex + 2
-                },
-                onMove = { from, to ->
-                    if (to.index in 2..noteWithItems.dataItems.lastIndex + 2 && from.index in 2..noteWithItems.dataItems.lastIndex + 2 && !noteWithItems.dataItems.isNullOrEmpty()) {
-                        Collections.swap(noteWithItems.dataItems, from.index - 2, to.index - 2)
+            modifier = Modifier
+                .padding(it)
+                .fillMaxSize()
+                .reorderable(
+                    state = state,
+                    canDragOver = { itemPosition ->
+                        itemPosition.index in 2..noteWithItems.dataItems.lastIndex + 2
+                    },
+                    onMove = { from, to ->
+                        if (to.index in 2..noteWithItems.dataItems.lastIndex + 2 && from.index in 2..noteWithItems.dataItems.lastIndex + 2 && !noteWithItems.dataItems.isNullOrEmpty()) {
+                            Collections.swap(noteWithItems.dataItems, from.index - 2, to.index - 2)
+                        }
+                    }, onDragEnd = { from, to ->
+                        if (from >= 0 && to >= 0) {
+                            myViewModel.upsertNoteAndData(
+                                noteWithItems.note,
+                                noteWithItems.dataItems.toMutableList()
+                            )
+                        }
                     }
-                }, onDragEnd = { from, to ->
-                    if (from >= 0 && to >= 0) {
-                        myViewModel.upsertNoteAndData(
-                            noteWithItems.note,
-                            noteWithItems.dataItems.toMutableList()
-                        )
-                    }
-                }
-            ),
+                ),
             contentPadding = PaddingValues(bottom = if (timerState != TimerState.Stopped) 160.dp else 88.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {

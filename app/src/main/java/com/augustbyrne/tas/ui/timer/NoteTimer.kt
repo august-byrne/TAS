@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -106,10 +107,11 @@ fun DeterminateProgressBar(
                 }
             }
         } else {
-            Spacer(modifier = Modifier
-                .aspectRatio(1f)
-                .fillMaxSize()
-                .padding(16.dp))
+            Spacer(
+                modifier = Modifier
+                    .padding(32.dp)
+                    .fillMaxHeight(0.6f)
+            )
         }
         Box(modifier = Modifier.align(Alignment.Center)) {
             content()
@@ -128,12 +130,22 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
     val itemIndex: Int by TimerService.itemIndex.observeAsState(0)
     val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(1L)
     val progressInMilli: Long = 1000L - timerLengthMilli.times(1000L).div(totalTimerLengthMilli)
+    val startDelayState by myViewModel.startDelayPrefLiveData.observeAsState(initial = 5)
     val timerTheme = if (BatteryLevelReceiver.lowBattery == true) {
         TimerTheme.Original
     } else {
         savedTimerTheme
     }
     val delayedStartPrefState by myViewModel.startDelayPrefLiveData.observeAsState(initial = 5)
+    val icon =
+        if (timerState == TimerState.Running) Icons.Default.Pause else Icons.Default.PlayArrow
+    val iconTint by animateColorAsState(
+        targetValue = if (timerState == TimerState.Running) Color.Yellow else Color.Green,
+        animationSpec = tween(
+            durationMillis = 400,
+            easing = LinearEasing
+        )
+    )
     LaunchedEffect(Unit) {
         val batteryStatus: Intent? = IntentFilter(Intent.ACTION_BATTERY_CHANGED).let { ifilter ->
             context.registerReceiver(null, ifilter)
@@ -145,11 +157,9 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
         }
         BatteryLevelReceiver.lowBattery = batteryPct != null && batteryPct <= 15
     }
-    ThemedBackground(timerTheme)
+    ThemedBackground(timerTheme, startDelayState.toLong())
     Column(
-        modifier = Modifier
-            .fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         CenterAlignedTopAppBar(
@@ -210,14 +220,15 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
         )
         if (timerState != TimerState.Delayed) {
             Column(
-                modifier = Modifier
-                    .padding(8.dp)
-                    .fillMaxSize(),
+                modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceEvenly
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
                 if (BatteryLevelReceiver.lowBattery == true) {
-                    Text(style = MaterialTheme.typography.titleMedium, text = "LOW BATTERY MODE")
+                    Text(
+                        style = MaterialTheme.typography.titleMedium,
+                        text = "LOW BATTERY MODE"
+                    )
                 }
                 DeterminateProgressBar(
                     modifier = Modifier
@@ -262,16 +273,18 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                 }
                 Row(
                     modifier = Modifier.wrapContentSize(),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
                 ) {
+                    Spacer(Modifier.requiredWidth(58.dp))
                     if (TimerService.currentNoteItems[itemIndex].activity.isNotBlank()) {
                         Text(
                             modifier = Modifier
                                 .wrapContentSize()
-                                .weight(1f)
-                                .padding(8.dp),
+                                .weight(weight = 1f, fill = false),
                             text = TimerService.currentNoteItems[itemIndex].activity,
-                            maxLines = 1,
+                            maxLines = 2,
+                            textAlign = TextAlign.Center,
                             overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.headlineMedium
                         )
@@ -283,7 +296,9 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                         colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
                     ) {
                         Icon(
-                            modifier = Modifier.scale(1.25f),
+                            modifier = Modifier
+                                .scale(1.5f)
+                                .padding(vertical = 8.dp),
                             imageVector = Icons.Default.Replay,
                             contentDescription = "restart current item"
                         )
@@ -291,128 +306,103 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                 }
                 if (itemIndex + 1 <= TimerService.currentNoteItems.lastIndex) {
                     Text(
+                        modifier = Modifier.padding(horizontal = 16.dp),
                         text = "Next up: ${TimerService.currentNoteItems[itemIndex + 1].activity}",
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.titleLarge
-                        )
-                }
-                Row(
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .fillMaxWidth()
-                        .wrapContentHeight(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TextButton(
-                        onClick = {
-                            TimerService.modifyTimer(itemIndex - 1)
-                        },
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
-                    ) {
-                        Icon(
-                            modifier = Modifier
-                                .scale(1.5f)
-                                .padding(8.dp),
-                            imageVector = Icons.Default.SkipPrevious,
-                            contentDescription = "back to previous item"
-                        )
-                    }
-                    PlayPauseStopButtons(
-                        timerState = timerState,
-                        onClickStartPause = {
-                            if (timerState == TimerState.Running) {
-                                // Pause is Clicked
-                                TimerService.pauseTimer(timerLengthMilli)
-                            } else {
-                                // Start is Clicked
-                                if (timerState == TimerState.Stopped) {
-                                    TimerService.delayedStart(length = delayedStartPrefState, itemIndex = itemIndex)
-                                } else {
-                                    TimerService.startTimer(itemIndex)
-                                }
-                            }
-                        },
-                        onClickStop = {
-                            TimerService.stopTimer(itemIndex)
-                        }
                     )
-                    TextButton(
-                        onClick = {
-                            TimerService.modifyTimer(itemIndex + 1)
-                        },
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
-                    ) {
-                        Icon(
-                            modifier = Modifier
-                                .scale(1.5f)
-                                .padding(8.dp),
-                            imageVector = Icons.Default.SkipNext,
-                            contentDescription = "skip to next item"
-                        )
-                    }
                 }
             }
-        }
-        if (showTimerThemeDialog) {
-            RadioItemsDialog(
-                title = "Timer theme",
-                radioItemNames = listOf("original", "vibrant", "vapor wave"),
-                currentState = timerTheme.theme,
-                onClickItem = { indexClicked ->
-                    localCoroutineScope.launch {
-                        myViewModel.setTimerTheme(TimerTheme.getTheme(indexClicked))
+            if (showTimerThemeDialog) {
+                RadioItemsDialog(
+                    title = "Timer theme",
+                    radioItemNames = listOf("original", "vibrant", "vapor wave"),
+                    currentState = timerTheme.theme,
+                    onClickItem = { indexClicked ->
+                        localCoroutineScope.launch {
+                            myViewModel.setTimerTheme(TimerTheme.getTheme(indexClicked))
+                        }
+                        showTimerThemeDialog = false
+                    },
+                    onDismissRequest = {
+                        showTimerThemeDialog = false
                     }
-                    showTimerThemeDialog = false
-                },
-                onDismissRequest = {
-                    showTimerThemeDialog = false
-                }
-            )
-        }
-    }
-}
-
-@Composable
-private fun PlayPauseStopButtons(timerState: TimerState, onClickStartPause: () -> Unit, onClickStop: () -> Unit) {
-    val icon =
-        if (timerState == TimerState.Running) Icons.Default.Pause else Icons.Default.PlayArrow
-    val tint by animateColorAsState(
-        targetValue = if (timerState == TimerState.Running) Color.Yellow else Color.Green,
-        animationSpec = tween(
-            durationMillis = 400,
-            easing = LinearEasing
-        )
-    )
-    Row(
-        modifier = Modifier.wrapContentWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-    ) {
-        Button(
-            modifier = Modifier.padding(8.dp),
-            onClick = onClickStartPause,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = tint,
-                contentColor = Color.Black
-            )
-        ) {
-            Icon(icon, contentDescription = "Start or Pause")
-        }
-        AnimatedVisibility(
-            visible = timerState != TimerState.Stopped,
-            enter = slideInHorizontally() + fadeIn(),
-            exit = slideOutHorizontally() + fadeOut()
-        ) {
-            Button(
-                modifier = Modifier.padding(8.dp),
-                onClick = onClickStop,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Red,
-                    contentColor = Color.Black
                 )
+            }
+            Row(
+                modifier = Modifier
+                    .padding(vertical = 32.dp)
+                    .fillMaxWidth()
+                    .wrapContentHeight(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.Stop, contentDescription = "Stop")
+                TextButton(
+                    onClick = {
+                        TimerService.modifyTimer(itemIndex - 1)
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
+                ) {
+                    Icon(
+                        modifier = Modifier
+                            .scale(1.5f)
+                            .padding(vertical = 8.dp),
+                        imageVector = Icons.Default.SkipPrevious,
+                        contentDescription = "back to previous item"
+                    )
+                }
+                FloatingActionButton(
+                    onClick = {
+                        if (timerState == TimerState.Running) {
+                            // Pause is Clicked
+                            TimerService.pauseTimer(timerLengthMilli)
+                        } else {
+                            // Start is Clicked
+                            if (timerState == TimerState.Stopped) {
+                                TimerService.delayedStart(
+                                    length = delayedStartPrefState,
+                                    itemIndex = itemIndex
+                                )
+                            } else {
+                                TimerService.startTimer(itemIndex)
+                            }
+                        }
+                    },
+                    containerColor = iconTint,
+                    contentColor = Color.Black
+                ) {
+                    Icon(icon, contentDescription = "Start or Pause")
+                }
+                AnimatedVisibility(
+                    visible = timerState != TimerState.Stopped,
+                    enter = slideInHorizontally() + fadeIn(),
+                    exit = slideOutHorizontally() + fadeOut()
+                ) {
+                    FloatingActionButton(
+                        onClick = {
+                            TimerService.stopTimer(itemIndex)
+                        },
+                        containerColor = Color.Red,
+                        contentColor = Color.Black
+                    ) {
+                        Icon(Icons.Default.Stop, contentDescription = "Stop")
+                    }
+                }
+                TextButton(
+                    onClick = {
+                        TimerService.modifyTimer(itemIndex + 1)
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
+                ) {
+                    Icon(
+                        modifier = Modifier
+                            .scale(1.5f)
+                            .padding(vertical = 8.dp),
+                        imageVector = Icons.Default.SkipNext,
+                        contentDescription = "skip to next item"
+                    )
+                }
             }
         }
     }

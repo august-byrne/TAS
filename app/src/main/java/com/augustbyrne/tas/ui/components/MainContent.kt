@@ -90,7 +90,7 @@ fun AutoSizingText(modifier: Modifier = Modifier, textStyle: TextStyle = LocalTe
         },
         onTextLayout = { textLayoutResult: TextLayoutResult ->
             if (textLayoutResult.didOverflowWidth) {
-                if (mutableTextStyle.fontSize > 16.sp) {
+                if (mutableTextStyle.fontSize > 18.sp) {
                     mutableTextStyle =
                         mutableTextStyle.copy(fontSize = mutableTextStyle.fontSize * 0.9)
                 } else {

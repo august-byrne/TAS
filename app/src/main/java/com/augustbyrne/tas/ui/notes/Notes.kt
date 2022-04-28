@@ -75,6 +75,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
         // our list with build in nested scroll support that will notify us about its scroll
         LazyColumn(
             modifier = Modifier
+                .padding(it)
                 .fillMaxSize()
                 .reorderable(
                     state = state,
@@ -221,8 +222,10 @@ fun NoteItemUI (
                 onClick = onClickItem
             ),
         shape = RoundedCornerShape(16.dp),
-        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     ) {
         Column(
             modifier = Modifier

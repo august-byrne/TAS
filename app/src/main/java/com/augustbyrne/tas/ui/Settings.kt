@@ -4,8 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
-import androidx.compose.material.Switch
-import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.ArrowDropUp
@@ -55,7 +53,9 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
         }
     ) {
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .padding(it)
+                .fillMaxSize()
         ) {
             Text(
                 modifier = Modifier
@@ -164,8 +164,7 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
                         localCoroutineScope.launch {
                             myViewModel.setVibration(!vibrationState)
                         }
-                    },
-                    colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.primary, checkedTrackColor = MaterialTheme.colorScheme.primaryContainer)
+                    }
                 )
             }
             Row(
