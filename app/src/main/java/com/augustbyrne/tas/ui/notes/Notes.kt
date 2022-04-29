@@ -121,11 +121,12 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
                     onClickItem = {
                         myViewModel.saveListPosition(state.listState)
                         onNavigateToItem(note.id)
+                    },
+                    onClickStart = {
+                        myViewModel.saveListPosition(state.listState)
+                        onNavigateTimerStart(note.id)
                     }
-                ) {
-                    myViewModel.saveListPosition(state.listState)
-                    onNavigateTimerStart(note.id)
-                }
+                )
             }
             if (sortedNotes?.isEmpty() == true) {
                 item {
@@ -185,7 +186,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
                 .fillMaxSize()
                 .padding(
                     end = 16.dp,
-                    bottom = if (timerState != TimerState.Stopped) 88.dp else 16.dp
+                    bottom = if (timerState != TimerState.Stopped) 104.dp else 16.dp
                 )
         ) {
             FloatingActionButton(

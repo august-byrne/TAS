@@ -26,7 +26,14 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
 @Composable
-fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineScope: CoroutineScope, navController: NavHostController, snackbarState: SnackbarHostState, scrollBehavior: TopAppBarScrollBehavior) {
+fun NavGraph(
+    modifier: Modifier = Modifier,
+    viewModel: NoteViewModel,
+    coroutineScope: CoroutineScope,
+    navController: NavHostController,
+    snackbarState: SnackbarHostState,
+    scrollBehavior: TopAppBarScrollBehavior
+) {
     val context = LocalContext.current
     val delayedStartPrefState by viewModel.startDelayPrefLiveData.observeAsState(initial = 5)
     NavHost(
@@ -71,6 +78,7 @@ fun NavGraph(modifier: Modifier = Modifier, viewModel: NoteViewModel, coroutineS
             val noteId = it.arguments?.getInt("noteId") ?: 0
             ExpandedNoteUI(
                 noteId,
+                scrollBehavior,
                 viewModel,
                 { noteWithItems, index ->
                     if (!noteWithItems.dataItems.isNullOrEmpty()) {

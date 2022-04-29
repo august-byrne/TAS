@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material.ripple.rememberRipple
@@ -29,7 +30,6 @@ import com.augustbyrne.tas.ui.components.EditDataItemDialog
 import com.augustbyrne.tas.ui.components.EditExpandedNoteHeaderDialog
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
-import com.augustbyrne.tas.util.ClassicEnterAlwaysScrollBehavior
 import com.augustbyrne.tas.util.TimerState
 import com.augustbyrne.tas.util.classicSystemBarScrollBehavior
 import kotlinx.coroutines.launch
@@ -45,6 +45,7 @@ private val myDateTimeFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle
 @Composable
 fun ExpandedNoteUI (
     noteId: Int,
+    scrollBehavior: TopAppBarScrollBehavior,
     myViewModel: NoteViewModel,
     onNavigateTimerStart: (noteWithItems: NoteWithItems, index: Int) -> Unit,
     onDeleteNote: (noteWithItems: NoteWithItems) -> Unit,
@@ -55,7 +56,6 @@ fun ExpandedNoteUI (
     val noteWithItems by myViewModel.getNoteWithItemsById(noteId)
         .observeAsState(initial = NoteWithItems(NoteItem(), listOf()))
     val prevTimeType by myViewModel.lastUsedTimeUnitLiveData.observeAsState(initial = 0)
-    val scrollBehavior = remember { ClassicEnterAlwaysScrollBehavior() }
     val state = rememberReorderState()
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     var noteInfoToggle by rememberSaveable { mutableStateOf(true) }
@@ -104,13 +104,14 @@ fun ExpandedNoteUI (
                         }
                     }
                 ),
-            contentPadding = PaddingValues(bottom = if (timerState != TimerState.Stopped) 160.dp else 88.dp),
+            contentPadding = PaddingValues(bottom = if (timerState != TimerState.Stopped) 176.dp else 104.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             item {
                 Column(
                     modifier = Modifier
                         .wrapContentSize()
+                        .clip(RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp))
                         .background(MaterialTheme.colorScheme.primaryContainer)
                 ) {
                     Text(
@@ -289,7 +290,7 @@ fun ExpandedNoteUI (
                 .fillMaxSize()
                 .padding(
                     end = 16.dp,
-                    bottom = if (timerState != TimerState.Stopped) 88.dp else 16.dp
+                    bottom = if (timerState != TimerState.Stopped) 104.dp else 16.dp
                 )
         ) {
             FloatingActionButton(

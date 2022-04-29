@@ -107,11 +107,7 @@ fun DeterminateProgressBar(
                 }
             }
         } else {
-            Spacer(
-                modifier = Modifier
-                    .padding(32.dp)
-                    .fillMaxHeight(0.6f)
-            )
+            Spacer(modifier = Modifier.fillMaxHeight(0.5f))
         }
         Box(modifier = Modifier.align(Alignment.Center)) {
             content()
@@ -177,6 +173,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                 ) {
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
+                        tint = Color.Black,
                         contentDescription = "Back"
                     )
                 }
@@ -186,6 +183,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                 IconButton(onClick = { expanded = true }) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
+                        tint = Color.Black,
                         contentDescription = "Menu"
                     )
                 }
@@ -220,9 +218,8 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
         )
         if (timerState != TimerState.Delayed) {
             Column(
-                modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
+                verticalArrangement = Arrangement.SpaceEvenly
             ) {
                 if (BatteryLevelReceiver.lowBattery == true) {
                     Text(
@@ -244,6 +241,12 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                         totalTimerLengthMilli = totalTimerLengthMilli
                     )
                 }
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceEvenly
+            ) {
                 if (TimerService.currentNoteItems.size != 1) {
                     FlowRow(
                         mainAxisSize = SizeMode.Expand,
@@ -332,7 +335,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
             }
             Row(
                 modifier = Modifier
-                    .padding(vertical = 32.dp)
+                    .padding(bottom = 32.dp)
                     .fillMaxWidth()
                     .wrapContentHeight(),
                 horizontalArrangement = Arrangement.SpaceEvenly,

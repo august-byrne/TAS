@@ -107,8 +107,11 @@ class NoteViewModel @Inject constructor(
         }.asLiveData()
 
     suspend fun getStaticNoteWithItemsById(id: Int): NoteWithItems =
-        repo.getNoteWithItemsByIdSynchronous(id).apply {
-            dataItems.sortedByDescending { it.order }
+        repo.getNoteWithItemsByIdSynchronous(id).run {
+            NoteWithItems(
+                note = note,
+                dataItems = dataItems.sortedByDescending { it.order }
+            )
         }
 
     suspend fun getNumberOfNotes(): Int = repo.getNumberOfNotes()
