@@ -3,7 +3,7 @@ package com.augustbyrne.tas.ui.timer
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
-import androidx.compose.animation.*
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -138,7 +138,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
     val iconTint by animateColorAsState(
         targetValue = if (timerState == TimerState.Running) Color.Yellow else Color.Green,
         animationSpec = tween(
-            durationMillis = 400,
+            durationMillis = 200,
             easing = LinearEasing
         )
     )
@@ -275,12 +275,14 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                     }
                 }
                 Row(
-                    modifier = Modifier.wrapContentSize(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Spacer(Modifier.requiredWidth(58.dp))
                     if (TimerService.currentNoteItems[itemIndex].activity.isNotBlank()) {
+                        Spacer(Modifier.width(58.dp))
                         Text(
                             modifier = Modifier
                                 .wrapContentSize()
@@ -299,9 +301,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                         colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
                     ) {
                         Icon(
-                            modifier = Modifier
-                                .scale(1.5f)
-                                .padding(vertical = 8.dp),
+                            modifier = Modifier.scale(1.5f),
                             imageVector = Icons.Default.Replay,
                             contentDescription = "restart current item"
                         )
@@ -348,20 +348,16 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                     colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
                 ) {
                     Icon(
-                        modifier = Modifier
-                            .scale(1.5f)
-                            .padding(vertical = 8.dp),
+                        modifier = Modifier.scale(1.75f),
                         imageVector = Icons.Default.SkipPrevious,
                         contentDescription = "back to previous item"
                     )
                 }
                 FloatingActionButton(
                     onClick = {
-                        if (timerState == TimerState.Running) {
-                            // Pause is Clicked
+                        if (timerState == TimerState.Running) { // Pause is Clicked
                             TimerService.pauseTimer(timerLengthMilli)
-                        } else {
-                            // Start is Clicked
+                        } else { // Start is Clicked
                             if (timerState == TimerState.Stopped) {
                                 TimerService.delayedStart(
                                     length = delayedStartPrefState,
@@ -375,22 +371,11 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                     containerColor = iconTint,
                     contentColor = Color.Black
                 ) {
-                    Icon(icon, contentDescription = "Start or Pause")
-                }
-                AnimatedVisibility(
-                    visible = timerState != TimerState.Stopped,
-                    enter = slideInHorizontally() + fadeIn(),
-                    exit = slideOutHorizontally() + fadeOut()
-                ) {
-                    FloatingActionButton(
-                        onClick = {
-                            TimerService.stopTimer(itemIndex)
-                        },
-                        containerColor = Color.Red,
-                        contentColor = Color.Black
-                    ) {
-                        Icon(Icons.Default.Stop, contentDescription = "Stop")
-                    }
+                    Icon(
+                        modifier = Modifier.scale(1.5f),
+                        imageVector = icon,
+                        contentDescription = "Start or Pause"
+                    )
                 }
                 TextButton(
                     onClick = {
@@ -399,9 +384,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                     colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
                 ) {
                     Icon(
-                        modifier = Modifier
-                            .scale(1.5f)
-                            .padding(vertical = 8.dp),
+                        modifier = Modifier.scale(1.75f),
                         imageVector = Icons.Default.SkipNext,
                         contentDescription = "skip to next item"
                     )

@@ -272,7 +272,6 @@ fun EditExpandedNoteHeaderDialog(initialValue: NoteItem = NoteItem(), onDismissR
 fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, onAccepted: (returnedValue: DataItem) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val newItem = remember { initialDataItem.id == 0 }
     var timeUnitValue by remember { mutableStateOf(initialDataItem.unit) }
     var activityFieldValue by remember {
         mutableStateOf(
@@ -311,7 +310,7 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
         title = {
             Text(
                 text = "${
-                    if (newItem) {
+                    if (initialDataItem.id == 0) {
                         "Add"
                     } else {
                         "Edit"
@@ -323,15 +322,14 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(160.dp),
+                    .wrapContentHeight(unbounded = true),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 OutlinedTextField(
                     label = { Text("Activity") },
-                    modifier = Modifier.requiredHeightIn(min = TextFieldDefaults.MinHeight, max = TextFieldDefaults.MinHeight * 3).focusRequester(focusRequester),
+                    modifier = Modifier.focusRequester(focusRequester),
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
                     maxLines = 3,
-                    //singleLine = true,
                     value = activityFieldValue,
                     onValueChange = {
                         if (it.text.length <= activityMaxChars) {
@@ -357,51 +355,50 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
                         focusedBorderColor = MaterialTheme.colorScheme.outline
                     )
                 )
+                Spacer(Modifier.height(16.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth().requiredHeight(TextFieldDefaults.MinHeight),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(
+                    OutlinedTextField(
                         modifier = Modifier.weight(1f),
-                        horizontalAlignment = Alignment.End
-                    ) {
-                        OutlinedTextField(
-                            label = { Text("Time") },
-                            textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
-                            singleLine = true,
-                            value = timeFieldValue,
-                            onValueChange = {
-                                if (it.text.length <= timeMaxChars) {
-                                    timeFieldValue = it
-                                }
-                            },
-                            trailingIcon = {
-                                Text(
-                                    text = "${timeFieldValue.text.length}/$timeMaxChars"
-                                )
-                            },
-                            isError = timeError,
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Number,
-                                imeAction = ImeAction.Done
-                            ),
-                            keyboardActions = KeyboardActions(
-                                onDone = {
-                                    onAccepted(
-                                        initialDataItem.copy(
-                                            activity = activityFieldValue.text,
-                                            time = timeFieldValue.text.toInt(),
-                                            unit = timeUnitValue
-                                        )
-                                    )
-                                    focusManager.clearFocus()
-                                }
-                            ),
-                            colors = TextFieldDefaults.outlinedTextFieldColors(
-                                focusedBorderColor = MaterialTheme.colorScheme.outline
+                        label = { Text("Time") },
+                        textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
+                        singleLine = true,
+                        value = timeFieldValue,
+                        onValueChange = {
+                            if (it.text.length <= timeMaxChars) {
+                                timeFieldValue = it
+                            }
+                        },
+                        trailingIcon = {
+                            Text(
+                                text = "${timeFieldValue.text.length}/$timeMaxChars"
                             )
+                        },
+                        isError = timeError,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                onAccepted(
+                                    initialDataItem.copy(
+                                        activity = activityFieldValue.text,
+                                        time = timeFieldValue.text.toInt(),
+                                        unit = timeUnitValue
+                                    )
+                                )
+                                focusManager.clearFocus()
+                            }
+                        ),
+                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                            focusedBorderColor = MaterialTheme.colorScheme.outline
                         )
-                    }
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
                     TextButton(
                         onClick = {

@@ -22,7 +22,7 @@ android {
             storePassword keystoreProperties['storePassword']
         }
     }
-    compileSdkVersion 31
+    compileSdkVersion 32
     buildToolsVersion "30.0.3"
     buildFeatures {
         compose true
@@ -30,9 +30,9 @@ android {
     defaultConfig {
         applicationId "com.augustbyrne.tas"
         minSdkVersion 26
-        targetSdkVersion 31
-        versionCode 25
-        versionName "1.8.4"
+        targetSdkVersion 32
+        versionCode 26
+        versionName "1.8.6"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions {
             annotationProcessorOptions {
@@ -74,6 +74,7 @@ android {
     packagingOptions {
         resources.excludes += "DebugProbesKt.bin"
     }
+    namespace 'com.augustbyrne.tas'
 }
 
 dependencies {
@@ -152,8 +153,8 @@ dependencies {
     implementation "androidx.navigation:navigation-common:2.4.2"
 
     // Accompanist Components (temp)
-    implementation 'com.google.accompanist:accompanist-flowlayout:0.24.6-alpha'
-    implementation 'com.google.accompanist:accompanist-systemuicontroller:0.24.6-alpha'
+    implementation 'com.google.accompanist:accompanist-flowlayout:0.24.7-alpha'
+    implementation 'com.google.accompanist:accompanist-systemuicontroller:0.24.7-alpha'
 
     // UI Tests
     //androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
