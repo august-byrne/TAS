@@ -31,11 +31,11 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 @Composable
-fun ThemedBackground(timerTheme: TimerTheme, startingDelay: Long) {
+fun ThemedBackground(timerTheme: TimerTheme?, startingDelay: Long) {
     val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
     val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(1L)
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
-    val progressInMilli: Long = 1000L - timerLengthMilli.times(1000L).div(totalTimerLengthMilli)
+    val progressPercent: Float = 1f - timerLengthMilli.div(totalTimerLengthMilli.toFloat())
     Box(modifier = Modifier.fillMaxSize()) {
         when (timerTheme) {
             TimerTheme.Original -> {
@@ -128,18 +128,30 @@ fun ThemedBackground(timerTheme: TimerTheme, startingDelay: Long) {
                         (size.height * (3f / 5f)),
                         TileMode.Decal
                     )
+                    val brushBottomBackground = Brush.verticalGradient(
+                        listOf(teal200, teal100),
+                        (size.height * (3f / 5f)),
+                        size.height,
+                        TileMode.Decal
+                    )
+                    val brushVerticalLines = Brush.verticalGradient(
+                        listOf(blue700, blue500),
+                        (size.height * (3f / 5f)),
+                        size.height,
+                        TileMode.Decal
+                    )
                     drawRect(
                         brush = brushTopBackground,
                         size = size.copy(height = size.height * 3f / 5f)
                     )
                     drawRect(
-                        color = teal200,
+                        brush = brushBottomBackground,
                         size = size.copy(height = size.height * 3f / 5f),
                         topLeft = Offset(0f, size.height * 3f / 5f)
                     )
                     for (z in -10..16) {
                         drawLine(
-                            color = blue500,
+                            brush = brushVerticalLines,
                             start = Offset(size.width * (z.toFloat() / 6f), size.height),
                             end = Offset(
                                 size.width * ((0.4f * z.toFloat() / 10f) + 0.38f),
@@ -194,7 +206,7 @@ fun ThemedBackground(timerTheme: TimerTheme, startingDelay: Long) {
                                 ColorUtils.blendARGB(
                                     yellowOrange.toArgb(),
                                     redOrange.toArgb(),
-                                    progressInMilli.div(1000f)
+                                    progressPercent
                                 )
                             )
                         ),
@@ -213,10 +225,14 @@ fun ThemedBackground(timerTheme: TimerTheme, startingDelay: Long) {
                             verticalArrangement = Arrangement.SpaceEvenly,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(style = MaterialTheme.typography.displayMedium, text = "Starting in")
                             Text(
                                 style = MaterialTheme.typography.displayMedium,
-                                text = (timerLengthMilli.div(1000) + 1).coerceIn(0, startingDelay).toString()
+                                text = "Starting in"
+                            )
+                            Text(
+                                style = MaterialTheme.typography.displayMedium,
+                                text = (timerLengthMilli.div(1000) + 1).coerceIn(0, startingDelay)
+                                    .toString()
                             )
                         }
                     }
@@ -315,6 +331,7 @@ fun ThemedBackground(timerTheme: TimerTheme, startingDelay: Long) {
                     contentDescription = "right tree"
                 )
             }
+            else -> {}
         }
     }
     Box(modifier = Modifier.fillMaxSize()) {

@@ -28,27 +28,34 @@ class PreferenceManager @Inject constructor(
         private val PREF_START_DELAY = intPreferencesKey("start_delay")
     }
 
+    // Default is to show ads
     val showAdsFlow: Flow<Boolean> = context.dataStore.data.map { it[PREF_SHOW_ADS] ?: true }
     suspend fun setShowAds(value: Boolean) = context.dataStore.edit { it[PREF_SHOW_ADS] = value }
 
+    // Default is to follow system
     val isDarkThemeFlow: Flow<Int> = context.dataStore.data.map { it[PREF_DARK_MODE] ?: 0 }
     suspend fun setIsDarkTheme(value: Int) = context.dataStore.edit { it[PREF_DARK_MODE] = value }
 
-    val timerThemeFlow: Flow<Int> = context.dataStore.data.map { it[PREF_TIMER_THEME] ?: 0 }
+    // Default is the vibrant theme
+    val timerThemeFlow: Flow<Int> = context.dataStore.data.map { it[PREF_TIMER_THEME] ?: 1 }
     suspend fun setTimerTheme(value: Int) = context.dataStore.edit { it[PREF_TIMER_THEME] = value }
 
+    // Default is to sort by creation date
     val sortTypeFlow: Flow<Int> = context.dataStore.data.map { it[PREF_SORT_BY] ?: 0 }
     suspend fun setSortType(value: Int) = context.dataStore.edit { it[PREF_SORT_BY] = value }
 
+    // Default is seconds
     val lastUsedTimeUnitFlow: Flow<Int> =
         context.dataStore.data.map { it[PREF_LAST_TIME_UNIT] ?: 0 }
 
     suspend fun setLastUsedTimeUnit(value: Int) =
         context.dataStore.edit { it[PREF_LAST_TIME_UNIT] = value }
 
+    // Default is vibrate
     val vibrationFlow: Flow<Boolean> = context.dataStore.data.map { it[PREF_VIBRATE] ?: true }
     suspend fun setVibration(value: Boolean) = context.dataStore.edit { it[PREF_VIBRATE] = value }
 
+    // Default is a 5 second starting delay
     val startDelay: Flow<Int> = context.dataStore.data.map { it[PREF_START_DELAY] ?: 5 }
     suspend fun setStartDelay(value: Int) = context.dataStore.edit { it[PREF_START_DELAY] = value }
 }

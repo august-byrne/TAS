@@ -81,7 +81,7 @@ fun NavGraph(
                 scrollBehavior,
                 viewModel,
                 { noteWithItems, index ->
-                    if (!noteWithItems.dataItems.isNullOrEmpty()) {
+                    if (noteWithItems.dataItems.isNotEmpty()) {
                         TimerService.initTimerServiceValues(noteWithItems)
                         navController.navigate("note_timer")
                         TimerService.delayedStart(length = delayedStartPrefState, itemIndex = index)
@@ -130,7 +130,7 @@ fun NavGraph(
                 { noteWithItems ->
                     navController.popBackStack()
                     noteWithItems.apply {
-                        if (note.title.isEmpty() && note.description.isEmpty() && dataItems.isNullOrEmpty()) {
+                        if (note.title.isEmpty() && note.description.isEmpty() && dataItems.isEmpty()) {
                             viewModel.deleteNote(noteId)
                             Toast.makeText(context, "Removed empty note", Toast.LENGTH_SHORT).show()
                         }

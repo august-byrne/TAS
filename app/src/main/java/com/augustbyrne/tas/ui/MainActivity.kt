@@ -10,6 +10,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,11 +26,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
@@ -40,7 +43,9 @@ import com.augustbyrne.tas.ui.components.MainBottomNavBar
 import com.augustbyrne.tas.ui.notes.NoteViewModel
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
+import com.augustbyrne.tas.ui.values.redOrange
 import com.augustbyrne.tas.ui.values.special400
+import com.augustbyrne.tas.ui.values.yellowOrange
 import com.augustbyrne.tas.util.*
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.ads.AdRequest
@@ -65,7 +70,6 @@ class MainActivity : AppCompatActivity() {
 
     private val batteryLevelReceiver = BatteryLevelReceiver()
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -138,7 +142,11 @@ class MainActivity : AppCompatActivity() {
                             navBackStackEntry
                         )
                     }
-                    MainBottomNavBar(navBackStackEntry, navController, Modifier.classicSystemBarScrollBehavior(scrollBehavior, false))
+                    MainBottomNavBar(
+                        navBackStackEntry,
+                        navController,
+                        Modifier.classicSystemBarScrollBehavior(scrollBehavior, false)
+                    )
                     DefaultSnackbar(
                         snackbarHostState = snackbarHostState,
                         onClickUndo = {
@@ -200,6 +208,7 @@ fun CollapsedTimer(modifier: Modifier = Modifier, navController: NavController, 
         val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
         val itemIndex: Int by TimerService.itemIndex.observeAsState(0)
         val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(1L)
+        val progressPercent: Float = 1f - timerLengthMilli.div(totalTimerLengthMilli.toFloat())
         val icon =
             if (timerState == TimerState.Running) Icons.Default.Pause else Icons.Default.PlayArrow
         Surface(
@@ -213,7 +222,16 @@ fun CollapsedTimer(modifier: Modifier = Modifier, navController: NavController, 
             Column(
                 modifier = Modifier
                     .wrapContentHeight()
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .background(
+                        Color(
+                            ColorUtils.blendARGB(
+                                yellowOrange.toArgb(),
+                                redOrange.toArgb(),
+                                progressPercent
+                            )
+                        ).copy(alpha = 0.1f)
+                    ),
                 verticalArrangement = Arrangement.SpaceEvenly
             ) {
                 if (timerState == TimerState.Delayed) {
@@ -297,7 +315,7 @@ fun CollapsedTimer(modifier: Modifier = Modifier, navController: NavController, 
                             )
                         )
                     }
-                    Divider(thickness = Dp.Hairline)
+                    Divider(color = MaterialTheme.colorScheme.onSurface, thickness = Dp.Hairline)
                 }
             }
         }

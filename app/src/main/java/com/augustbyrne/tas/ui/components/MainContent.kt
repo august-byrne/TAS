@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainBottomNavBar(navBackStackEntry: NavBackStackEntry?, navController: NavController, modifier: Modifier = Modifier) {
     val navIndex = when(navBackStackEntry?.destination?.id) {

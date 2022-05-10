@@ -92,7 +92,7 @@ fun ExpandedNoteUI (
                         itemPosition.index in 2..noteWithItems.dataItems.lastIndex + 2
                     },
                     onMove = { from, to ->
-                        if (to.index in 2..noteWithItems.dataItems.lastIndex + 2 && from.index in 2..noteWithItems.dataItems.lastIndex + 2 && !noteWithItems.dataItems.isNullOrEmpty()) {
+                        if (to.index in 2..noteWithItems.dataItems.lastIndex + 2 && from.index in 2..noteWithItems.dataItems.lastIndex + 2 && noteWithItems.dataItems.isNotEmpty()) {
                             Collections.swap(noteWithItems.dataItems, from.index - 2, to.index - 2)
                         }
                     }, onDragEnd = { from, to ->
@@ -177,12 +177,12 @@ fun ExpandedNoteUI (
                             .clickable { noteInfoToggle = !noteInfoToggle }
                             .padding(8.dp),
                         text = if (noteInfoToggle && noteWithItems.note.last_edited_on != null) {
-                            noteWithItems.note.last_edited_on?.let {
-                                "last edited: ${it.format(myDateTimeFormat)}"
+                            noteWithItems.note.last_edited_on?.let { dateTime ->
+                                "last edited: ${dateTime.format(myDateTimeFormat)}"
                             } ?: ""
                         } else {
-                            noteWithItems.note.creation_date?.let {
-                                "created: ${it.format(myDateTimeFormat)}"
+                            noteWithItems.note.creation_date?.let { dateTime ->
+                                "created: ${dateTime.format(myDateTimeFormat)}"
                             } ?: ""
                         },
                         style = MaterialTheme.typography.bodyMedium

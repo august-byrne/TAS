@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -55,7 +56,7 @@ import kotlinx.coroutines.launch
 fun DeterminateProgressBar(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    progressInMilli: Long,
+    progressPercent: Float,
     progressColorStart: Color = yellow200,
     progressColorEnd: Color = blue500,
     backgroundColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
@@ -69,7 +70,7 @@ fun DeterminateProgressBar(
     }
     val brushTip = remember { SolidColor(progressColorEnd) }
     val brushBackground = remember { SolidColor(backgroundColor) }
-    val progressDegrees = progressInMilli.times(360).div(1000f)
+    val progressDegrees = progressPercent.times(360f)
 
     Box {
         if (enabled) {
@@ -107,7 +108,7 @@ fun DeterminateProgressBar(
                 }
             }
         } else {
-            Spacer(modifier = Modifier.fillMaxHeight(0.5f))
+            Spacer(modifier = Modifier.fillMaxHeight(0.515f))
         }
         Box(modifier = Modifier.align(Alignment.Center)) {
             content()
@@ -120,12 +121,12 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
     val context = LocalContext.current
     val localCoroutineScope = rememberCoroutineScope()
     var showTimerThemeDialog by rememberSaveable { mutableStateOf(false) }
-    val savedTimerTheme by myViewModel.timerThemeLiveData.observeAsState(initial = TimerTheme.Vibrant)
+    val savedTimerTheme by myViewModel.timerThemeLiveData.observeAsState()
     val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     val itemIndex: Int by TimerService.itemIndex.observeAsState(0)
     val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(1L)
-    val progressInMilli: Long = 1000L - timerLengthMilli.times(1000L).div(totalTimerLengthMilli)
+    val progressPercent: Float = 1f - timerLengthMilli.div(totalTimerLengthMilli.toFloat())
     val startDelayState by myViewModel.startDelayPrefLiveData.observeAsState(initial = 5)
     val timerTheme = if (BatteryLevelReceiver.lowBattery == true) {
         TimerTheme.Original
@@ -172,9 +173,9 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                     onClick = onNavBack
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.Default.ExpandMore,
                         tint = Color.Black,
-                        contentDescription = "Back"
+                        contentDescription = "minimize"
                     )
                 }
             },
@@ -219,7 +220,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
         if (timerState != TimerState.Delayed) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceEvenly
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
                 if (BatteryLevelReceiver.lowBattery == true) {
                     Text(
@@ -232,7 +233,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                         .fillMaxWidth()
                         .wrapContentHeight(),
                     enabled = timerTheme != TimerTheme.VaporWave && BatteryLevelReceiver.lowBattery != true,
-                    progressInMilli = progressInMilli
+                    progressPercent = progressPercent
                 ) {
                     TimerText(
                         enabled = timerTheme != TimerTheme.VaporWave,
@@ -243,9 +244,12 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                 }
             }
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .background(Color.White.copy(alpha = 0.25f))
+                    .weight(weight = 1f, fill = true)
+                    .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceEvenly
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
                 if (TimerService.currentNoteItems.size != 1) {
                     FlowRow(
@@ -285,13 +289,14 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                         Spacer(Modifier.width(58.dp))
                         Text(
                             modifier = Modifier
-                                .wrapContentSize()
-                                .weight(weight = 1f, fill = false),
+                                .wrapContentHeight()
+                                .weight(weight = 1f, fill = true),
                             text = TimerService.currentNoteItems[itemIndex].activity,
                             maxLines = 2,
                             textAlign = TextAlign.Center,
                             overflow = TextOverflow.Ellipsis,
-                            style = MaterialTheme.typography.headlineMedium
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                     TextButton(
@@ -309,10 +314,15 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                 }
                 if (itemIndex + 1 <= TimerService.currentNoteItems.lastIndex) {
                     Text(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        text = "Next up: ${TimerService.currentNoteItems[itemIndex + 1].activity}",
+                        text = "Next: ${TimerService.currentNoteItems[itemIndex + 1].activity}",
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                } else {
+                    Text(
+                        text = "",
+                        maxLines = 1,
                         style = MaterialTheme.typography.titleLarge
                     )
                 }
@@ -321,7 +331,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                 RadioItemsDialog(
                     title = "Timer theme",
                     radioItemNames = listOf("original", "vibrant", "vapor wave"),
-                    currentState = timerTheme.theme,
+                    currentState = timerTheme?.theme,
                     onClickItem = { indexClicked ->
                         localCoroutineScope.launch {
                             myViewModel.setTimerTheme(TimerTheme.getTheme(indexClicked))
@@ -335,7 +345,8 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
             }
             Row(
                 modifier = Modifier
-                    .padding(bottom = 32.dp)
+                    .background(Color.White.copy(alpha = 0.25f))
+                    .padding(bottom = 32.dp, top = 16.dp)
                     .fillMaxWidth()
                     .wrapContentHeight(),
                 horizontalArrangement = Arrangement.SpaceEvenly,

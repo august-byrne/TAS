@@ -274,20 +274,3 @@ fun NoteItemUI (
     }
 }
 
-/*
-@Preview
-@Composable
-fun NoteItemUITest() {
-    val note = NoteItem(
-        id = 1,
-        title = "This is a title that is way too long",
-        description = "Description dsdf hashd fhadhf as dhasdf hasd fhddfd",
-        order = 1,
-        last_edited_on = LocalDateTime.now(),
-        creation_date = LocalDateTime.now()
-    )
-    AppTheme {
-        NoteItemUI(Modifier, note, {}) {}
-    }
-}
- */

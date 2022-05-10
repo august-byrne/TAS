@@ -17,6 +17,7 @@ import android.os.*
 import android.widget.Toast
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.toArgb
+import androidx.core.app.NotificationCompat.CATEGORY_WORKOUT
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -97,6 +98,7 @@ class TimerService : LifecycleService() {
             .setSmallIcon(R.drawable.play)
             .setColor(yellow100.toArgb())
             .setColorized(true)
+            .setCategory(CATEGORY_WORKOUT)
             .setVisibility(Notification.VISIBILITY_PUBLIC)
             .setContentIntent(getMainActivityPendingIntent())
             .setActions(
@@ -165,16 +167,21 @@ class TimerService : LifecycleService() {
                     },
                     actionNext(index).build()
                 )
-            if (internalTimerState != TimerState.Stopped) {
-                notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
-            }
+            notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
         }
 
-        timerState.observe(this) { timerState ->
+        timerState.observe(this) { timerState: TimerState ->
             when (timerState) {
                 TimerState.Stopped -> {
-                    stopForeground(true)
-                    //notificationManager.cancel(NOTIFICATION_ID)
+                    notificationBuilder
+                        .setOngoing(false)
+                        .setActions(
+                            actionPrevious(internalIndex).build(),
+                            actionPlay(internalIndex).build(),
+                            actionNext(internalIndex).build()
+                        )
+                    notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
+                    stopForeground(STOP_FOREGROUND_DETACH)
                 }
                 TimerState.Paused -> {
                     notificationBuilder
@@ -193,12 +200,9 @@ class TimerService : LifecycleService() {
                             actionNext(internalIndex).build()
                         )
                     startForeground(NOTIFICATION_ID, notificationBuilder.build())
-                    //notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
                 }
                 TimerState.Delayed -> {
-                    stopForeground(true)
-                }
-                else -> {
+                    stopForeground(STOP_FOREGROUND_REMOVE)
                 }
             }
         }
@@ -232,6 +236,11 @@ class TimerService : LifecycleService() {
             IMPORTANCE_LOW
         )
         notificationManager.createNotificationChannel(channel)
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        stopTimer()
+        super.onTaskRemoved(rootIntent)
     }
 
     companion object {
