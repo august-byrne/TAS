@@ -53,14 +53,15 @@ import com.google.accompanist.flowlayout.SizeMode
 import kotlinx.coroutines.launch
 
 @Composable
-fun DeterminateProgressBar(
+fun CircleProgressBar(
     modifier: Modifier = Modifier,
-    enabled: Boolean = true,
+    timerState: TimerState,
+    timerLengthMilli: Long,
+    totalTimerLengthMilli: Long,
     progressPercent: Float,
     progressColorStart: Color = yellow200,
     progressColorEnd: Color = blue500,
-    backgroundColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
-    content: @Composable () -> Unit
+    backgroundColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
 ) {
     val drawStyle = remember { Stroke(width = 24.dp.value, cap = StrokeCap.Round) }
     val brush = remember {
@@ -73,45 +74,45 @@ fun DeterminateProgressBar(
     val progressDegrees = progressPercent.times(360f)
 
     Box {
-        if (enabled) {
-            Canvas(
-                modifier = modifier
-                    .aspectRatio(1f)
-                    .fillMaxSize()
-                    .padding(16.dp)
-            ) {
+        Canvas(
+            modifier = modifier
+                .aspectRatio(1f)
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
 
-                // Background of Progress bar
+            // Background of Progress bar
+            drawArc(
+                brush = brushBackground,
+                startAngle = 90f,
+                sweepAngle = 360f,
+                useCenter = false,
+                style = drawStyle
+            )
+
+            rotate(progressDegrees + 270f, center) {
                 drawArc(
-                    brush = brushBackground,
-                    startAngle = 90f,
-                    sweepAngle = 360f,
+                    brush = brush,
+                    startAngle = 360f - progressDegrees,
+                    sweepAngle = progressDegrees,
                     useCenter = false,
                     style = drawStyle
                 )
-
-                rotate(progressDegrees + 270f, center) {
-                    drawArc(
-                        brush = brush,
-                        startAngle = 360f - progressDegrees,
-                        sweepAngle = progressDegrees,
-                        useCenter = false,
-                        style = drawStyle
-                    )
-                    drawArc(
-                        brush = brushTip,
-                        startAngle = 360f,
-                        sweepAngle = 0.1f,
-                        useCenter = false,
-                        style = drawStyle
-                    )
-                }
+                drawArc(
+                    brush = brushTip,
+                    startAngle = 360f,
+                    sweepAngle = 0.1f,
+                    useCenter = false,
+                    style = drawStyle
+                )
             }
-        } else {
-            Spacer(modifier = Modifier.fillMaxHeight(0.515f))
         }
         Box(modifier = Modifier.align(Alignment.Center)) {
-            content()
+            TimerText(
+                timerState = timerState,
+                timerLengthMilli = timerLengthMilli,
+                totalTimerLengthMilli = totalTimerLengthMilli
+            )
         }
     }
 }
@@ -154,98 +155,41 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
         }
         BatteryLevelReceiver.lowBattery = batteryPct != null && batteryPct <= 15
     }
-    ThemedBackground(timerTheme, startDelayState.toLong())
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
-        CenterAlignedTopAppBar(
-            modifier = Modifier.statusBarsPadding(),
-            title = {
-                AutoSizingText(
-                    modifier = Modifier.fillMaxWidth(0.9F),
-                    textStyle = LocalTextStyle.current.copy(color = Color.Black),
-                    text = TimerService.currentNote.title
+    ThemedBackground(
+        timerTheme = timerTheme,
+        startingDelay = startDelayState.toLong(),
+        timerUI = {
+            if (BatteryLevelReceiver.lowBattery == true) {
+                Text(
+                    style = MaterialTheme.typography.titleMedium,
+                    text = "LOW BATTERY MODE"
                 )
-            },
-            navigationIcon = {
-                IconButton(
-                    onClick = onNavBack
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ExpandMore,
-                        tint = Color.Black,
-                        contentDescription = "minimize"
-                    )
-                }
-            },
-            actions = {
-                var expanded by remember { mutableStateOf(false) }
-                IconButton(onClick = { expanded = true }) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        tint = Color.Black,
-                        contentDescription = "Menu"
-                    )
-                }
-                DropdownMenu(
-                    modifier = Modifier.background(MaterialTheme.colorScheme.surface),
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                    content = {
-                        DropdownMenuItem(onClick = {
-                            expanded = false
-                            showTimerThemeDialog = true
-                            //onNavTimerSettings()
-                        }) {
-                            Text(
-                                color = MaterialTheme.colorScheme.onSurface,
-                                text = "Timer theme"
-                            )
-                        }
-                    }
+                TimerText(
+                    timerState = timerState,
+                    timerLengthMilli = timerLengthMilli,
+                    totalTimerLengthMilli = totalTimerLengthMilli
                 )
-            },
-            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                containerColor = if (BatteryLevelReceiver.lowBattery == true) {
-                    orange500
-                } else {
-                    Color.Transparent
-                },
-                titleContentColor = Color.Black,
-                navigationIconContentColor = Color.Black,
-                actionIconContentColor = Color.Black
-            )
-        )
-        if (timerState != TimerState.Delayed) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                if (BatteryLevelReceiver.lowBattery == true) {
-                    Text(
-                        style = MaterialTheme.typography.titleMedium,
-                        text = "LOW BATTERY MODE"
-                    )
-                }
-                DeterminateProgressBar(
+            } else {
+                CircleProgressBar(
                     modifier = Modifier
                         .fillMaxWidth()
                         .wrapContentHeight(),
-                    enabled = timerTheme != TimerTheme.VaporWave && BatteryLevelReceiver.lowBattery != true,
-                    progressPercent = progressPercent
-                ) {
-                    TimerText(
-                        enabled = timerTheme != TimerTheme.VaporWave,
-                        timerState = timerState,
-                        timerLengthMilli = timerLengthMilli,
-                        totalTimerLengthMilli = totalTimerLengthMilli
-                    )
-                }
+                    progressPercent = progressPercent,
+                    timerState = timerState,
+                    timerLengthMilli = timerLengthMilli,
+                    totalTimerLengthMilli = totalTimerLengthMilli
+                )
             }
+        },
+        contentUI = {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .background(Color.White.copy(alpha = 0.25f))
+        ) {
             Column(
                 modifier = Modifier
-                    .background(Color.White.copy(alpha = 0.25f))
                     .weight(weight = 1f, fill = true)
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -327,26 +271,9 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                     )
                 }
             }
-            if (showTimerThemeDialog) {
-                RadioItemsDialog(
-                    title = "Timer theme",
-                    radioItemNames = listOf("original", "vibrant", "vapor wave"),
-                    currentState = timerTheme?.theme,
-                    onClickItem = { indexClicked ->
-                        localCoroutineScope.launch {
-                            myViewModel.setTimerTheme(TimerTheme.getTheme(indexClicked))
-                        }
-                        showTimerThemeDialog = false
-                    },
-                    onDismissRequest = {
-                        showTimerThemeDialog = false
-                    }
-                )
-            }
             Row(
                 modifier = Modifier
-                    .background(Color.White.copy(alpha = 0.25f))
-                    .padding(bottom = 32.dp, top = 16.dp)
+                    .padding(bottom = 32.dp, top = 8.dp)
                     .fillMaxWidth()
                     .wrapContentHeight(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
@@ -402,51 +329,125 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                 }
             }
         }
+    })
+    Box(modifier = Modifier.fillMaxSize()) {
+        CenterAlignedTopAppBar(
+            modifier = Modifier.statusBarsPadding().align(Alignment.TopCenter),
+            title = {
+                AutoSizingText(
+                    modifier = Modifier.fillMaxWidth(0.9F),
+                    textStyle = LocalTextStyle.current.copy(color = Color.Black),
+                    text = TimerService.currentNote.title
+                )
+            },
+            navigationIcon = {
+                IconButton(
+                    onClick = onNavBack
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ExpandMore,
+                        tint = Color.Black,
+                        contentDescription = "minimize"
+                    )
+                }
+            },
+            actions = {
+                var expanded by remember { mutableStateOf(false) }
+                IconButton(onClick = { expanded = true }) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        tint = Color.Black,
+                        contentDescription = "Menu"
+                    )
+                }
+                DropdownMenu(
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    content = {
+                        DropdownMenuItem(onClick = {
+                            expanded = false
+                            showTimerThemeDialog = true
+                            //onNavTimerSettings()
+                        }) {
+                            Text(
+                                color = MaterialTheme.colorScheme.onSurface,
+                                text = "Timer theme"
+                            )
+                        }
+                    }
+                )
+            },
+            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                containerColor = if (BatteryLevelReceiver.lowBattery == true) {
+                    orange500
+                } else {
+                    Color.Transparent
+                },
+                titleContentColor = Color.Black,
+                navigationIconContentColor = Color.Black,
+                actionIconContentColor = Color.Black
+            )
+        )
+        if (showTimerThemeDialog) {
+            RadioItemsDialog(
+                title = "Timer theme",
+                radioItemNames = listOf("original", "vibrant", "vapor wave"),
+                currentState = timerTheme?.theme,
+                onClickItem = { indexClicked ->
+                    localCoroutineScope.launch {
+                        myViewModel.setTimerTheme(TimerTheme.getTheme(indexClicked))
+                    }
+                    showTimerThemeDialog = false
+                },
+                onDismissRequest = {
+                    showTimerThemeDialog = false
+                }
+            )
+        }
     }
 }
 
 @Composable
-fun TimerText(modifier: Modifier = Modifier, enabled: Boolean = true, timerState: TimerState, timerLengthMilli: Long, totalTimerLengthMilli: Long) {
-    if (enabled) {
-        val timerLengthAdjusted = if (timerState == TimerState.Stopped) {
-            totalTimerLengthMilli.div(1000)
+fun TimerText(modifier: Modifier = Modifier, timerState: TimerState, timerLengthMilli: Long, totalTimerLengthMilli: Long) {
+    val timerLengthAdjusted = if (timerState == TimerState.Stopped) {
+        totalTimerLengthMilli.div(1000)
+    } else {
+        (timerLengthMilli.div(1000) + 1).coerceIn(0, totalTimerLengthMilli.div(1000))
+    }
+    val hour = timerLengthAdjusted.div(3600).toInt()
+    val min = timerLengthAdjusted.div(60).mod(60)
+    val sec = timerLengthAdjusted.mod(60)
+    val formattedTimerLength: String = String.format("%02d:%02d:%02d", hour, min, sec)
+    Box(modifier = modifier) {
+        if (timerState == TimerState.Running && timerLengthAdjusted <= 5) {
+            // Flashing Timer Text
+            val infiniteTransition = rememberInfiniteTransition()
+            val alpha by infiniteTransition.animateFloat(
+                initialValue = 1.0f,
+                targetValue = 0.0f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(400, easing = FastOutLinearInEasing),
+                    repeatMode = RepeatMode.Reverse
+                )
+            )
+            AutoSizingText(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(32.dp)
+                    .alpha(alpha),
+                textStyle = MaterialTheme.typography.displayLarge.copy(fontSize = 96.sp),
+                text = formattedTimerLength
+            )
         } else {
-            (timerLengthMilli.div(1000) + 1).coerceIn(0, totalTimerLengthMilli.div(1000))
-        }
-        val hour = timerLengthAdjusted.div(3600).toInt()
-        val min = timerLengthAdjusted.div(60).mod(60)
-        val sec = timerLengthAdjusted.mod(60)
-        val formattedTimerLength: String = String.format("%02d:%02d:%02d", hour, min, sec)
-        Box(modifier = modifier) {
-            if (timerState == TimerState.Running && timerLengthAdjusted <= 5) {
-                // Flashing Timer Text
-                val infiniteTransition = rememberInfiniteTransition()
-                val alpha by infiniteTransition.animateFloat(
-                    initialValue = 1.0f,
-                    targetValue = 0.0f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(400, easing = FastOutLinearInEasing),
-                        repeatMode = RepeatMode.Reverse
-                    )
-                )
-                AutoSizingText(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(32.dp)
-                        .alpha(alpha),
-                    textStyle = MaterialTheme.typography.displayLarge.copy(fontSize = 96.sp),
-                    text = formattedTimerLength
-                )
-            } else {
-                // Normal Resized Text
-                AutoSizingText(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(32.dp),
-                    textStyle = MaterialTheme.typography.displayLarge.copy(fontSize = 96.sp),
-                    text = formattedTimerLength
-                )
-            }
+            // Normal Resized Text
+            AutoSizingText(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(32.dp),
+                textStyle = MaterialTheme.typography.displayLarge.copy(fontSize = 96.sp),
+                text = formattedTimerLength
+            )
         }
     }
 }

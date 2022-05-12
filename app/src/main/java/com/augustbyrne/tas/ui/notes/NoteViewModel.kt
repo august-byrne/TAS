@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import com.augustbyrne.tas.data.PreferenceManager
@@ -160,4 +161,9 @@ class NoteViewModel @Inject constructor(
     }
 
     fun loadListPosition(): LazyListState = listState
+
+    var miniTimerPadding: MutableLiveData<Float> = MutableLiveData(0f)
+    fun updateFabPadding(miniTimerHeight: Float, miniTimerOffset: Float) {
+        miniTimerPadding.value = (miniTimerHeight + miniTimerOffset).coerceAtLeast(0f)
+    }
 }

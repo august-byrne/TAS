@@ -38,7 +38,7 @@ class Converters {
  */
 
 enum class TimerState {
-    Stopped, Paused, Running, Delayed
+    Stopped, Paused, Running, Delayed, Closed
 }
 
 enum class CompletionType {

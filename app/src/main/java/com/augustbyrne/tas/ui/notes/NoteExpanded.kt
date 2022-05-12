@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -59,6 +60,7 @@ fun ExpandedNoteUI (
     val state = rememberReorderState()
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     var noteInfoToggle by rememberSaveable { mutableStateOf(true) }
+    val fabPadding: Float by myViewModel.miniTimerPadding.observeAsState(0f)
 
     Scaffold(
         modifier = Modifier
@@ -290,7 +292,9 @@ fun ExpandedNoteUI (
                 .fillMaxSize()
                 .padding(
                     end = 16.dp,
-                    bottom = if (timerState != TimerState.Stopped) 104.dp else 16.dp
+                    bottom = with(LocalDensity.current) {
+                        fabPadding.toDp()
+                    } + 16.dp
                 )
         ) {
             FloatingActionButton(

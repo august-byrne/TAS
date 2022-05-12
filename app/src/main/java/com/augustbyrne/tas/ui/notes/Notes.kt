@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -47,6 +48,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
     val sortType by myViewModel.sortTypeLiveData.observeAsState()
     val sortedNotes by myViewModel.sortedAllNotes(sortType).observeAsState()
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
+    val fabPadding: Float by myViewModel.miniTimerPadding.observeAsState(0f)
 
     Scaffold(
         modifier = Modifier
@@ -55,7 +57,9 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             SmallTopAppBar(
-                modifier = Modifier.statusBarsPadding().classicSystemBarScrollBehavior(scrollBehavior),
+                modifier = Modifier
+                    .statusBarsPadding()
+                    .classicSystemBarScrollBehavior(scrollBehavior),
                 title = {
                     AutoSizingText(text = "Timed Activity System")
                 },
@@ -186,7 +190,9 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
                 .fillMaxSize()
                 .padding(
                     end = 16.dp,
-                    bottom = if (timerState != TimerState.Stopped) 104.dp else 16.dp
+                    bottom = with(LocalDensity.current) {
+                        fabPadding.toDp()
+                    } + 16.dp
                 )
         ) {
             FloatingActionButton(

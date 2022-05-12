@@ -9,8 +9,10 @@ import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.core.animate
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,12 +23,16 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -53,6 +59,7 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -81,7 +88,7 @@ class MainActivity : AppCompatActivity() {
 
         registerReceiver(batteryLevelReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
-        // remove system insets as we will handle these ourselves with accompanist
+        // remove system insets as we will handle these ourselves
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
@@ -138,6 +145,7 @@ class MainActivity : AppCompatActivity() {
                         )
                         CollapsedTimer(
                             Modifier.align(Alignment.BottomCenter),
+                            myViewModel,
                             navController,
                             navBackStackEntry
                         )
@@ -198,9 +206,15 @@ class MainActivity : AppCompatActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CollapsedTimer(modifier: Modifier = Modifier, navController: NavController, navBackStackEntry: NavBackStackEntry?) {
-    val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
-    if (timerState != TimerState.Stopped &&
+fun CollapsedTimer(
+    modifier: Modifier = Modifier,
+    myViewModel: NoteViewModel,
+    navController: NavController,
+    navBackStackEntry: NavBackStackEntry?) {
+    val coroutineScope = rememberCoroutineScope()
+    val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Closed)
+    if (
+        timerState != TimerState.Closed &&
         navBackStackEntry?.destination?.id != navController.findDestination("note_timer")!!.id &&
         navBackStackEntry?.destination?.id != navController.findDestination("settings")!!.id &&
         navBackStackEntry?.destination?.id != navController.findDestination("general_timer")!!.id
@@ -211,8 +225,57 @@ fun CollapsedTimer(modifier: Modifier = Modifier, navController: NavController, 
         val progressPercent: Float = 1f - timerLengthMilli.div(totalTimerLengthMilli.toFloat())
         val icon =
             if (timerState == TimerState.Running) Icons.Default.Pause else Icons.Default.PlayArrow
+        var scrollOffset by remember { mutableStateOf(0f) }
+        var contentHeight by rememberSaveable { mutableStateOf(0) }
+        myViewModel.updateFabPadding(contentHeight.toFloat(), scrollOffset)
         Surface(
-            modifier = modifier,
+            modifier = modifier
+                .clipToBounds()
+                .layout { measurable, constraints ->
+                    // Measure the composable
+                    val placeable = measurable.measure(constraints)
+                    contentHeight = placeable.height
+                    val placeableResizedY = placeable.height + scrollOffset.toInt()
+                    val yOffset = 0
+                    layout(placeable.width, placeableResizedY) {
+                        // Where the composable gets placed
+                        placeable.placeRelative(0, yOffset)
+                    }
+                }
+                .pointerInput(Unit) {
+                    detectVerticalDragGestures(
+                        onVerticalDrag = { change, dragAmount ->
+                            change.consume()
+                            scrollOffset = (scrollOffset - dragAmount).coerceAtMost(0f)
+                            myViewModel.updateFabPadding(contentHeight.toFloat(), scrollOffset)
+                        },
+                        onDragEnd = {
+                            if (scrollOffset < -contentHeight / 2) {
+                                coroutineScope.launch {
+                                    animate(
+                                        initialValue = scrollOffset,
+                                        targetValue = -contentHeight.toFloat()
+                                    ) { value, _ ->
+                                        scrollOffset = value
+                                        myViewModel.updateFabPadding(contentHeight.toFloat(), value)
+                                    }
+                                }
+                                TimerService.closeTimer()
+                                //scrollOffset = 0f
+                            } else {
+                                coroutineScope.launch {
+                                    animate(
+                                        initialValue = scrollOffset,
+                                        targetValue = 0f
+                                    ) { value, _ ->
+                                        scrollOffset = value
+                                        myViewModel.updateFabPadding(contentHeight.toFloat(), value)
+                                    }
+                                }
+                            }
+                        }
+                    )
+                },
             shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
             color = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface,

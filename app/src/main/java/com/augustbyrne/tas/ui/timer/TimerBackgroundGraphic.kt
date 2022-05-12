@@ -31,7 +31,7 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 @Composable
-fun ThemedBackground(timerTheme: TimerTheme?, startingDelay: Long) {
+fun ThemedBackground(timerTheme: TimerTheme?, startingDelay: Long, timerUI: @Composable () -> Unit, contentUI: @Composable () -> Unit) {
     val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
     val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(1L)
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
@@ -39,11 +39,19 @@ fun ThemedBackground(timerTheme: TimerTheme?, startingDelay: Long) {
     Box(modifier = Modifier.fillMaxSize()) {
         when (timerTheme) {
             TimerTheme.Original -> {
-                Box(
+                Column(
                     modifier = Modifier
                         .background(yellow50)
-                        .fillMaxSize()
-                )
+                        .padding(top = (64 + 40).dp)
+                        .fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    if (timerState != TimerState.Delayed) {
+                        timerUI()
+                        contentUI()
+                    }
+                }
             }
             TimerTheme.Vibrant -> {
                 val infiniteTransition = rememberInfiniteTransition()
@@ -117,6 +125,18 @@ fun ThemedBackground(timerTheme: TimerTheme?, startingDelay: Long) {
                             ),
                             alpha = bubble.alpha
                         )
+                    }
+                }
+                Column(
+                    modifier = Modifier
+                        .padding(top = (64 + 40).dp)
+                        .fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    if (timerState != TimerState.Delayed) {
+                        timerUI()
+                        contentUI()
                     }
                 }
             }
@@ -221,7 +241,9 @@ fun ThemedBackground(timerTheme: TimerTheme?, startingDelay: Long) {
                         )
                     } else {
                         Column(
-                            modifier = Modifier.wrapContentSize().align(Alignment.Center),
+                            modifier = Modifier
+                                .wrapContentSize()
+                                .align(Alignment.Center),
                             verticalArrangement = Arrangement.SpaceEvenly,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
@@ -330,6 +352,17 @@ fun ThemedBackground(timerTheme: TimerTheme?, startingDelay: Long) {
                     contentScale = ContentScale.Fit,
                     contentDescription = "right tree"
                 )
+                Box(
+                    modifier = Modifier
+                        .background(Color.White.copy(alpha = 0.25f))
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.4f)
+                        .align(Alignment.BottomCenter)
+                ) {
+                    if (timerState != TimerState.Delayed) {
+                        contentUI()
+                    }
+                }
             }
             else -> {}
         }
@@ -337,7 +370,9 @@ fun ThemedBackground(timerTheme: TimerTheme?, startingDelay: Long) {
     Box(modifier = Modifier.fillMaxSize()) {
         if (timerState == TimerState.Delayed && timerTheme != TimerTheme.VaporWave) {
             Column(
-                modifier = Modifier.wrapContentSize().align(Alignment.Center),
+                modifier = Modifier
+                    .wrapContentSize()
+                    .align(Alignment.Center),
                 verticalArrangement = Arrangement.SpaceEvenly,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
