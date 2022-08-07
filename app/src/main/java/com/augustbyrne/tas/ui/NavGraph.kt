@@ -2,9 +2,10 @@ package com.augustbyrne.tas.ui
 
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.TopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -25,6 +26,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NavGraph(
     modifier: Modifier = Modifier,
@@ -32,7 +34,7 @@ fun NavGraph(
     coroutineScope: CoroutineScope,
     navController: NavHostController,
     snackbarState: SnackbarHostState,
-    scrollBehavior: TopAppBarScrollBehavior
+    barState: TopAppBarState
 ) {
     val context = LocalContext.current
     val delayedStartPrefState by viewModel.startDelayPrefLiveData.observeAsState(initial = 5)
@@ -63,7 +65,7 @@ fun NavGraph(
                         }
                     }
                 },
-                scrollBehavior
+                barState
             )
         }
         composable(
@@ -78,7 +80,6 @@ fun NavGraph(
             val noteId = it.arguments?.getInt("noteId") ?: 0
             ExpandedNoteUI(
                 noteId,
-                scrollBehavior,
                 viewModel,
                 { noteWithItems, index ->
                     if (noteWithItems.dataItems.isNotEmpty()) {

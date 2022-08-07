@@ -20,7 +20,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.pointer.pointerInput
@@ -60,28 +59,29 @@ fun QuickTimer(onNavigateTimerStart: (noteWithData: NoteWithItems) -> Unit, onNa
             modifier = Modifier
                 .padding(it)
                 .fillMaxSize()
-                .background(
+/*                .background(
                     brush = Brush.verticalGradient(
                         colorStops = arrayOf(
                             Pair(0F, MaterialTheme.colorScheme.secondaryContainer),
                             Pair(1F, MaterialTheme.colorScheme.tertiaryContainer)
                         )
                     )
-                ),
+                )*/,
             verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(weight = 1f),
+                    .weight(weight = 1f)
+                    .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 RepeatingButton(
                     modifier = Modifier
                         .fillMaxHeight()
                         .weight(1f),
-                    shape = RoundedCornerShape(0.dp),
+                    shape = RoundedCornerShape(topStart = 16.dp),
                     onClick = {
                         if (timeValue + 3600 >= 86399) {
                             timeValue = 86399
@@ -121,7 +121,7 @@ fun QuickTimer(onNavigateTimerStart: (noteWithData: NoteWithItems) -> Unit, onNa
                     modifier = Modifier
                         .fillMaxHeight()
                         .weight(1f),
-                    shape = RoundedCornerShape(0.dp),
+                    shape = RoundedCornerShape(topEnd = 16.dp),
                     onClick = {
                         if (timeValue + 1 >= 86399) {
                             timeValue = 86399
@@ -141,7 +141,8 @@ fun QuickTimer(onNavigateTimerStart: (noteWithData: NoteWithItems) -> Unit, onNa
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(weight = 1f),
+                    .weight(weight = 1f)
+                    .background(MaterialTheme.colorScheme.tertiaryContainer),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {

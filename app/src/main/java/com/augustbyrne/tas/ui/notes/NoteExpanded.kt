@@ -31,6 +31,7 @@ import com.augustbyrne.tas.ui.components.EditDataItemDialog
 import com.augustbyrne.tas.ui.components.EditExpandedNoteHeaderDialog
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
+import com.augustbyrne.tas.util.ClassicEnterAlwaysScrollBehavior
 import com.augustbyrne.tas.util.TimerState
 import com.augustbyrne.tas.util.classicSystemBarScrollBehavior
 import kotlinx.coroutines.launch
@@ -46,7 +47,6 @@ private val myDateTimeFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle
 @Composable
 fun ExpandedNoteUI (
     noteId: Int,
-    scrollBehavior: TopAppBarScrollBehavior,
     myViewModel: NoteViewModel,
     onNavigateTimerStart: (noteWithItems: NoteWithItems, index: Int) -> Unit,
     onDeleteNote: (noteWithItems: NoteWithItems) -> Unit,
@@ -61,6 +61,8 @@ fun ExpandedNoteUI (
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     var noteInfoToggle by rememberSaveable { mutableStateOf(true) }
     val fabPadding: Float by myViewModel.miniTimerPadding.observeAsState(0f)
+    val topBarState = rememberTopAppBarState()
+    val scrollBehavior = remember { ClassicEnterAlwaysScrollBehavior(topBarState) }
 
     Scaffold(
         modifier = Modifier
@@ -70,7 +72,7 @@ fun ExpandedNoteUI (
         topBar = {
             NoteExpandedTopBar(
                 note = noteWithItems.note,
-                scrollBehavior = scrollBehavior,
+                barState = topBarState,
                 onNavBack = {
                     onNavBack(noteWithItems)
                 },
@@ -113,8 +115,10 @@ fun ExpandedNoteUI (
                 Column(
                     modifier = Modifier
                         .wrapContentSize()
-                        .clip(RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .background(
+                            MaterialTheme.colorScheme.primaryContainer,
+                            RoundedCornerShape(16.dp)
+                        )
                 ) {
                     Text(
                         modifier = Modifier
@@ -312,11 +316,13 @@ fun ExpandedNoteUI (
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NoteExpandedTopBar(note: NoteItem, scrollBehavior: TopAppBarScrollBehavior, onNavBack: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit) {
+fun NoteExpandedTopBar(note: NoteItem, barState: TopAppBarState, onNavBack: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit) {
     SmallTopAppBar(
-        modifier = Modifier.statusBarsPadding().classicSystemBarScrollBehavior(scrollBehavior),
-        //scrollBehavior = scrollBehavior,
+        modifier = Modifier
+            .statusBarsPadding()
+            .classicSystemBarScrollBehavior(barState),
         title = {
             Text(
                 modifier = Modifier.fillMaxWidth(),

@@ -29,6 +29,7 @@ import com.augustbyrne.tas.ui.components.AutoSizingText
 import com.augustbyrne.tas.ui.components.EditExpandedNoteHeaderDialog
 import com.augustbyrne.tas.ui.components.RadioItemsDialog
 import com.augustbyrne.tas.ui.timer.TimerService
+import com.augustbyrne.tas.util.ClassicEnterAlwaysScrollBehavior
 import com.augustbyrne.tas.util.SortType
 import com.augustbyrne.tas.util.TimerState
 import com.augustbyrne.tas.util.classicSystemBarScrollBehavior
@@ -42,24 +43,25 @@ import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Unit, onNavigateTimerStart: (noteId: Int) -> Unit, scrollBehavior: TopAppBarScrollBehavior) {
+fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Unit, onNavigateTimerStart: (noteId: Int) -> Unit, appBarScrollState: TopAppBarState) {
     val state = rememberReorderState()
     val coroutineScope = rememberCoroutineScope()
     val sortType by myViewModel.sortTypeLiveData.observeAsState()
     val sortedNotes by myViewModel.sortedAllNotes(sortType).observeAsState()
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     val fabPadding: Float by myViewModel.miniTimerPadding.observeAsState(0f)
+    val appBarScrollBehavior = ClassicEnterAlwaysScrollBehavior(appBarScrollState)
 
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
             // attach as a parent to the nested scroll system
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
+            .nestedScroll(appBarScrollBehavior.nestedScrollConnection),
         topBar = {
             SmallTopAppBar(
                 modifier = Modifier
                     .statusBarsPadding()
-                    .classicSystemBarScrollBehavior(scrollBehavior),
+                    .classicSystemBarScrollBehavior(appBarScrollState),
                 title = {
                     AutoSizingText(text = "Timed Activity System")
                 },
@@ -211,7 +213,6 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteItemUI (
     modifier: Modifier = Modifier,

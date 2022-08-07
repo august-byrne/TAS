@@ -52,7 +52,10 @@ import com.augustbyrne.tas.ui.values.AppTheme
 import com.augustbyrne.tas.ui.values.redOrange
 import com.augustbyrne.tas.ui.values.special400
 import com.augustbyrne.tas.ui.values.yellowOrange
-import com.augustbyrne.tas.util.*
+import com.augustbyrne.tas.util.BatteryLevelReceiver
+import com.augustbyrne.tas.util.DarkMode
+import com.augustbyrne.tas.util.TimerState
+import com.augustbyrne.tas.util.classicSystemBarScrollBehavior
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
@@ -77,6 +80,7 @@ class MainActivity : AppCompatActivity() {
 
     private val batteryLevelReceiver = BatteryLevelReceiver()
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -108,8 +112,8 @@ class MainActivity : AppCompatActivity() {
             } else {
                 window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
-            // Not using remember allows scrollBehavior to reset when we leave the home composable
-            val scrollBehavior = ClassicEnterAlwaysScrollBehavior()
+            val doubleBarState = rememberTopAppBarState()
+
             AppTheme(darkTheme = isAppDark) {
                 // Update the status bar to be translucent
                 val systemUiController = rememberSystemUiController()
@@ -136,12 +140,12 @@ class MainActivity : AppCompatActivity() {
                             .weight(1f)
                     ) {
                         NavGraph(
-                            modifier = Modifier.fillMaxSize(),//.nestedScroll(scrollBehavior.nestedScrollConnection),
+                            modifier = Modifier.fillMaxSize(),
                             viewModel = myViewModel,
                             coroutineScope = coroutineScope,
                             navController = navController,
                             snackbarState = snackbarHostState,
-                            scrollBehavior = scrollBehavior
+                            barState = doubleBarState
                         )
                         CollapsedTimer(
                             Modifier.align(Alignment.BottomCenter),
@@ -153,7 +157,7 @@ class MainActivity : AppCompatActivity() {
                     MainBottomNavBar(
                         navBackStackEntry,
                         navController,
-                        Modifier.classicSystemBarScrollBehavior(scrollBehavior, false)
+                        Modifier.classicSystemBarScrollBehavior(doubleBarState, false)
                     )
                     DefaultSnackbar(
                         snackbarHostState = snackbarHostState,
@@ -172,7 +176,7 @@ class MainActivity : AppCompatActivity() {
                             modifier = Modifier.fillMaxWidth(),
                             factory = { context ->
                                 AdView(context).apply {
-                                    adSize = adaptiveAdSize
+                                    setAdSize(adaptiveAdSize)
                                     adUnitId = context.getString(R.string.banner_ad_unit_id)
                                     loadAd(AdRequest.Builder().build())
                                 }

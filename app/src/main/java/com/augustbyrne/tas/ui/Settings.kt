@@ -116,7 +116,7 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
                 )
                 Text(
                     text = when (timerThemeState) {
-                        TimerTheme.Original -> "Original"
+                        TimerTheme.Original -> "Basic"
                         TimerTheme.Vibrant -> "Vibrant"
                         TimerTheme.VaporWave -> "Vaporwave"
                     },
@@ -296,7 +296,7 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
             if (showTimerThemeDialog) {
                 RadioItemsDialog(
                     title = "Timer theme",
-                    radioItemNames = listOf("original", "vibrant", "vapor wave"),
+                    radioItemNames = listOf("basic", "vibrant", "vaporwave"),
                     currentState = timerThemeState.theme,
                     onClickItem = { indexClicked ->
                         localCoroutineScope.launch {

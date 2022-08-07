@@ -4,10 +4,9 @@ import androidx.compose.animation.core.AnimationState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateTo
 import androidx.compose.animation.core.tween
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBarScrollBehavior
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.TopAppBarState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
@@ -97,23 +96,24 @@ enum class SortType(val type: Int) {
  * A [Modifier] that affects the location and size of an app bar. This is the classic system bar
  * style where the bars slide out of view of the screen.
  *
- * An app bar that uses this with a prepared [TopAppBarScrollBehavior] will slide out of view when
+ * An app bar that uses this with a prepared [TopAppBarState] will slide out of view when
  * the nested content is pulled up, and will slide back in when the content is pulled down.
  *
- * @param scrollBehavior a [TopAppBarScrollBehavior] used to receive scroll events
+ * @param scrollState a [TopAppBarState] used to receive scroll events
  * @param topBar determines whether the app bar is a top or bottom bar
  */
-fun Modifier.classicSystemBarScrollBehavior(scrollBehavior: TopAppBarScrollBehavior, topBar: Boolean = true) =
+@OptIn(ExperimentalMaterial3Api::class)
+fun Modifier.classicSystemBarScrollBehavior(scrollState: TopAppBarState, topBar: Boolean = true) =
     clipToBounds()
         .layout { measurable, constraints ->
             // Measure the composable
             val placeable = measurable.measure(constraints)
-            if (topBar && scrollBehavior.offsetLimit != -placeable.height.toFloat()) {
-                scrollBehavior.offsetLimit = -placeable.height.toFloat()
+            if (topBar && scrollState.heightOffsetLimit != -placeable.height.toFloat()) {
+                scrollState.heightOffsetLimit = -placeable.height.toFloat()
             }
             val placeableResizedY =
-                placeable.height + (if (topBar) scrollBehavior.offset else scrollBehavior.offset * 1.25f).toInt()
-            val yOffset = if (topBar) scrollBehavior.offset.toInt() else 0
+                placeable.height + (if (topBar) scrollState.contentOffset else scrollState.contentOffset * 1.25f).toInt()
+            val yOffset = if (topBar) scrollState.contentOffset.toInt() else 0
             layout(placeable.width, placeableResizedY) {
                 // Where the composable gets placed
                 placeable.placeRelative(0, yOffset)
@@ -122,47 +122,49 @@ fun Modifier.classicSystemBarScrollBehavior(scrollBehavior: TopAppBarScrollBehav
 
 
 /**
- * A [TopAppBarScrollBehavior] that adjusts its properties to affect the colors and height of an
+ * A [TopAppBarState] that adjusts its properties to affect the colors and height of an
  * app bar. This classic version includes [snap] to snap the app bar completely open or closed
  * after scrolling, and bug fixes to the base [NestedScrollConnection].
  *
- * An app bar that is set up with this [TopAppBarScrollBehavior] will immediately collapse when
+ * An app bar that is set up with this [TopAppBarState] will immediately collapse when
  * the nested content is pulled up, and will immediately appear when the content is pulled down.
  *
  * @param canScroll a callback used to determine whether scroll events are to be accepted
  * @param snap determines whether the app bar snaps to fully open/closed after scrolling
  */
-class ClassicEnterAlwaysScrollBehavior(
+@OptIn(ExperimentalMaterial3Api::class)
+class ClassicEnterAlwaysScrollBehavior @OptIn(ExperimentalMaterial3Api::class) constructor(
+    override val state: TopAppBarState,
     val canScroll: () -> Boolean = { true },
     val snap: Boolean = true
 ) : TopAppBarScrollBehavior {
     private val velocityTracker = VelocityTracker()
-    override val scrollFraction: Float
-        get() = if (offsetLimit != 0f) {
-            1 - ((offsetLimit - contentOffset).coerceIn(
-                minimumValue = offsetLimit,
+/*    val scrollFraction: Float
+        get() = if (state.heightOffsetLimit != 0f) {
+            1 - ((state.heightOffsetLimit - state.contentOffset).coerceIn(
+                minimumValue = state.heightOffsetLimit,
                 maximumValue = 0f
-            ) / offsetLimit)
+            ) / state.heightOffsetLimit)
         } else {
             0f
-        }
-    override var offsetLimit by mutableStateOf(-Float.MAX_VALUE)
-    override var offset by mutableStateOf(0f)
-    override var contentOffset by mutableStateOf(0f)
+        }*/
+    override val isPinned: Boolean
+        get() = false
+
     override var nestedScrollConnection =
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 if (!canScroll()) return Offset.Zero
                 velocityTracker.addPosition(System.currentTimeMillis(), available)
-                val newOffset = (offset + available.y)
-                val coerced = newOffset.coerceIn(minimumValue = offsetLimit, maximumValue = 0f)
+                val newOffset = (state.contentOffset + available.y)
+                val coerced = newOffset.coerceIn(minimumValue = state.heightOffsetLimit, maximumValue = 0f)
                 return if (newOffset == coerced) {
                     // Nothing coerced, so we're in the middle of app bar collapse or expand
-                    offset = coerced
+                    state.contentOffset = coerced
                     // Consume only the scroll on the Y axis.
                     available.copy(x = 0f)
                 } else {
-                    offset = coerced // added to reduce glitching
+                    state.contentOffset = coerced // added to reduce glitching
                     Offset.Zero
                 }
             }
@@ -174,16 +176,16 @@ class ClassicEnterAlwaysScrollBehavior(
             ): Offset {
                 if (!canScroll()) return Offset.Zero
                 velocityTracker.addPosition(System.currentTimeMillis(), available)
-                contentOffset += consumed.y
-                if (offset == 0f || offset == offsetLimit) {
+                state.contentOffset += consumed.y
+                if (state.contentOffset == 0f || state.contentOffset == state.heightOffsetLimit) {
                     if (consumed.y == 0f && available.y > 0f) {
                         // Reset the total offset to zero when scrolling all the way down.
                         // This will eliminate some float precision inaccuracies.
-                        contentOffset = 0f
+                        state.contentOffset = 0f
                     }
                 }
-                offset = (offset + consumed.y).coerceIn(
-                    minimumValue = offsetLimit,
+                state.contentOffset = (state.contentOffset + consumed.y).coerceIn(
+                    minimumValue = state.heightOffsetLimit,
                     maximumValue = 0f
                 )
                 return Offset.Zero
@@ -203,17 +205,17 @@ class ClassicEnterAlwaysScrollBehavior(
 
             override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
                 if (!canScroll()) return Velocity.Zero
-                // (b/179417109) FIXED IN onPreFling(): We get positive Velocity when flinging
-                // up while the top app bar is changing its height. Track b/179417109 for a fix.
-                if (offset in offsetLimit..0f && available.y == 0f && snap) {
-                    AnimationState(initialValue = offset).animateTo(
+                // FIXED IN onPreFling(): We get positive Velocity when flinging up while the top
+                // app bar is changing its height. Track b/179417109 for a google fix.
+                if (state.contentOffset in state.heightOffsetLimit..0f && available.y == 0f && snap) {
+                    AnimationState(initialValue = state.contentOffset).animateTo(
                         // Snap the app bar offset to completely collapse or completely expand
-                        if (offset <= offsetLimit / 2) offsetLimit else 0f,
+                        if (state.contentOffset <= state.heightOffsetLimit / 2) state.heightOffsetLimit else 0f,
                         animationSpec = tween(
                             durationMillis = 100,
                             easing = LinearEasing
                         )
-                    ) { offset = value }
+                    ) { state.contentOffset = value }
                 }
                 return super.onPostFling(consumed, available)
             }

@@ -117,6 +117,7 @@ fun CircleProgressBar(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSettings: () -> Unit) {
     val context = LocalContext.current
@@ -392,7 +393,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
         if (showTimerThemeDialog) {
             RadioItemsDialog(
                 title = "Timer theme",
-                radioItemNames = listOf("original", "vibrant", "vapor wave"),
+                radioItemNames = listOf("basic", "vibrant", "vaporwave"),
                 currentState = timerTheme?.theme,
                 onClickItem = { indexClicked ->
                     localCoroutineScope.launch {
