@@ -133,7 +133,7 @@ fun Modifier.classicSystemBarScrollBehavior(scrollState: TopAppBarState, topBar:
  * @param snap determines whether the app bar snaps to fully open/closed after scrolling
  */
 @OptIn(ExperimentalMaterial3Api::class)
-class ClassicEnterAlwaysScrollBehavior @OptIn(ExperimentalMaterial3Api::class) constructor(
+class ClassicEnterAlwaysScrollBehavior constructor(
     override val state: TopAppBarState,
     val canScroll: () -> Boolean = { true },
     val snap: Boolean = true

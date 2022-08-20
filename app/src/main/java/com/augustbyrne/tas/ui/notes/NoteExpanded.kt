@@ -61,8 +61,9 @@ fun ExpandedNoteUI (
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     var noteInfoToggle by rememberSaveable { mutableStateOf(true) }
     val fabPadding: Float by myViewModel.miniTimerPadding.observeAsState(0f)
+    // TODO: Fix top app bar no scroll bug
     val topBarState = rememberTopAppBarState()
-    val scrollBehavior = remember { ClassicEnterAlwaysScrollBehavior(topBarState) }
+    val scrollBehavior = ClassicEnterAlwaysScrollBehavior(topBarState)
 
     Scaffold(
         modifier = Modifier
@@ -70,23 +71,62 @@ fun ExpandedNoteUI (
             // attach as a parent to the nested scroll system
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            NoteExpandedTopBar(
-                note = noteWithItems.note,
-                barState = topBarState,
-                onNavBack = {
-                    onNavBack(noteWithItems)
+            SmallTopAppBar(
+                modifier = Modifier
+                    .statusBarsPadding()
+                    .classicSystemBarScrollBehavior(topBarState),
+                title = {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        text = noteWithItems.note.title.ifEmpty { "Add title" }
+                    )
                 },
-                onDeleteNote = {
-                    onDeleteNote(noteWithItems)
+                navigationIcon = {
+                    IconButton(
+                        onClick = { onNavBack(noteWithItems) }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
                 },
-                onCloneNote = {
-                    onCloneNote(noteWithItems)
+                actions = {
+                    var expanded by remember { mutableStateOf(false) }
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(
+                            imageVector = Icons.Rounded.MoreVert,
+                            contentDescription = "Menu"
+                        )
+                    }
+                    DropdownMenu(
+                        modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        content = {
+                            DropdownMenuItem(
+                                text = { Text("Clone note") },
+                                onClick = {
+                                    expanded = false
+                                    onCloneNote(noteWithItems)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Delete") },
+                                onClick = {
+                                    expanded = false
+                                    onDeleteNote(noteWithItems)
+                                }
+                            )
+                        }
+                    )
                 }
             )
         }
     ) {
         LazyColumn(
-            state = state.listState,
             modifier = Modifier
                 .padding(it)
                 .fillMaxSize()
@@ -108,6 +148,7 @@ fun ExpandedNoteUI (
                         }
                     }
                 ),
+            state = state.listState,
             contentPadding = PaddingValues(bottom = if (timerState != TimerState.Stopped) 176.dp else 104.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
@@ -316,64 +357,6 @@ fun ExpandedNoteUI (
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun NoteExpandedTopBar(note: NoteItem, barState: TopAppBarState, onNavBack: () -> Unit, onDeleteNote: () -> Unit, onCloneNote: () -> Unit) {
-    SmallTopAppBar(
-        modifier = Modifier
-            .statusBarsPadding()
-            .classicSystemBarScrollBehavior(barState),
-        title = {
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                text = note.title.ifEmpty { "Add title" }
-            )
-        },
-        navigationIcon = {
-            IconButton(
-                onClick = onNavBack
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.ArrowBack,
-                    contentDescription = "Back"
-                )
-            }
-        },
-        actions = {
-            var expanded by remember { mutableStateOf(false) }
-            IconButton(onClick = { expanded = true }) {
-                Icon(
-                    imageVector = Icons.Rounded.MoreVert,
-                    contentDescription = "Menu"
-                )
-            }
-            DropdownMenu(
-                modifier = Modifier.background(MaterialTheme.colorScheme.surface),
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                content = {
-                    DropdownMenuItem(
-                        text = { Text("Clone note") },
-                        onClick = {
-                            expanded = false
-                            onCloneNote()
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Delete") },
-                        onClick = {
-                            expanded = false
-                            onDeleteNote()
-                        }
-                    )
-                }
-            )
-        }
-    )
-}
-
 @Composable
 fun DataItemUI (
     modifier: Modifier = Modifier,
@@ -455,21 +438,21 @@ fun DataItemUI (
                 onDismissRequest = { itemExpanded = false },
                 content = {
                     DropdownMenuItem(
-                        text = { Text("Clone Item") },
+                        text = { Text("Clone item") },
                         onClick = {
                             itemExpanded = false
                             onClickCloneItem()
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text("Start from Here") },
+                        text = { Text("Start from here") },
                         onClick = {
                             itemExpanded = false
                             onClickStartFromHere()
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text("Delete Item") },
+                        text = { Text("Delete item") },
                         onClick = {
                             itemExpanded = false
                             onClickDelete()

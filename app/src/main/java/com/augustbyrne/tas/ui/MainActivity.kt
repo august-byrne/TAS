@@ -11,7 +11,6 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.core.animate
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -26,11 +25,11 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.style.TextAlign
@@ -38,7 +37,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
@@ -49,9 +47,7 @@ import com.augustbyrne.tas.ui.components.MainBottomNavBar
 import com.augustbyrne.tas.ui.notes.NoteViewModel
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
-import com.augustbyrne.tas.ui.values.redOrange
 import com.augustbyrne.tas.ui.values.special400
-import com.augustbyrne.tas.ui.values.yellowOrange
 import com.augustbyrne.tas.util.BatteryLevelReceiver
 import com.augustbyrne.tas.util.DarkMode
 import com.augustbyrne.tas.util.TimerState
@@ -226,15 +222,16 @@ fun CollapsedTimer(
         val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
         val itemIndex: Int by TimerService.itemIndex.observeAsState(0)
         val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(1L)
-        val progressPercent: Float = 1f - timerLengthMilli.div(totalTimerLengthMilli.toFloat())
         val icon =
             if (timerState == TimerState.Running) Icons.Default.Pause else Icons.Default.PlayArrow
         var scrollOffset by remember { mutableStateOf(0f) }
         var contentHeight by rememberSaveable { mutableStateOf(0) }
+        var timerAlpha by remember { mutableStateOf(1f) }
         myViewModel.updateFabPadding(contentHeight.toFloat(), scrollOffset)
         Surface(
             modifier = modifier
                 .clipToBounds()
+                .alpha(timerAlpha)
                 .layout { measurable, constraints ->
                     // Measure the composable
                     val placeable = measurable.measure(constraints)
@@ -252,6 +249,7 @@ fun CollapsedTimer(
                             change.consume()
                             scrollOffset = (scrollOffset - dragAmount).coerceAtMost(0f)
                             myViewModel.updateFabPadding(contentHeight.toFloat(), scrollOffset)
+                            timerAlpha = 1f + (scrollOffset / contentHeight.toFloat())
                         },
                         onDragEnd = {
                             if (scrollOffset < -contentHeight / 2) {
@@ -289,16 +287,7 @@ fun CollapsedTimer(
             Column(
                 modifier = Modifier
                     .wrapContentHeight()
-                    .fillMaxWidth()
-                    .background(
-                        Color(
-                            ColorUtils.blendARGB(
-                                yellowOrange.toArgb(),
-                                redOrange.toArgb(),
-                                progressPercent
-                            )
-                        ).copy(alpha = 0.1f)
-                    ),
+                    .fillMaxWidth(),
                 verticalArrangement = Arrangement.SpaceEvenly
             ) {
                 if (timerState == TimerState.Delayed) {
@@ -310,7 +299,7 @@ fun CollapsedTimer(
                         text = "Timer starting in ${
                             (timerLengthMilli.div(1000) + 1).coerceIn(
                                 0,
-                                5
+                                10
                             )
                         }",
                         style = MaterialTheme.typography.titleLarge,
@@ -368,13 +357,24 @@ fun CollapsedTimer(
                         modifier = Modifier
                             .wrapContentHeight()
                             .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
                     ) {
+                        drawLine(
+                            color = Color.Black.copy(alpha = 0.1f),
+                            strokeWidth = 4.dp.toPx(),
+                            cap = StrokeCap.Round,
+                            start = Offset(y = 0f, x = 0f),
+                            end = Offset(
+                                y = 0f,
+                                x = size.width
+                            )
+                        )
                         val progressLine =
                             size.width * (1f - (timerLengthMilli.toFloat() / totalTimerLengthMilli.toFloat()))
                         drawLine(
                             color = special400,
                             strokeWidth = 4.dp.toPx(),
-                            cap = StrokeCap.Square,
+                            cap = StrokeCap.Round,
                             start = Offset(y = 0f, x = 0f),
                             end = Offset(
                                 y = 0f,
