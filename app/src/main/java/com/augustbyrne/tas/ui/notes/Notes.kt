@@ -11,11 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Sort
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,7 +26,7 @@ import com.augustbyrne.tas.ui.components.AutoSizingText
 import com.augustbyrne.tas.ui.components.EditExpandedNoteHeaderDialog
 import com.augustbyrne.tas.ui.components.RadioItemsDialog
 import com.augustbyrne.tas.ui.timer.TimerService
-import com.augustbyrne.tas.util.ClassicEnterAlwaysScrollBehavior
+import com.augustbyrne.tas.util.BarType
 import com.augustbyrne.tas.util.SortType
 import com.augustbyrne.tas.util.TimerState
 import com.augustbyrne.tas.util.classicSystemBarScrollBehavior
@@ -50,7 +47,11 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
     val sortedNotes by myViewModel.sortedAllNotes(sortType).observeAsState()
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     val fabPadding: Float by myViewModel.miniTimerPadding.observeAsState(0f)
-    val appBarScrollBehavior = ClassicEnterAlwaysScrollBehavior(appBarScrollState)
+    val appBarScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(appBarScrollState)
+
+    LaunchedEffect(Unit) {
+        appBarScrollState.heightOffset = 0f
+    }
 
     Scaffold(
         modifier = Modifier
@@ -61,7 +62,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
             SmallTopAppBar(
                 modifier = Modifier
                     .statusBarsPadding()
-                    .classicSystemBarScrollBehavior(appBarScrollState),
+                    .classicSystemBarScrollBehavior(appBarScrollState, BarType.Top),
                 title = {
                     AutoSizingText(text = "Timed Activity System")
                 },
@@ -81,7 +82,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
         // our list with build in nested scroll support that will notify us about its scroll
         LazyColumn(
             modifier = Modifier
-                .padding(it)
+                .padding(top = it.calculateTopPadding())
                 .fillMaxSize()
                 .reorderable(
                     state = state,
@@ -106,7 +107,7 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
                 start = 8.dp,
                 end = 8.dp,
                 top = 8.dp,
-                bottom = if (timerState != TimerState.Stopped) 160.dp else 88.dp
+                bottom = if (timerState != TimerState.Stopped) 170.dp else 88.dp
             ),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {

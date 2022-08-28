@@ -31,7 +31,7 @@ import com.augustbyrne.tas.ui.components.EditDataItemDialog
 import com.augustbyrne.tas.ui.components.EditExpandedNoteHeaderDialog
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
-import com.augustbyrne.tas.util.ClassicEnterAlwaysScrollBehavior
+import com.augustbyrne.tas.util.BarType
 import com.augustbyrne.tas.util.TimerState
 import com.augustbyrne.tas.util.classicSystemBarScrollBehavior
 import kotlinx.coroutines.launch
@@ -48,6 +48,7 @@ private val myDateTimeFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle
 fun ExpandedNoteUI (
     noteId: Int,
     myViewModel: NoteViewModel,
+    topAppBarState: TopAppBarState,
     onNavigateTimerStart: (noteWithItems: NoteWithItems, index: Int) -> Unit,
     onDeleteNote: (noteWithItems: NoteWithItems) -> Unit,
     onCloneNote: (noteWithItems: NoteWithItems) -> Unit,
@@ -61,9 +62,11 @@ fun ExpandedNoteUI (
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     var noteInfoToggle by rememberSaveable { mutableStateOf(true) }
     val fabPadding: Float by myViewModel.miniTimerPadding.observeAsState(0f)
-    // TODO: Fix top app bar no scroll bug
-    val topBarState = rememberTopAppBarState()
-    val scrollBehavior = ClassicEnterAlwaysScrollBehavior(topBarState)
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(topAppBarState)
+
+    LaunchedEffect(Unit) {
+        topAppBarState.heightOffset = 0f
+    }
 
     Scaffold(
         modifier = Modifier
@@ -74,7 +77,7 @@ fun ExpandedNoteUI (
             SmallTopAppBar(
                 modifier = Modifier
                     .statusBarsPadding()
-                    .classicSystemBarScrollBehavior(topBarState),
+                    .classicSystemBarScrollBehavior(topAppBarState, BarType.Top),
                 title = {
                     Text(
                         modifier = Modifier.fillMaxWidth(),
@@ -128,7 +131,7 @@ fun ExpandedNoteUI (
     ) {
         LazyColumn(
             modifier = Modifier
-                .padding(it)
+                .padding(top = it.calculateTopPadding())
                 .fillMaxSize()
                 .reorderable(
                     state = state,
@@ -149,7 +152,7 @@ fun ExpandedNoteUI (
                     }
                 ),
             state = state.listState,
-            contentPadding = PaddingValues(bottom = if (timerState != TimerState.Stopped) 176.dp else 104.dp),
+            contentPadding = PaddingValues(bottom = if (timerState != TimerState.Stopped) 170.dp else 88.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             item {

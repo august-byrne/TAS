@@ -57,16 +57,8 @@ fun QuickTimer(onNavigateTimerStart: (noteWithData: NoteWithItems) -> Unit, onNa
     ) {
         Column(
             modifier = Modifier
-                .padding(it)
-                .fillMaxSize()
-/*                .background(
-                    brush = Brush.verticalGradient(
-                        colorStops = arrayOf(
-                            Pair(0F, MaterialTheme.colorScheme.secondaryContainer),
-                            Pair(1F, MaterialTheme.colorScheme.tertiaryContainer)
-                        )
-                    )
-                )*/,
+                .padding(top = it.calculateTopPadding())
+                .fillMaxSize(),
             verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -212,7 +204,9 @@ fun QuickTimer(onNavigateTimerStart: (noteWithData: NoteWithItems) -> Unit, onNa
             }
         }
         Box(
-            modifier = Modifier.padding(it).fillMaxSize()
+            modifier = Modifier
+                .padding(top = it.calculateTopPadding())
+                .fillMaxSize()
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),
@@ -265,7 +259,9 @@ fun QuickTimer(onNavigateTimerStart: (noteWithData: NoteWithItems) -> Unit, onNa
             }
         }
         Box(
-            modifier = Modifier.padding(it).fillMaxSize(),
+            modifier = Modifier
+                .padding(top = it.calculateTopPadding())
+                .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Column(

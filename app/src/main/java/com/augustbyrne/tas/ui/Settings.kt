@@ -54,7 +54,7 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
     ) {
         Column(
             modifier = Modifier
-                .padding(it)
+                .padding(top = it.calculateTopPadding())
                 .fillMaxSize()
         ) {
             Text(

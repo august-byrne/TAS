@@ -81,6 +81,7 @@ fun NavGraph(
             ExpandedNoteUI(
                 noteId,
                 viewModel,
+                barState,
                 { noteWithItems, index ->
                     if (noteWithItems.dataItems.isNotEmpty()) {
                         TimerService.initTimerServiceValues(noteWithItems)

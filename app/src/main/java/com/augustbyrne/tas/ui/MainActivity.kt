@@ -34,7 +34,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
@@ -48,10 +47,7 @@ import com.augustbyrne.tas.ui.notes.NoteViewModel
 import com.augustbyrne.tas.ui.timer.TimerService
 import com.augustbyrne.tas.ui.values.AppTheme
 import com.augustbyrne.tas.ui.values.special400
-import com.augustbyrne.tas.util.BatteryLevelReceiver
-import com.augustbyrne.tas.util.DarkMode
-import com.augustbyrne.tas.util.TimerState
-import com.augustbyrne.tas.util.classicSystemBarScrollBehavior
+import com.augustbyrne.tas.util.*
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
@@ -126,14 +122,14 @@ class MainActivity : AppCompatActivity() {
                 }
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .navigationBarsPadding(),
+                        .navigationBarsPadding()
+                        .fillMaxSize(),
                     verticalArrangement = Arrangement.SpaceEvenly
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(1f)
+                            .weight(1f, true)
                     ) {
                         NavGraph(
                             modifier = Modifier.fillMaxSize(),
@@ -153,7 +149,7 @@ class MainActivity : AppCompatActivity() {
                     MainBottomNavBar(
                         navBackStackEntry,
                         navController,
-                        Modifier.classicSystemBarScrollBehavior(doubleBarState, false)
+                        Modifier.classicSystemBarScrollBehavior(doubleBarState, BarType.Bottom)
                     )
                     DefaultSnackbar(
                         snackbarHostState = snackbarHostState,
@@ -212,16 +208,17 @@ fun CollapsedTimer(
     navController: NavController,
     navBackStackEntry: NavBackStackEntry?) {
     val coroutineScope = rememberCoroutineScope()
-    val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Closed)
+    val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
+    val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
+    val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(1L)
+    val timerIndicatorBG = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
     if (
-        timerState != TimerState.Closed &&
+        timerState != TimerState.Stopped &&
         navBackStackEntry?.destination?.id != navController.findDestination("note_timer")!!.id &&
         navBackStackEntry?.destination?.id != navController.findDestination("settings")!!.id &&
         navBackStackEntry?.destination?.id != navController.findDestination("general_timer")!!.id
     ) {
-        val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
         val itemIndex: Int by TimerService.itemIndex.observeAsState(0)
-        val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(1L)
         val icon =
             if (timerState == TimerState.Running) Icons.Default.Pause else Icons.Default.PlayArrow
         var scrollOffset by remember { mutableStateOf(0f) }
@@ -360,7 +357,7 @@ fun CollapsedTimer(
                             .padding(horizontal = 16.dp)
                     ) {
                         drawLine(
-                            color = Color.Black.copy(alpha = 0.1f),
+                            color = timerIndicatorBG,
                             strokeWidth = 4.dp.toPx(),
                             cap = StrokeCap.Round,
                             start = Offset(y = 0f, x = 0f),
@@ -382,8 +379,48 @@ fun CollapsedTimer(
                             )
                         )
                     }
-                    Divider(color = MaterialTheme.colorScheme.onSurface, thickness = Dp.Hairline)
                 }
+            }
+        }
+    } else if (
+        timerState != TimerState.Stopped &&
+        (navBackStackEntry?.destination?.id == navController.findDestination("settings")!!.id ||
+        navBackStackEntry?.destination?.id == navController.findDestination("general_timer")!!.id)
+    ) {
+        Surface(
+            modifier = modifier.height(2.dp).fillMaxWidth(),
+            color = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            tonalElevation = 3.0.dp, // Same as Bottom Navigation Bar
+        ) {
+            Canvas(
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            ) {
+                drawLine(
+                    color = timerIndicatorBG,
+                    strokeWidth = 4.dp.toPx(),
+                    cap = StrokeCap.Round,
+                    start = Offset(y = 0f, x = 0f),
+                    end = Offset(
+                        y = 0f,
+                        x = size.width
+                    )
+                )
+                val progressLine =
+                    size.width * (1f - (timerLengthMilli.toFloat() / totalTimerLengthMilli.toFloat()))
+                drawLine(
+                    color = special400,
+                    strokeWidth = 4.dp.toPx(),
+                    cap = StrokeCap.Round,
+                    start = Offset(y = 0f, x = 0f),
+                    end = Offset(
+                        y = 0f,
+                        x = progressLine
+                    )
+                )
             }
         }
     }

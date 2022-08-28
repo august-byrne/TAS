@@ -204,9 +204,6 @@ class TimerService : LifecycleService() {
                 TimerState.Delayed -> {
                     stopForeground(STOP_FOREGROUND_REMOVE)
                 }
-                TimerState.Closed -> {
-                    stopForeground(STOP_FOREGROUND_REMOVE)
-                }
             }
         }
     }
@@ -348,7 +345,7 @@ class TimerService : LifecycleService() {
         fun closeTimer() {
             timer?.cancel()
             delayedTimer?.cancel()
-            setTimerState(TimerState.Closed)
+            setTimerState(TimerState.Stopped)
         }
 
         private var tempSavedTimerLengthMilli = 0L
@@ -372,7 +369,7 @@ class TimerService : LifecycleService() {
             }
         }
 
-        private var serviceTimerState = MutableLiveData(TimerState.Closed)
+        private var serviceTimerState = MutableLiveData(TimerState.Stopped)
         val timerState: LiveData<TimerState> = serviceTimerState
 
         private fun setTimerState(timerState: TimerState) {
