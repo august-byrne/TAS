@@ -18,6 +18,8 @@ class NoteRepository @Inject constructor(private val noteDao: NoteDao) {
     suspend fun deleteDataItem(id: Int) = noteDao.deleteData(id)
     val allNotes: Flow<List<NoteItem>> = noteDao.getAllNotes()
     fun getNoteWithItemsById(noteId: Int): Flow<NoteWithItems?> = noteDao.getNoteWithItems(noteId)
-    suspend fun getNoteWithItemsByIdSynchronous(noteId: Int): NoteWithItems = noteDao.getNoteWithItemsSync(noteId)
+    suspend fun getNoteWithItemsByIdSynchronous(noteId: Int): NoteWithItems =
+        noteDao.getNoteWithItemsSync(noteId)
+
     suspend fun getNumberOfNotes(): Int = noteDao.getNumberOfNotes()
 }

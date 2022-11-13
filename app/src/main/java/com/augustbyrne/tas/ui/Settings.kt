@@ -3,7 +3,8 @@ package com.augustbyrne.tas.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Divider
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.ArrowDropUp
@@ -15,6 +16,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.input.KeyboardType
@@ -24,13 +26,19 @@ import com.augustbyrne.tas.ui.components.EditOneFieldDialog
 import com.augustbyrne.tas.ui.components.RadioItemsDialog
 import com.augustbyrne.tas.ui.notes.NoteViewModel
 import com.augustbyrne.tas.ui.values.blue500
+import com.augustbyrne.tas.util.BarType
 import com.augustbyrne.tas.util.DarkMode
 import com.augustbyrne.tas.util.TimerTheme
+import com.augustbyrne.tas.util.classicSystemBarScrollBehavior
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
+fun SettingsUI(
+    myViewModel: NoteViewModel,
+    onNavBack: () -> Unit,
+    appBarScrollState: TopAppBarState
+) {
     val uriHandler = LocalUriHandler.current
     val context = LocalContext.current
     val localCoroutineScope = rememberCoroutineScope()
@@ -42,13 +50,26 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
     val vibrationState by myViewModel.vibrationLiveData.observeAsState(initial = true)
     val startDelayState by myViewModel.startDelayPrefLiveData.observeAsState(initial = 5)
     var expanded by remember { mutableStateOf(false) }
+    val appBarScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(appBarScrollState)
+    val scrollState = rememberScrollState()
+
+    LaunchedEffect(Unit) {
+        appBarScrollState.heightOffset = 0f
+    }
+
     Scaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            // attach as a parent to the nested scroll system
+            .nestedScroll(appBarScrollBehavior.nestedScrollConnection),
         topBar = {
-            SmallTopAppBar(
-                modifier = Modifier.statusBarsPadding(),
+            TopAppBar(
                 title = {
                     Text(text = "Settings")
-                }
+                },
+                modifier = Modifier
+                    .statusBarsPadding()
+                    .classicSystemBarScrollBehavior(appBarScrollState, BarType.Top)
             )
         }
     ) {
@@ -56,6 +77,7 @@ fun SettingsUI(myViewModel: NoteViewModel, onNavBack: () -> Unit) {
             modifier = Modifier
                 .padding(top = it.calculateTopPadding())
                 .fillMaxSize()
+                .verticalScroll(scrollState)
         ) {
             Text(
                 modifier = Modifier

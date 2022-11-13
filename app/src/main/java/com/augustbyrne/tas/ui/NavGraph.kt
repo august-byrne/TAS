@@ -125,7 +125,8 @@ fun NavGraph(
                             )
                             navController.popBackStack()
                         } else {
-                            Toast.makeText(context, "Add a title to clone", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Add a title to clone", Toast.LENGTH_SHORT)
+                                .show()
                         }
                     }
                 },
@@ -165,9 +166,11 @@ fun NavGraph(
             )
         }
         composable("settings") {
-            SettingsUI(viewModel) {
-                navController.popBackStack()
-            }
+            SettingsUI(
+                viewModel,
+                { navController.popBackStack() },
+                barState
+            )
         }
     }
 }

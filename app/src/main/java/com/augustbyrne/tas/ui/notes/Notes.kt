@@ -5,7 +5,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
@@ -31,26 +31,52 @@ import com.augustbyrne.tas.util.SortType
 import com.augustbyrne.tas.util.TimerState
 import com.augustbyrne.tas.util.classicSystemBarScrollBehavior
 import kotlinx.coroutines.launch
+import org.burnoutcrew.reorderable.ReorderableItem
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
-import org.burnoutcrew.reorderable.draggedItem
-import org.burnoutcrew.reorderable.rememberReorderState
+import org.burnoutcrew.reorderable.rememberReorderableLazyListState
 import org.burnoutcrew.reorderable.reorderable
 import java.time.LocalDateTime
-import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Unit, onNavigateTimerStart: (noteId: Int) -> Unit, appBarScrollState: TopAppBarState) {
-    val state = rememberReorderState()
+fun NoteListUI(
+    myViewModel: NoteViewModel,
+    onNavigateToItem: (noteId: Int) -> Unit,
+    onNavigateTimerStart: (noteId: Int) -> Unit,
+    appBarScrollState: TopAppBarState
+) {
     val coroutineScope = rememberCoroutineScope()
     val sortType by myViewModel.sortTypeLiveData.observeAsState()
     val sortedNotes by myViewModel.sortedAllNotes(sortType).observeAsState()
+    var draggableNotes by remember { mutableStateOf(sortedNotes) }
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     val fabPadding: Float by myViewModel.miniTimerPadding.observeAsState(0f)
     val appBarScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(appBarScrollState)
+    val state = rememberReorderableLazyListState(
+        onMove = { from, to ->
+            draggableNotes = draggableNotes?.toMutableList()?.apply {
+                add(to.index, removeAt(from.index))
+            }
+        }, onDragEnd = { from, to ->
+            if (from >= 0 && to >= 0 && !draggableNotes.isNullOrEmpty()) {
+                myViewModel.updateAllNotes(draggableNotes!!.toMutableList())
+            }
+            if (sortType != SortType.Order) {
+                coroutineScope.launch {
+                    myViewModel.setSortType(SortType.Order)
+                }
+            }
+        }
+    )
 
     LaunchedEffect(Unit) {
         appBarScrollState.heightOffset = 0f
+    }
+
+    LaunchedEffect(sortedNotes) {
+        if (!sortedNotes.isNullOrEmpty()) {
+            draggableNotes = sortedNotes
+        }
     }
 
     Scaffold(
@@ -59,13 +85,13 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
             // attach as a parent to the nested scroll system
             .nestedScroll(appBarScrollBehavior.nestedScrollConnection),
         topBar = {
-            SmallTopAppBar(
-                modifier = Modifier
-                    .statusBarsPadding()
-                    .classicSystemBarScrollBehavior(appBarScrollState, BarType.Top),
+            TopAppBar(
                 title = {
                     AutoSizingText(text = "Timed Activity System")
                 },
+                modifier = Modifier
+                    .statusBarsPadding()
+                    .classicSystemBarScrollBehavior(appBarScrollState, BarType.Top),
                 actions = {
                     IconButton(onClick = {
                         myViewModel.openSortPopup = true
@@ -75,33 +101,16 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
                             contentDescription = "Sort"
                         )
                     }
-                }
-            )
+                })
         }
-    ) {
+    ) { statusBarPadding ->
         // our list with build in nested scroll support that will notify us about its scroll
         LazyColumn(
             modifier = Modifier
-                .padding(top = it.calculateTopPadding())
+                .padding(top = statusBarPadding.calculateTopPadding())
                 .fillMaxSize()
-                .reorderable(
-                    state = state,
-                    onMove = { from, to ->
-                        if (!sortedNotes.isNullOrEmpty()) {
-                            Collections.swap(sortedNotes!!, from.index, to.index)
-                        }
-                    }, onDragEnd = { from, to ->
-                        if (from >= 0 && to >= 0 && !sortedNotes.isNullOrEmpty()) {
-                            myViewModel.updateAllNotes(sortedNotes!!.toMutableList())
-                        }
-                        if (sortType != SortType.Order) {
-                            coroutineScope.launch {
-                                myViewModel.setSortType(SortType.Order)
-                            }
-                        }
-                    }
-
-                ),
+                .reorderable(state)
+                .detectReorderAfterLongPress(state),
             state = state.listState,
             contentPadding = PaddingValues(
                 start = 8.dp,
@@ -119,21 +128,26 @@ fun NoteListUI(myViewModel: NoteViewModel, onNavigateToItem: (noteId: Int) -> Un
                     )
                 }
             }
-            itemsIndexed(sortedNotes ?: listOf()) { index, note ->
-                NoteItemUI(
-                    modifier = Modifier
-                        .draggedItem(state.offsetByIndex(index))
-                        .detectReorderAfterLongPress(state),
-                    note = note,
-                    onClickItem = {
-                        myViewModel.saveListPosition(state.listState)
-                        onNavigateToItem(note.id)
-                    },
-                    onClickStart = {
-                        myViewModel.saveListPosition(state.listState)
-                        onNavigateTimerStart(note.id)
-                    }
-                )
+            items(
+                items = draggableNotes ?: listOf(),
+                key = { it.id }
+            ) { note ->
+                ReorderableItem(
+                    reorderableState = state,
+                    key = note.id
+                ) {
+                    NoteItemUI(
+                        note = note,
+                        onClickItem = {
+                            myViewModel.saveListPosition(state.listState)
+                            onNavigateToItem(note.id)
+                        },
+                        onClickStart = {
+                            myViewModel.saveListPosition(state.listState)
+                            onNavigateTimerStart(note.id)
+                        }
+                    )
+                }
             }
             if (sortedNotes?.isEmpty() == true) {
                 item {

@@ -47,11 +47,11 @@ fun QuickTimer(onNavigateTimerStart: (noteWithData: NoteWithItems) -> Unit, onNa
 
     Scaffold(
         topBar = {
-            SmallTopAppBar(
-                modifier = Modifier.statusBarsPadding(),
+            TopAppBar(
                 title = {
                     Text(text = "Quick Timer")
-                }
+                },
+                modifier = Modifier.statusBarsPadding()
             )
         }
     ) {
@@ -66,7 +66,10 @@ fun QuickTimer(onNavigateTimerStart: (noteWithData: NoteWithItems) -> Unit, onNa
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(weight = 1f)
-                    .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
+                    .background(
+                        MaterialTheme.colorScheme.secondaryContainer,
+                        RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+                    ),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 RepeatingButton(
@@ -403,7 +406,8 @@ fun Modifier.repeatingClickable(
                         while (enabled && down.pressed) {
                             currentClickListener()
                             delay(currentDelayMillis)
-                            val nextMillis = currentDelayMillis - (currentDelayMillis * delayDecayFactor)
+                            val nextMillis =
+                                currentDelayMillis - (currentDelayMillis * delayDecayFactor)
                             currentDelayMillis = nextMillis.toLong().coerceAtLeast(minDelayMillis)
                         }
                     }

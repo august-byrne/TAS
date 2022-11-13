@@ -31,8 +31,8 @@ android {
         applicationId "com.augustbyrne.tas"
         minSdkVersion 26
         targetSdkVersion 33
-        versionCode 30
-        versionName "1.8.10"
+        versionCode 31
+        versionName "1.9.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions {
             annotationProcessorOptions {
@@ -69,7 +69,7 @@ android {
         jvmTarget = "11"
     }
     composeOptions {
-        kotlinCompilerExtensionVersion "1.3.0"
+        kotlinCompilerExtensionVersion "1.3.1"
     }
     packagingOptions {
         resources.excludes += "DebugProbesKt.bin"
@@ -80,20 +80,20 @@ android {
 dependencies {
     def room_version = "2.4.3"
     def lifecycle_version = "2.5.1"
-    def hilt_version = '2.43.2'
-    def compose_version = '1.2.1'
+    def hilt_version = '2.44.1'
+    def compose_version = '1.3.1'
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     //implementation "com.google.devtools.ksp:symbol-processing-api:1.5.31-1.0.0"
     //implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
-    implementation 'androidx.core:core-ktx:1.8.0'
-    implementation "androidx.appcompat:appcompat:1.5.0"
+    implementation 'androidx.core:core-ktx:1.9.0'
+    implementation 'androidx.appcompat:appcompat:1.5.1'
 
     // Activity for Kotlin
-    implementation "androidx.activity:activity-ktx:1.5.1"
+    implementation 'androidx.activity:activity-ktx:1.6.1'
 
     // Google Ads
-    implementation 'com.google.android.gms:play-services-ads:21.1.0'
+    implementation 'com.google.android.gms:play-services-ads:21.3.0'
 
     // Lifecycle Components
     // Service
@@ -120,14 +120,11 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4'
 
-    // New Material Design
-    implementation 'com.google.android.material:material:1.6.1'
-
-    // Material 3 You Design
-    implementation 'androidx.compose.material3:material3:1.0.0-beta01'
+    // Material Design
+    implementation 'com.google.android.material:material:1.7.0'
 
     // Compose Compiler
-    implementation "androidx.compose.compiler:compiler:1.3.0"
+    implementation 'androidx.compose.compiler:compiler:1.3.2'
     // Compose UI
     implementation "androidx.compose.ui:ui:$compose_version"
     // Tooling support (Previews, etc.)
@@ -136,25 +133,25 @@ dependencies {
     implementation "androidx.compose.foundation:foundation:$compose_version"
     // Compose Animations
     implementation "androidx.compose.animation:animation:$compose_version"
-    // Material Design
-    implementation "androidx.compose.material:material:$compose_version"
+    // Compose Material 3 Components
+    implementation 'androidx.compose.material3:material3:1.0.1'
     // Material design icons
     implementation "androidx.compose.material:material-icons-core:$compose_version"
     implementation "androidx.compose.material:material-icons-extended:$compose_version"
     // Integration with activities
-    implementation "androidx.activity:activity-compose:1.5.1"
+    implementation 'androidx.activity:activity-compose:1.6.1'
     // Integration with ViewModels
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycle_version"
     // Integration with observables
     implementation "androidx.compose.runtime:runtime:$compose_version"
     implementation "androidx.compose.runtime:runtime-livedata:$compose_version"
     // Compose Navigation Integration
-    implementation "androidx.navigation:navigation-compose:2.5.1"
-    implementation "androidx.navigation:navigation-common:2.5.1"
+    implementation 'androidx.navigation:navigation-compose:2.5.3'
+    implementation 'androidx.navigation:navigation-common:2.5.3'
 
     // Accompanist Components (temp)
-    implementation 'com.google.accompanist:accompanist-flowlayout:0.25.0'
-    implementation 'com.google.accompanist:accompanist-systemuicontroller:0.25.0'
+    implementation 'com.google.accompanist:accompanist-flowlayout:0.27.0'
+    implementation 'com.google.accompanist:accompanist-systemuicontroller:0.27.0'
 
     // UI Tests
     //androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
@@ -168,7 +165,7 @@ dependencies {
 
     // A Jetpack Compose modifier enabling reordering in a LazyList
     // DON'T UPDATE! REQUIRES TOTAL REORDERABLE REMAKE.
-    implementation "org.burnoutcrew.composereorderable:reorderable:0.7.4"
+    implementation("org.burnoutcrew.composereorderable:reorderable:0.9.6")
 
     //testImplementation 'junit:junit:4.13.2'
     //androidTestImplementation 'androidx.test.ext:junit:1.1.3'

@@ -9,8 +9,6 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.ArrowDropUp
@@ -48,8 +46,18 @@ import kotlin.math.pow
  * @param onDismissRequest the action to take when a dismiss is requested (back press or cancel button is clicked).
  * @param onAccepted the action to take when the ok button is clicked. The value of the text field container is returned, to be acted upon.
  */
+@ExperimentalMaterial3Api
 @Composable
-fun EditOneFieldDialog(headerName: String, fieldName: String? = null, initialValue: String, maxChars: Int? = null, singleLine: Boolean = true, inputType: KeyboardType = KeyboardType.Text, onDismissRequest: () -> Unit, onAccepted: (returnedValue: String) -> Unit) {
+fun EditOneFieldDialog(
+    headerName: String,
+    fieldName: String? = null,
+    initialValue: String,
+    maxChars: Int? = null,
+    singleLine: Boolean = true,
+    inputType: KeyboardType = KeyboardType.Text,
+    onDismissRequest: () -> Unit,
+    onAccepted: (returnedValue: String) -> Unit
+) {
     var fieldValue by remember {
         mutableStateOf(
             TextFieldValue(
@@ -137,8 +145,13 @@ fun EditOneFieldDialog(headerName: String, fieldName: String? = null, initialVal
     )
 }
 
+@ExperimentalMaterial3Api
 @Composable
-fun EditExpandedNoteHeaderDialog(initialValue: NoteItem = NoteItem(), onDismissRequest: () -> Unit, onAccepted: (returnedValue: NoteItem) -> Unit) {
+fun EditExpandedNoteHeaderDialog(
+    initialValue: NoteItem = NoteItem(),
+    onDismissRequest: () -> Unit,
+    onAccepted: (returnedValue: NoteItem) -> Unit
+) {
     val titleMaxChars = 26
     val descriptionMaxChars = 100
     var titleFieldValue by remember {
@@ -268,8 +281,13 @@ fun EditExpandedNoteHeaderDialog(initialValue: NoteItem = NoteItem(), onDismissR
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
+@ExperimentalMaterial3Api
 @Composable
-fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, onAccepted: (returnedValue: DataItem) -> Unit) {
+fun EditDataItemDialog(
+    initialDataItem: DataItem,
+    onDismissRequest: () -> Unit,
+    onAccepted: (returnedValue: DataItem) -> Unit
+) {
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
     var timeUnitValue by remember { mutableStateOf(initialDataItem.unit) }
@@ -507,9 +525,14 @@ fun EditDataItemDialog(initialDataItem: DataItem, onDismissRequest: () -> Unit, 
  * A flexible Dialog which populates the given list of names.
  * Returns the index of the clicked item.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RadioItemsDialog(title: String, radioItemNames: List<String>,currentState: Int? = null, onClickItem: (Int) -> Unit, onDismissRequest: () -> Unit) {
+fun RadioItemsDialog(
+    title: String,
+    radioItemNames: List<String>,
+    currentState: Int? = null,
+    onClickItem: (Int) -> Unit,
+    onDismissRequest: () -> Unit
+) {
     AlertDialog(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(

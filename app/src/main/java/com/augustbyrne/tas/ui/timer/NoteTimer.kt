@@ -11,8 +11,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.ripple.rememberRipple
@@ -183,154 +181,154 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
             }
         },
         contentUI = {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .background(Color.White.copy(alpha = 0.25f))
-        ) {
             Column(
                 modifier = Modifier
-                    .weight(weight = 1f, fill = true)
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .background(Color.White.copy(alpha = 0.25f))
             ) {
-                if (TimerService.currentNoteItems.size != 1) {
-                    FlowRow(
-                        mainAxisSize = SizeMode.Expand,
-                        mainAxisAlignment = FlowMainAxisAlignment.Center,
-                        mainAxisSpacing = 0.dp,
-                        crossAxisAlignment = FlowCrossAxisAlignment.Start,
-                        crossAxisSpacing = 8.dp
+                Column(
+                    modifier = Modifier
+                        .weight(weight = 1f, fill = true)
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    if (TimerService.currentNoteItems.size != 1) {
+                        FlowRow(
+                            mainAxisSize = SizeMode.Expand,
+                            mainAxisAlignment = FlowMainAxisAlignment.Center,
+                            mainAxisSpacing = 0.dp,
+                            crossAxisAlignment = FlowCrossAxisAlignment.Start,
+                            crossAxisSpacing = 8.dp
+                        ) {
+                            for (dataItemIndex in TimerService.currentNoteItems.indices) {
+                                Icon(
+                                    modifier = Modifier
+                                        .wrapContentSize()
+                                        .scale(0.64f)
+                                        .clip(CircleShape)
+                                        .clickable(
+                                            onClick = { TimerService.modifyTimer(dataItemIndex) },
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = rememberRipple()
+                                        )
+                                        .padding(4.dp),
+                                    imageVector = Icons.Default.Circle,
+                                    contentDescription = "item marker",
+                                    tint = if (itemIndex == dataItemIndex) Color.Green else Color.DarkGray
+                                )
+                            }
+                        }
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
                     ) {
-                        for (dataItemIndex in TimerService.currentNoteItems.indices) {
-                            Icon(
+                        if (TimerService.currentNoteItems[itemIndex].activity.isNotBlank()) {
+                            Spacer(Modifier.width(58.dp))
+                            Text(
                                 modifier = Modifier
-                                    .wrapContentSize()
-                                    .scale(0.64f)
-                                    .clip(CircleShape)
-                                    .clickable(
-                                        onClick = { TimerService.modifyTimer(dataItemIndex) },
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = rememberRipple()
-                                    )
-                                    .padding(4.dp),
-                                imageVector = Icons.Default.Circle,
-                                contentDescription = "item marker",
-                                tint = if (itemIndex == dataItemIndex) Color.Green else Color.DarkGray
+                                    .wrapContentHeight()
+                                    .weight(weight = 1f, fill = true),
+                                text = TimerService.currentNoteItems[itemIndex].activity,
+                                maxLines = 2,
+                                textAlign = TextAlign.Center,
+                                overflow = TextOverflow.Ellipsis,
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
+                        TextButton(
+                            onClick = {
+                                TimerService.modifyTimer(itemIndex)
+                            },
+                            colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
+                        ) {
+                            Icon(
+                                modifier = Modifier.scale(1.5f),
+                                imageVector = Icons.Default.Replay,
+                                contentDescription = "restart current item"
+                            )
+                        }
+                    }
+                    if (itemIndex + 1 <= TimerService.currentNoteItems.lastIndex) {
+                        Text(
+                            text = "Next: ${TimerService.currentNoteItems[itemIndex + 1].activity}",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    } else {
+                        Text(
+                            text = "",
+                            maxLines = 1,
+                            style = MaterialTheme.typography.titleLarge
+                        )
                     }
                 }
                 Row(
                     modifier = Modifier
+                        .padding(bottom = 32.dp, top = 8.dp)
                         .fillMaxWidth()
                         .wrapContentHeight(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (TimerService.currentNoteItems[itemIndex].activity.isNotBlank()) {
-                        Spacer(Modifier.width(58.dp))
-                        Text(
-                            modifier = Modifier
-                                .wrapContentHeight()
-                                .weight(weight = 1f, fill = true),
-                            text = TimerService.currentNoteItems[itemIndex].activity,
-                            maxLines = 2,
-                            textAlign = TextAlign.Center,
-                            overflow = TextOverflow.Ellipsis,
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
                     TextButton(
                         onClick = {
-                            TimerService.modifyTimer(itemIndex)
+                            TimerService.modifyTimer(itemIndex - 1)
                         },
                         colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
                     ) {
                         Icon(
+                            modifier = Modifier.scale(1.75f),
+                            imageVector = Icons.Default.SkipPrevious,
+                            contentDescription = "back to previous item"
+                        )
+                    }
+                    FloatingActionButton(
+                        onClick = {
+                            if (timerState == TimerState.Running) { // Pause is Clicked
+                                TimerService.pauseTimer(timerLengthMilli)
+                            } else { // Start is Clicked
+                                if (timerState == TimerState.Stopped) {
+                                    TimerService.delayedStart(
+                                        length = delayedStartPrefState,
+                                        itemIndex = itemIndex
+                                    )
+                                } else {
+                                    TimerService.startTimer(itemIndex)
+                                }
+                            }
+                        },
+                        containerColor = iconTint,
+                        contentColor = Color.Black
+                    ) {
+                        Icon(
                             modifier = Modifier.scale(1.5f),
-                            imageVector = Icons.Default.Replay,
-                            contentDescription = "restart current item"
+                            imageVector = icon,
+                            contentDescription = "Start or Pause"
+                        )
+                    }
+                    TextButton(
+                        onClick = {
+                            TimerService.modifyTimer(itemIndex + 1)
+                        },
+                        colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
+                    ) {
+                        Icon(
+                            modifier = Modifier.scale(1.75f),
+                            imageVector = Icons.Default.SkipNext,
+                            contentDescription = "skip to next item"
                         )
                     }
                 }
-                if (itemIndex + 1 <= TimerService.currentNoteItems.lastIndex) {
-                    Text(
-                        text = "Next: ${TimerService.currentNoteItems[itemIndex + 1].activity}",
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                } else {
-                    Text(
-                        text = "",
-                        maxLines = 1,
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                }
             }
-            Row(
-                modifier = Modifier
-                    .padding(bottom = 32.dp, top = 8.dp)
-                    .fillMaxWidth()
-                    .wrapContentHeight(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(
-                    onClick = {
-                        TimerService.modifyTimer(itemIndex - 1)
-                    },
-                    colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
-                ) {
-                    Icon(
-                        modifier = Modifier.scale(1.75f),
-                        imageVector = Icons.Default.SkipPrevious,
-                        contentDescription = "back to previous item"
-                    )
-                }
-                FloatingActionButton(
-                    onClick = {
-                        if (timerState == TimerState.Running) { // Pause is Clicked
-                            TimerService.pauseTimer(timerLengthMilli)
-                        } else { // Start is Clicked
-                            if (timerState == TimerState.Stopped) {
-                                TimerService.delayedStart(
-                                    length = delayedStartPrefState,
-                                    itemIndex = itemIndex
-                                )
-                            } else {
-                                TimerService.startTimer(itemIndex)
-                            }
-                        }
-                    },
-                    containerColor = iconTint,
-                    contentColor = Color.Black
-                ) {
-                    Icon(
-                        modifier = Modifier.scale(1.5f),
-                        imageVector = icon,
-                        contentDescription = "Start or Pause"
-                    )
-                }
-                TextButton(
-                    onClick = {
-                        TimerService.modifyTimer(itemIndex + 1)
-                    },
-                    colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
-                ) {
-                    Icon(
-                        modifier = Modifier.scale(1.75f),
-                        imageVector = Icons.Default.SkipNext,
-                        contentDescription = "skip to next item"
-                    )
-                }
-            }
-        }
-    })
+        })
     Box(modifier = Modifier.fillMaxSize()) {
         CenterAlignedTopAppBar(
             modifier = Modifier.statusBarsPadding().align(Alignment.TopCenter),
@@ -366,16 +364,19 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                     expanded = expanded,
                     onDismissRequest = { expanded = false },
                     content = {
-                        DropdownMenuItem(onClick = {
-                            expanded = false
-                            showTimerThemeDialog = true
-                            //onNavTimerSettings()
-                        }) {
-                            Text(
-                                color = MaterialTheme.colorScheme.onSurface,
-                                text = "Timer theme"
-                            )
-                        }
+                        DropdownMenuItem(
+                            onClick = {
+                                expanded = false
+                                showTimerThemeDialog = true
+                                //onNavTimerSettings()
+                            },
+                            text = {
+                                Text(
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    text = "Timer theme"
+                                )
+                            }
+                        )
                     }
                 )
             },
@@ -410,7 +411,12 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
 }
 
 @Composable
-fun TimerText(modifier: Modifier = Modifier, timerState: TimerState, timerLengthMilli: Long, totalTimerLengthMilli: Long) {
+fun TimerText(
+    modifier: Modifier = Modifier,
+    timerState: TimerState,
+    timerLengthMilli: Long,
+    totalTimerLengthMilli: Long
+) {
     val timerLengthAdjusted = if (timerState == TimerState.Stopped) {
         totalTimerLengthMilli.div(1000)
     } else {

@@ -6,7 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -39,7 +39,6 @@ import org.burnoutcrew.reorderable.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import java.util.*
 
 private val myDateTimeFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
 
@@ -57,15 +56,38 @@ fun ExpandedNoteUI (
     val coroutineScope = rememberCoroutineScope()
     val noteWithItems by myViewModel.getNoteWithItemsById(noteId)
         .observeAsState(initial = NoteWithItems(NoteItem(), listOf()))
+    var draggableNotes by remember { mutableStateOf(noteWithItems.dataItems) }
     val prevTimeType by myViewModel.lastUsedTimeUnitLiveData.observeAsState(initial = 0)
-    val state = rememberReorderState()
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     var noteInfoToggle by rememberSaveable { mutableStateOf(true) }
     val fabPadding: Float by myViewModel.miniTimerPadding.observeAsState(0f)
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(topAppBarState)
+    val state = rememberReorderableLazyListState(
+        canDragOver = { to, _ ->
+            to.index in 2..noteWithItems.dataItems.lastIndex + 2
+        },
+        onMove = { from, to ->
+            draggableNotes = draggableNotes.toMutableList().apply {
+                add(to.index - 2, removeAt(from.index - 2))
+            }
+        }, onDragEnd = { from, to ->
+            if (from >= 0 && to >= 0) {
+                myViewModel.upsertNoteAndData(
+                    noteWithItems.note,
+                    draggableNotes.toMutableList()
+                )
+            }
+        }
+    )
 
     LaunchedEffect(Unit) {
         topAppBarState.heightOffset = 0f
+    }
+
+    LaunchedEffect(noteWithItems.dataItems) {
+        if (noteWithItems.dataItems.isNotEmpty()) {
+            draggableNotes = noteWithItems.dataItems
+        }
     }
 
     Scaffold(
@@ -74,18 +96,17 @@ fun ExpandedNoteUI (
             // attach as a parent to the nested scroll system
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            SmallTopAppBar(
+            TopAppBar(title = {
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    text = noteWithItems.note.title.ifEmpty { "Add title" }
+                )
+            },
                 modifier = Modifier
                     .statusBarsPadding()
                     .classicSystemBarScrollBehavior(topAppBarState, BarType.Top),
-                title = {
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        text = noteWithItems.note.title.ifEmpty { "Add title" }
-                    )
-                },
                 navigationIcon = {
                     IconButton(
                         onClick = { onNavBack(noteWithItems) }
@@ -128,29 +149,12 @@ fun ExpandedNoteUI (
                 }
             )
         }
-    ) {
+    ) { statusBarsPadding ->
         LazyColumn(
             modifier = Modifier
-                .padding(top = it.calculateTopPadding())
+                .padding(top = statusBarsPadding.calculateTopPadding())
                 .fillMaxSize()
-                .reorderable(
-                    state = state,
-                    canDragOver = { itemPosition ->
-                        itemPosition.index in 2..noteWithItems.dataItems.lastIndex + 2
-                    },
-                    onMove = { from, to ->
-                        if (to.index in 2..noteWithItems.dataItems.lastIndex + 2 && from.index in 2..noteWithItems.dataItems.lastIndex + 2 && noteWithItems.dataItems.isNotEmpty()) {
-                            Collections.swap(noteWithItems.dataItems, from.index - 2, to.index - 2)
-                        }
-                    }, onDragEnd = { from, to ->
-                        if (from >= 0 && to >= 0) {
-                            myViewModel.upsertNoteAndData(
-                                noteWithItems.note,
-                                noteWithItems.dataItems.toMutableList()
-                            )
-                        }
-                    }
-                ),
+                .reorderable(state),
             state = state.listState,
             contentPadding = PaddingValues(bottom = if (timerState != TimerState.Stopped) 170.dp else 88.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp)
@@ -239,33 +243,36 @@ fun ExpandedNoteUI (
                     )
                 }
             }
-            itemsIndexed(noteWithItems.dataItems) { index: Int, item: DataItem ->
-                DataItemUI(
-                    modifier = Modifier
-                        .draggedItem(state.offsetByIndex(index.plus(2))),
-                    dataItem = item,
-                    state = state,
-                    onClickToEdit = { myViewModel.initialDialogDataItem = item },
-                    onClickCloneItem = {
-                        coroutineScope.launch {
-                            myViewModel.upsertDataItem(item.copy(id = 0, order = 0))
-                            myViewModel.updateNote(
-                                noteWithItems.note.copy(
-                                    last_edited_on = LocalDateTime.now()
+            items(
+                items = draggableNotes,
+                key = { it.id }
+            ) { item ->
+                ReorderableItem(reorderableState = state, key = item.id) {
+                    DataItemUI(
+                        dataItem = item,
+                        state = state,
+                        onClickToEdit = { myViewModel.initialDialogDataItem = item },
+                        onClickCloneItem = {
+                            coroutineScope.launch {
+                                myViewModel.upsertDataItem(item.copy(id = 0, order = 0))
+                                myViewModel.updateNote(
+                                    noteWithItems.note.copy(
+                                        last_edited_on = LocalDateTime.now()
+                                    )
                                 )
-                            )
+                            }
+                        },
+                        onClickStartFromHere = {
+                            onNavigateTimerStart(noteWithItems, draggableNotes.indexOf(item))
+                        },
+                        onClickDelete = {
+                            coroutineScope.launch {
+                                myViewModel.deleteDataItem(item.id)
+                                myViewModel.updateNote(noteWithItems.note.copy(last_edited_on = LocalDateTime.now()))
+                            }
                         }
-                    },
-                    onClickStartFromHere = {
-                        onNavigateTimerStart(noteWithItems, index)
-                    },
-                    onClickDelete = {
-                        coroutineScope.launch {
-                            myViewModel.deleteDataItem(item.id)
-                            myViewModel.updateNote(noteWithItems.note.copy(last_edited_on = LocalDateTime.now()))
-                        }
-                    }
-                )
+                    )
+                }
             }
             item {
                 Row(
@@ -364,7 +371,7 @@ fun ExpandedNoteUI (
 fun DataItemUI (
     modifier: Modifier = Modifier,
     dataItem: DataItem,
-    state: ReorderableState,
+    state: ReorderableLazyListState,
     onClickToEdit: () -> Unit,
     onClickCloneItem: () -> Unit,
     onClickStartFromHere: () -> Unit,
@@ -479,6 +486,8 @@ fun DataItemUITest() {
         unit = 1
     )
     AppTheme {
-        DataItemUI(Modifier, dataItem, rememberReorderState(), {}, {}, {}, {})
+        DataItemUI(Modifier, dataItem, rememberReorderableLazyListState(onMove = { to, from ->
+
+        }), {}, {}, {}, {})
     }
 }

@@ -7,7 +7,7 @@ import android.content.Intent
 class NotificationReceiver: BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent) {
         val currentIndex = intent.getIntExtra("com.augustbyrne.tas.ItemListIndex", 0)
-        when(intent.action) {
+        when (intent.action) {
             "PREV_ITEM" -> {
                 TimerService.modifyTimer(currentIndex.dec())
             }
@@ -22,5 +22,4 @@ class NotificationReceiver: BroadcastReceiver() {
             }
         }
     }
-
 }

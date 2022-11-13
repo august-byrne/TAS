@@ -17,12 +17,24 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 
 @Composable
-fun MainBottomNavBar(navBackStackEntry: NavBackStackEntry?, navController: NavController, modifier: Modifier = Modifier) {
-    val navIndex = when(navBackStackEntry?.destination?.id) {
-        navController.findDestination("home")!!.id -> { 0 }
-        navController.findDestination("general_timer")!!.id -> { 1 }
-        navController.findDestination("settings")!!.id -> { 2 }
-        else -> { null }
+fun MainBottomNavBar(
+    navBackStackEntry: NavBackStackEntry?,
+    navController: NavController,
+    modifier: Modifier = Modifier
+) {
+    val navIndex = when (navBackStackEntry?.destination?.id) {
+        navController.findDestination("home")!!.id -> {
+            0
+        }
+        navController.findDestination("general_timer")!!.id -> {
+            1
+        }
+        navController.findDestination("settings")!!.id -> {
+            2
+        }
+        else -> {
+            null
+        }
     }
     if (navIndex != null) {
         NavigationBar(
@@ -75,7 +87,11 @@ fun MainBottomNavBar(navBackStackEntry: NavBackStackEntry?, navController: NavCo
 }
 
 @Composable
-fun AutoSizingText(modifier: Modifier = Modifier, textStyle: TextStyle = LocalTextStyle.current, text: String) {
+fun AutoSizingText(
+    modifier: Modifier = Modifier,
+    textStyle: TextStyle = LocalTextStyle.current,
+    text: String
+) {
     var readyToDraw by remember { mutableStateOf(false) }
     var mutableTextStyle by remember { mutableStateOf(textStyle) }
     Text(

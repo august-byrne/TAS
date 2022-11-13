@@ -15,7 +15,6 @@ import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Snackbar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -437,7 +436,7 @@ fun DefaultSnackbar(
         hostState = snackbarHostState
     ) { snackBarData ->
         Snackbar(
-            backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
             action = {
                 snackBarData.visuals.actionLabel?.let { actionLabel ->
                     TextButton(onClick = onClickUndo) {

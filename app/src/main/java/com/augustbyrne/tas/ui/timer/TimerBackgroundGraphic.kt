@@ -31,7 +31,12 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 @Composable
-fun ThemedBackground(timerTheme: TimerTheme?, startingDelay: Long, timerUI: @Composable () -> Unit, contentUI: @Composable () -> Unit) {
+fun ThemedBackground(
+    timerTheme: TimerTheme?,
+    startingDelay: Long,
+    timerUI: @Composable () -> Unit,
+    contentUI: @Composable () -> Unit
+) {
     val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
     val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(1L)
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
@@ -226,7 +231,7 @@ fun ThemedBackground(timerTheme: TimerTheme?, startingDelay: Long, timerUI: @Com
                                 ColorUtils.blendARGB(
                                     yellowOrange.toArgb(),
                                     redOrange.toArgb(),
-                                    progressPercent
+                                    if (timerState != TimerState.Delayed) progressPercent else 0.0f
                                 )
                             )
                         ),
@@ -364,7 +369,9 @@ fun ThemedBackground(timerTheme: TimerTheme?, startingDelay: Long, timerUI: @Com
                     }
                 }
             }
-            else -> {}
+            else -> {
+                // Don't populate any UI yet
+            }
         }
     }
     Box(modifier = Modifier.fillMaxSize()) {
