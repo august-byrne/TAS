@@ -44,10 +44,6 @@ import com.augustbyrne.tas.ui.values.yellow200
 import com.augustbyrne.tas.util.BatteryLevelReceiver
 import com.augustbyrne.tas.util.TimerState
 import com.augustbyrne.tas.util.TimerTheme
-import com.google.accompanist.flowlayout.FlowCrossAxisAlignment
-import com.google.accompanist.flowlayout.FlowMainAxisAlignment
-import com.google.accompanist.flowlayout.FlowRow
-import com.google.accompanist.flowlayout.SizeMode
 import kotlinx.coroutines.launch
 
 @Composable
@@ -115,7 +111,7 @@ fun CircleProgressBar(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSettings: () -> Unit) {
     val context = LocalContext.current
@@ -196,11 +192,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                 ) {
                     if (TimerService.currentNoteItems.size != 1) {
                         FlowRow(
-                            mainAxisSize = SizeMode.Expand,
-                            mainAxisAlignment = FlowMainAxisAlignment.Center,
-                            mainAxisSpacing = 0.dp,
-                            crossAxisAlignment = FlowCrossAxisAlignment.Start,
-                            crossAxisSpacing = 8.dp
+                            horizontalArrangement = Arrangement.Center
                         ) {
                             for (dataItemIndex in TimerService.currentNoteItems.indices) {
                                 Icon(
@@ -258,6 +250,13 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                     if (itemIndex + 1 <= TimerService.currentNoteItems.lastIndex) {
                         Text(
                             text = "Next: ${TimerService.currentNoteItems[itemIndex + 1].activity}",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    } else if (itemIndex == TimerService.currentNoteItems.lastIndex) {
+                        Text(
+                            text = "Final Item",
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.titleLarge
@@ -328,10 +327,13 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                     }
                 }
             }
-        })
+        }
+    )
     Box(modifier = Modifier.fillMaxSize()) {
         CenterAlignedTopAppBar(
-            modifier = Modifier.statusBarsPadding().align(Alignment.TopCenter),
+            modifier = Modifier
+                .statusBarsPadding()
+                .align(Alignment.TopCenter),
             title = {
                 AutoSizingText(
                     modifier = Modifier.fillMaxWidth(0.9F),

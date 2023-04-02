@@ -211,8 +211,9 @@ fun CollapsedTimer(
     val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
     val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(1L)
     val timerIndicatorBG = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-    if (
-        timerState != TimerState.Stopped &&
+    if (timerState == TimerState.Stopped) {
+        myViewModel.updateFabPadding(0f, 0f)
+    } else if (
         navBackStackEntry?.destination?.id != navController.findDestination("note_timer")!!.id &&
         navBackStackEntry?.destination?.id != navController.findDestination("settings")!!.id &&
         navBackStackEntry?.destination?.id != navController.findDestination("general_timer")!!.id
@@ -382,9 +383,8 @@ fun CollapsedTimer(
             }
         }
     } else if (
-        timerState != TimerState.Stopped &&
-        (navBackStackEntry?.destination?.id == navController.findDestination("settings")!!.id ||
-        navBackStackEntry?.destination?.id == navController.findDestination("general_timer")!!.id)
+        navBackStackEntry.destination.id == navController.findDestination("settings")!!.id ||
+        navBackStackEntry.destination.id == navController.findDestination("general_timer")!!.id
     ) {
         Surface(
             modifier = modifier.height(2.dp).fillMaxWidth(),

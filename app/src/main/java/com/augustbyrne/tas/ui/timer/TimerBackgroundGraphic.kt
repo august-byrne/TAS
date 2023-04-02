@@ -19,6 +19,7 @@ import androidx.compose.ui.geometry.lerp
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -260,6 +261,13 @@ fun ThemedBackground(
                                 style = MaterialTheme.typography.displayMedium,
                                 text = (timerLengthMilli.div(1000) + 1).coerceIn(0, startingDelay)
                                     .toString()
+                            )
+                            Text(
+                                modifier = Modifier.padding(8.dp),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                style = MaterialTheme.typography.titleLarge,
+                                text = "Next: ${TimerService.currentNoteItems[0].activity}"
                             )
                         }
                     }

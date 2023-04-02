@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -39,6 +40,7 @@ import org.burnoutcrew.reorderable.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import kotlin.math.pow
 
 private val myDateTimeFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
 
@@ -79,6 +81,12 @@ fun ExpandedNoteUI (
             }
         }
     )
+
+    val totalTime = noteWithItems.dataItems.sumOf {
+        it.time * 60f.pow(
+            it.unit
+        ).toInt()
+    }
 
     LaunchedEffect(Unit) {
         topAppBarState.heightOffset = 0f
@@ -165,7 +173,7 @@ fun ExpandedNoteUI (
                         .wrapContentSize()
                         .background(
                             MaterialTheme.colorScheme.primaryContainer,
-                            RoundedCornerShape(16.dp)
+                            RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp)
                         )
                 ) {
                     Text(
@@ -204,6 +212,22 @@ fun ExpandedNoteUI (
                                 contentDescription = "edit title and description"
                             )
                         }
+                        Text(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight()
+                                .padding(top = 16.dp, end = 16.dp),
+                            textAlign = TextAlign.End,
+
+                            text =
+                                if(totalTime < 60) {
+                                    "total time: $totalTime sec"
+                                } else if (totalTime < 3600) {
+                                    "total time: ${"%.2f".format(totalTime/60f).toFloat()} min"
+                                } else {
+                                    "total time: ${"%.2f".format(totalTime/3600f).toFloat()} hr"
+                                }
+                        )
                     }
                 }
             }
@@ -403,7 +427,11 @@ fun DataItemUI (
                 .weight(1f)
                 .wrapContentHeight()
         ) {
-            Text(text = dataItem.activity)
+            Text(
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                text = dataItem.activity
+            )
         }
         Spacer(modifier = Modifier.padding(horizontal = 16.dp))
         Text(
@@ -412,22 +440,17 @@ fun DataItemUI (
             text = dataItem.time.toString() +
                     when (dataItem.unit) {
                         0 -> {
-                            " second"
+                            " sec"
                         }
                         1 -> {
-                            " minute"
+                            " min"
                         }
                         2 -> {
-                            " hour"
+                            " hr"
                         }
                         else -> {
                             " unit"
                         }
-                    } +
-                    if (dataItem.time != 1) {
-                        "s"
-                    } else {
-                        ""
                     }
         )
         Spacer(modifier = Modifier.padding(horizontal = 4.dp))

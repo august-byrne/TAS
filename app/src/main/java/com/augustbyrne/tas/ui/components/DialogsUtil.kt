@@ -309,7 +309,7 @@ fun EditDataItemDialog(
     }
     var timeError by rememberSaveable { mutableStateOf(false) }
     var activityError by rememberSaveable { mutableStateOf(false) }
-    val activityMaxChars = 50
+    val activityMaxChars = 66
     val timeMaxChars = 5
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
