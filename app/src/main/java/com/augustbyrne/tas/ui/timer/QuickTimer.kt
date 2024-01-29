@@ -4,19 +4,52 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Remove
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonElevation
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -37,7 +70,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun QuickTimer(onNavigateTimerStart: (noteWithData: NoteWithItems) -> Unit, onNavBack: () -> Unit) {
-    var timeValue by rememberSaveable { mutableStateOf(0) }
+    var timeValue by rememberSaveable { mutableIntStateOf(0) }
     val formattedTimerLength = String.format(
         "%02d:%02d:%02d",
         timeValue.div(3600),
@@ -392,29 +425,27 @@ fun Modifier.repeatingClickable(
     minDelayMillis: Long = 5,
     delayDecayFactor: Float = 0.2f,
     onClick: () -> Unit
-): Modifier = composed {
+): Modifier = this.then(composed {
 
     val currentClickListener by rememberUpdatedState(onClick)
 
     pointerInput(interactionSource, enabled) {
-        forEachGesture {
-            coroutineScope {
-                awaitPointerEventScope {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    val heldButtonJob = launch {
-                        var currentDelayMillis = maxDelayMillis
-                        while (enabled && down.pressed) {
-                            currentClickListener()
-                            delay(currentDelayMillis)
-                            val nextMillis =
-                                currentDelayMillis - (currentDelayMillis * delayDecayFactor)
-                            currentDelayMillis = nextMillis.toLong().coerceAtLeast(minDelayMillis)
-                        }
+        coroutineScope {
+            awaitEachGesture {
+                val down = awaitFirstDown(requireUnconsumed = false)
+                val heldButtonJob = launch {
+                    var currentDelayMillis = maxDelayMillis
+                    while (enabled && down.pressed) {
+                        currentClickListener()
+                        delay(currentDelayMillis)
+                        val nextMillis =
+                            currentDelayMillis - (currentDelayMillis * delayDecayFactor)
+                        currentDelayMillis = nextMillis.toLong().coerceAtLeast(minDelayMillis)
                     }
-                    waitForUpOrCancellation()
-                    heldButtonJob.cancel()
                 }
+                waitForUpOrCancellation()
+                heldButtonJob.cancel()
             }
         }
     }
-}
+})

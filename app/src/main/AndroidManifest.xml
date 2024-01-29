@@ -3,6 +3,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
@@ -33,7 +35,7 @@
 
         <receiver android:name="com.augustbyrne.tas.ui.timer.NotificationReceiver" />
         <receiver android:name="com.augustbyrne.tas.util.BatteryLevelReceiver" />
-        <service android:name="com.augustbyrne.tas.ui.timer.TimerService" />
+        <service android:name="com.augustbyrne.tas.ui.timer.TimerService" android:foregroundServiceType="mediaPlayback" />
     </application>
 
 </manifest>

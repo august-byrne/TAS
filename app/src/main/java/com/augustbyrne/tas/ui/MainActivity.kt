@@ -34,13 +34,11 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.augustbyrne.tas.R
 import com.augustbyrne.tas.ui.components.MainBottomNavBar
 import com.augustbyrne.tas.ui.notes.NoteViewModel
 import com.augustbyrne.tas.ui.timer.TimerService
@@ -48,10 +46,6 @@ import com.augustbyrne.tas.ui.values.AppTheme
 import com.augustbyrne.tas.ui.values.special400
 import com.augustbyrne.tas.util.*
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdSize
-import com.google.android.gms.ads.AdView
-import com.google.android.gms.ads.MobileAds
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -59,15 +53,6 @@ import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
 
     private val myViewModel: NoteViewModel by viewModels()
-
-    private val adaptiveAdSize: AdSize
-        get() {
-            val adWidthPixels = this.resources.displayMetrics.widthPixels
-            val density = this.resources.displayMetrics.density
-            val adWidth = (adWidthPixels.div(density)).toInt()
-            //return the optimal size depends on your orientation (landscape or portrait)
-            return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, adWidth)
-        }
 
     private val batteryLevelReceiver = BatteryLevelReceiver()
 
@@ -78,27 +63,24 @@ class MainActivity : AppCompatActivity() {
         //DynamicColors.applyToActivitiesIfAvailable(application)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
-        //initialize the mobile ads sdk
-        MobileAds.initialize(this) {}
-
         registerReceiver(batteryLevelReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
         // remove system insets as we will handle these ourselves
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
-            val adState by myViewModel.showAdsLiveData.observeAsState(initial = true)
             val darkModeState by myViewModel.isDarkThemeLiveData.observeAsState(initial = DarkMode.System)
             val navController = rememberNavController()
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val snackbarHostState = remember { SnackbarHostState() }
+            val bottomSheetScaffoldState = rememberBottomSheetScaffoldState()
             val coroutineScope = rememberCoroutineScope()
             val isAppDark = when (darkModeState) {
                 DarkMode.System -> isSystemInDarkTheme()
                 DarkMode.Off -> false
                 DarkMode.On -> true
             }
-            if (navBackStackEntry?.destination?.id == navController.findDestination("note_timer")!!.id) {
+            if (navBackStackEntry?.destination?.route == "note_timer") {
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             } else {
                 window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -111,9 +93,7 @@ class MainActivity : AppCompatActivity() {
                 LaunchedEffect(navBackStackEntry, isAppDark) {
                     systemUiController.setStatusBarColor(
                         color = Color.Transparent,
-                        darkIcons = navBackStackEntry?.destination?.id == navController.findDestination(
-                            "note_timer"
-                        )!!.id || !isAppDark
+                        darkIcons = navBackStackEntry?.destination?.route == "note_timer" || !isAppDark
                     )
                 }
                 LaunchedEffect(Unit) {
@@ -162,18 +142,6 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
                     )
-                    if (adState) {
-                        AndroidView(
-                            modifier = Modifier.fillMaxWidth(),
-                            factory = { context ->
-                                AdView(context).apply {
-                                    setAdSize(adaptiveAdSize)
-                                    adUnitId = context.getString(R.string.banner_ad_unit_id)
-                                    loadAd(AdRequest.Builder().build())
-                                }
-                            }
-                        )
-                    }
                 }
             }
         }
@@ -199,7 +167,6 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CollapsedTimer(
     modifier: Modifier = Modifier,
@@ -214,16 +181,16 @@ fun CollapsedTimer(
     if (timerState == TimerState.Stopped) {
         myViewModel.updateFabPadding(0f, 0f)
     } else if (
-        navBackStackEntry?.destination?.id != navController.findDestination("note_timer")!!.id &&
-        navBackStackEntry?.destination?.id != navController.findDestination("settings")!!.id &&
-        navBackStackEntry?.destination?.id != navController.findDestination("general_timer")!!.id
+        navBackStackEntry?.destination?.route != "note_timer" &&
+        navBackStackEntry?.destination?.route != "settings" &&
+        navBackStackEntry?.destination?.route != "general_timer"
     ) {
         val itemIndex: Int by TimerService.itemIndex.observeAsState(0)
         val icon =
             if (timerState == TimerState.Running) Icons.Default.Pause else Icons.Default.PlayArrow
-        var scrollOffset by remember { mutableStateOf(0f) }
-        var contentHeight by rememberSaveable { mutableStateOf(0) }
-        var timerAlpha by remember { mutableStateOf(1f) }
+        var scrollOffset by remember { mutableFloatStateOf(0f) }
+        var contentHeight by rememberSaveable { mutableIntStateOf(0) }
+        var timerAlpha by remember { mutableFloatStateOf(1f) }
         myViewModel.updateFabPadding(contentHeight.toFloat(), scrollOffset)
         Surface(
             modifier = modifier
@@ -383,11 +350,13 @@ fun CollapsedTimer(
             }
         }
     } else if (
-        navBackStackEntry.destination.id == navController.findDestination("settings")!!.id ||
-        navBackStackEntry.destination.id == navController.findDestination("general_timer")!!.id
+        navBackStackEntry.destination.route == "settings" ||
+        navBackStackEntry.destination.route == "general_timer"
     ) {
         Surface(
-            modifier = modifier.height(2.dp).fillMaxWidth(),
+            modifier = modifier
+                .height(2.dp)
+                .fillMaxWidth(),
             color = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface,
             tonalElevation = 3.0.dp, // Same as Bottom Navigation Bar

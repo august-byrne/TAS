@@ -1,11 +1,21 @@
 package com.augustbyrne.tas.ui.components
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.PlaylistPlay
+import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Timer
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.text.TextLayoutResult
@@ -22,14 +32,14 @@ fun MainBottomNavBar(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    val navIndex = when (navBackStackEntry?.destination?.id) {
-        navController.findDestination("home")!!.id -> {
+    val navIndex = when (navBackStackEntry?.destination?.route) {
+        "home" -> {
             0
         }
-        navController.findDestination("general_timer")!!.id -> {
+        "general_timer" -> {
             1
         }
-        navController.findDestination("settings")!!.id -> {
+        "settings" -> {
             2
         }
         else -> {
@@ -41,11 +51,11 @@ fun MainBottomNavBar(
             modifier = modifier
         ) {
             NavigationBarItem(
-                icon = { Icon(Icons.Rounded.PlaylistPlay, "Routines") },
+                icon = { Icon(Icons.AutoMirrored.Rounded.PlaylistPlay, "Routines") },
                 label = { Text("Routines") },
                 selected = navIndex == 0,
                 onClick = {
-                    if (navBackStackEntry?.destination?.id != navController.findDestination("home")!!.id) {
+                    if (navBackStackEntry?.destination?.route != "home") {
                         navController.navigate("home") {
                             popUpTo("home")
                             launchSingleTop = true
@@ -59,7 +69,7 @@ fun MainBottomNavBar(
                 label = { Text("Quick Timer") },
                 selected = navIndex == 1,
                 onClick = {
-                    if (navBackStackEntry?.destination?.id != navController.findDestination("general_timer")!!.id) {
+                    if (navBackStackEntry?.destination?.route != "general_timer") {
                         navController.navigate("general_timer") {
                             popUpTo("home")
                             launchSingleTop = true
@@ -73,7 +83,7 @@ fun MainBottomNavBar(
                 label = { Text("Settings") },
                 selected = navIndex == 2,
                 onClick = {
-                    if (navBackStackEntry?.destination?.id != navController.findDestination("settings")!!.id) {
+                    if (navBackStackEntry?.destination?.route != "settings") {
                         navController.navigate("settings") {
                             popUpTo("home")
                             launchSingleTop = true

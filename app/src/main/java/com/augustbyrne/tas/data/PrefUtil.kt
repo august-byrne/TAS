@@ -19,7 +19,6 @@ class PreferenceManager @Inject constructor(
     ) {
 
     companion object {
-        private val PREF_SHOW_ADS = booleanPreferencesKey("ads_state")
         private val PREF_DARK_MODE = intPreferencesKey("dark_mode_state")
         private val PREF_TIMER_THEME = intPreferencesKey("timer_theme_state")
         private val PREF_SORT_BY = intPreferencesKey("sort_type")
@@ -27,10 +26,6 @@ class PreferenceManager @Inject constructor(
         private val PREF_VIBRATE = booleanPreferencesKey("vibration_state")
         private val PREF_START_DELAY = intPreferencesKey("start_delay")
     }
-
-    // Default is to show ads
-    val showAdsFlow: Flow<Boolean> = context.dataStore.data.map { it[PREF_SHOW_ADS] ?: true }
-    suspend fun setShowAds(value: Boolean) = context.dataStore.edit { it[PREF_SHOW_ADS] = value }
 
     // Default is to follow system
     val isDarkThemeFlow: Flow<Int> = context.dataStore.data.map { it[PREF_DARK_MODE] ?: 0 }

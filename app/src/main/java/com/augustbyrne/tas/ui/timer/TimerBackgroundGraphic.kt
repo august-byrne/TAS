@@ -1,11 +1,27 @@
 package com.augustbyrne.tas.ui.timer
 
 import androidx.compose.animation.animateColor
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.InfiniteRepeatableSpec
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,7 +32,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.lerp
-import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -25,7 +47,15 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import com.augustbyrne.tas.R
-import com.augustbyrne.tas.ui.values.*
+import com.augustbyrne.tas.ui.values.blue500
+import com.augustbyrne.tas.ui.values.blue700
+import com.augustbyrne.tas.ui.values.pink100
+import com.augustbyrne.tas.ui.values.pink200
+import com.augustbyrne.tas.ui.values.redOrange
+import com.augustbyrne.tas.ui.values.teal100
+import com.augustbyrne.tas.ui.values.teal200
+import com.augustbyrne.tas.ui.values.yellow50
+import com.augustbyrne.tas.ui.values.yellowOrange
 import com.augustbyrne.tas.util.TimerState
 import com.augustbyrne.tas.util.TimerTheme
 import kotlin.math.pow
@@ -41,6 +71,7 @@ fun ThemedBackground(
     val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
     val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(1L)
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
+    val itemIndex: Int by TimerService.itemIndex.observeAsState(0)
     val progressPercent: Float = 1f - timerLengthMilli.div(totalTimerLengthMilli.toFloat())
     Box(modifier = Modifier.fillMaxSize()) {
         when (timerTheme) {
@@ -60,7 +91,7 @@ fun ThemedBackground(
                 }
             }
             TimerTheme.Vibrant -> {
-                val infiniteTransition = rememberInfiniteTransition()
+                val infiniteTransition = rememberInfiniteTransition(label = "timer_vibrant_transition")
                 val animationSpec: InfiniteRepeatableSpec<Color> = infiniteRepeatable(
                     animation = tween(3000, easing = FastOutSlowInEasing),
                     repeatMode = RepeatMode.Reverse
@@ -68,17 +99,17 @@ fun ThemedBackground(
                 val colorFirst by infiniteTransition.animateColor(
                     initialValue = orange,
                     targetValue = peach,
-                    animationSpec = animationSpec
+                    animationSpec = animationSpec, label = "timer_vibrant_color_1"
                 )
                 val colorSecond by infiniteTransition.animateColor(
                     initialValue = peach,
                     targetValue = lightPurple,
-                    animationSpec = animationSpec
+                    animationSpec = animationSpec, label = "timer_vibrant_color_2"
                 )
                 val colorThird by infiniteTransition.animateColor(
                     initialValue = lightPurple,
                     targetValue = orange,
-                    animationSpec = animationSpec
+                    animationSpec = animationSpec, label = "timer_vibrant_color_3"
                 )
                 val animatedProgress by infiniteTransition.animateFloat(
                     initialValue = 0f,
@@ -86,7 +117,7 @@ fun ThemedBackground(
                     animationSpec = infiniteRepeatable(
                         animation = tween(20 * 1000, easing = LinearEasing),
                         repeatMode = RepeatMode.Reverse
-                    )
+                    ), label = "timer_vibrant_progress"
                 )
                 val numberBubbles = 23
                 val bubbleInfo = remember {
@@ -267,7 +298,7 @@ fun ThemedBackground(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 style = MaterialTheme.typography.titleLarge,
-                                text = "Next: ${TimerService.currentNoteItems[0].activity}"
+                                text = "Next: ${TimerService.currentNoteItems[itemIndex].activity}"
                             )
                         }
                     }

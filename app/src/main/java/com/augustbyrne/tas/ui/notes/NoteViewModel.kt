@@ -120,9 +120,6 @@ class NoteViewModel @Inject constructor(
     /**
      * PreferenceManager DataStore Preferences Here
      */
-    val showAdsLiveData: LiveData<Boolean> = preferences.showAdsFlow.asLiveData()
-    suspend fun setShowAds(value: Boolean) = preferences.setShowAds(value)
-
     val isDarkThemeLiveData: LiveData<DarkMode> =
         preferences.isDarkThemeFlow.map { DarkMode.getMode(it) }.asLiveData()
 
