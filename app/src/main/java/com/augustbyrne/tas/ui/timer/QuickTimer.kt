@@ -38,6 +38,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -165,7 +166,7 @@ fun QuickTimer(onNavigateTimerStart: (noteWithData: NoteWithItems) -> Unit, onNa
                     //Icon(imageVector = Icons.Rounded.Add, contentDescription = "plus 1 second")
                 }
             }
-            Divider(color = MaterialTheme.colorScheme.onSurface)
+            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

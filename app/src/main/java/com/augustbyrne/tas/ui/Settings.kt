@@ -16,12 +16,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.ArrowDropUp
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -31,6 +30,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarState
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -118,7 +118,7 @@ fun SettingsUI(
                             showDarkModeDialog = true
                         },
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = rememberRipple()
+                        indication = ripple()
                     )
                     .padding(16.dp),
                 horizontalAlignment = Alignment.Start,
@@ -147,7 +147,7 @@ fun SettingsUI(
                             showTimerThemeDialog = true
                         },
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = rememberRipple()
+                        indication = ripple()
                     )
                     .padding(16.dp),
                 horizontalAlignment = Alignment.Start,
@@ -167,7 +167,7 @@ fun SettingsUI(
                     color = Color.Gray
                 )
             }
-            Divider(modifier = Modifier.fillMaxWidth())
+            HorizontalDivider(modifier = Modifier.fillMaxWidth())
             Text(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -188,7 +188,7 @@ fun SettingsUI(
                             }
                         },
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = rememberRipple()
+                        indication = ripple()
                     ),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -217,7 +217,7 @@ fun SettingsUI(
                     .clickable(
                         onClick = { expanded = true },
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = rememberRipple()
+                        indication = ripple()
                     ),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -279,7 +279,7 @@ fun SettingsUI(
                     }
                 }
             }
-            Divider(modifier = Modifier.fillMaxWidth())
+            HorizontalDivider(modifier = Modifier.fillMaxWidth())
             Text(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -298,7 +298,7 @@ fun SettingsUI(
                             uriHandler.openUri("https://ko-fi.com/augustb")
                         },
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = rememberRipple()
+                        indication = ripple()
                     )
                     .padding(16.dp),
                 text = "Buy me a tea",
@@ -313,7 +313,7 @@ fun SettingsUI(
                             uriHandler.openUri("https://github.com/august-byrne/ProtoSuite")
                         },
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = rememberRipple()
+                        indication = ripple()
                     )
                     .padding(16.dp),
                 text = "Project github",
