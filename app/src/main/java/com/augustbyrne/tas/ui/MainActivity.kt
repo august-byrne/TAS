@@ -6,9 +6,11 @@ import android.content.IntentFilter
 import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.view.WindowManager
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.core.animate
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -38,7 +40,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,6 +47,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -55,16 +57,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.view.WindowCompat
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.augustbyrne.tas.ui.components.MainBottomNavBar
@@ -77,16 +79,17 @@ import com.augustbyrne.tas.util.BatteryLevelReceiver
 import com.augustbyrne.tas.util.DarkMode
 import com.augustbyrne.tas.util.TimerState
 import com.augustbyrne.tas.util.classicSystemBarScrollBehavior
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
 
     private val myViewModel: NoteViewModel by viewModels()
 
     private val batteryLevelReceiver = BatteryLevelReceiver()
+
+    private var latestIntent by mutableStateOf<Intent?>(null)
 
     @OptIn(ExperimentalMaterial3Api::class)
     @SuppressLint("SourceLockedOrientationActivity")
@@ -95,24 +98,41 @@ class MainActivity : AppCompatActivity() {
         //DynamicColors.applyToActivitiesIfAvailable(application)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
-        registerReceiver(batteryLevelReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        ContextCompat.registerReceiver(
+            this,
+            batteryLevelReceiver,
+            IntentFilter(Intent.ACTION_BATTERY_CHANGED),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
 
-        // remove system insets as we will handle these ourselves
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        latestIntent = intent
+
+        // Edge-to-edge with fully transparent system bars so the app's
+        // background flows under the status bar and gesture nav pill.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.auto(
+                lightScrim = android.graphics.Color.TRANSPARENT,
+                darkScrim = android.graphics.Color.TRANSPARENT
+            ),
+            navigationBarStyle = SystemBarStyle.auto(
+                lightScrim = android.graphics.Color.TRANSPARENT,
+                darkScrim = android.graphics.Color.TRANSPARENT
+            )
+        )
 
         setContent {
             val darkModeState by myViewModel.isDarkThemeLiveData.observeAsState(initial = DarkMode.System)
             val navController = rememberNavController()
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val snackbarHostState = remember { SnackbarHostState() }
-            val bottomSheetScaffoldState = rememberBottomSheetScaffoldState()
             val coroutineScope = rememberCoroutineScope()
             val isAppDark = when (darkModeState) {
                 DarkMode.System -> isSystemInDarkTheme()
                 DarkMode.Off -> false
                 DarkMode.On -> true
             }
-            if (navBackStackEntry?.destination?.route == "note_timer") {
+            val isNoteTimer = navBackStackEntry?.destination?.hasRoute<Routes.NoteTimer>() == true
+            if (isNoteTimer) {
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             } else {
                 window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -120,22 +140,27 @@ class MainActivity : AppCompatActivity() {
             val doubleBarState = rememberTopAppBarState()
 
             AppTheme(darkTheme = isAppDark) {
-//                enableEdgeToEdge()
-                // Update the status bar to be translucent
-                val systemUiController = rememberSystemUiController()
                 LaunchedEffect(navBackStackEntry, isAppDark) {
-                    systemUiController.setStatusBarColor(
-                        color = Color.Transparent,
-                        darkIcons = navBackStackEntry?.destination?.route == "note_timer" || !isAppDark
+                    enableEdgeToEdge(
+                        statusBarStyle = SystemBarStyle.auto(
+                            lightScrim = android.graphics.Color.TRANSPARENT,
+                            darkScrim = android.graphics.Color.TRANSPARENT
+                        ) {
+                            !isNoteTimer && isAppDark
+                        },
+                        navigationBarStyle = SystemBarStyle.auto(
+                            lightScrim = android.graphics.Color.TRANSPARENT,
+                            darkScrim = android.graphics.Color.TRANSPARENT
+                        ) {
+                            !isNoteTimer && isAppDark
+                        }
                     )
                 }
-                LaunchedEffect(Unit) {
-                    navigateToTimerIfNeeded(intent, navController)
+                LaunchedEffect(latestIntent) {
+                    navigateToTimerIfNeeded(latestIntent, navController)
                 }
                 Column(
-                    modifier = Modifier
-                        .navigationBarsPadding()
-                        .fillMaxSize(),
+                    modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.SpaceEvenly
                 ) {
                     Box(
@@ -182,10 +207,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        setContent {
-            val navController = rememberNavController()
-            navigateToTimerIfNeeded(intent, navController)
-        }
+        setIntent(intent)
+        latestIntent = intent
     }
 
     override fun onDestroy() {
@@ -195,7 +218,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun navigateToTimerIfNeeded(intent: Intent?, navController: NavController) {
         if (intent?.action == TimerService.ACTION_SHOW_TRACKING_FRAGMENT) {
-            navController.navigate("note_timer")
+            navController.navigate(Routes.NoteTimer)
         }
     }
 }
@@ -211,13 +234,14 @@ fun CollapsedTimer(
     val timerLengthMilli: Long by TimerService.timerLengthMilli.observeAsState(1L)
     val totalTimerLengthMilli: Long by TimerService.totalTimerLengthMilli.observeAsState(1L)
     val timerIndicatorBG = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+    val onHome = navBackStackEntry?.destination?.hasRoute<Routes.Home>() == true
+    val onNoteTimer = navBackStackEntry?.destination?.hasRoute<Routes.NoteTimer>() == true
+    val onSettings = navBackStackEntry?.destination?.hasRoute<Routes.Settings>() == true
+    val onQuickTimer = navBackStackEntry?.destination?.hasRoute<Routes.QuickTimer>() == true
+    val bottomNavVisible = onHome || onSettings || onQuickTimer
     if (timerState == TimerState.Stopped) {
         myViewModel.updateFabPadding(0f, 0f)
-    } else if (
-        navBackStackEntry?.destination?.route != "note_timer" &&
-        navBackStackEntry?.destination?.route != "settings" &&
-        navBackStackEntry?.destination?.route != "general_timer"
-    ) {
+    } else if (!onNoteTimer && !onSettings && !onQuickTimer) {
         val itemIndex: Int by TimerService.itemIndex.observeAsState(0)
         val icon =
             if (timerState == TimerState.Running) Icons.Default.Pause else Icons.Default.PlayArrow
@@ -225,31 +249,35 @@ fun CollapsedTimer(
         var contentHeight by rememberSaveable { mutableIntStateOf(0) }
         var timerAlpha by remember { mutableFloatStateOf(1f) }
         myViewModel.updateFabPadding(contentHeight.toFloat(), scrollOffset)
+        val collapsedTimerModifier = if (bottomNavVisible) modifier else modifier.navigationBarsPadding()
         Surface(
-            modifier = modifier
+            modifier = collapsedTimerModifier
                 .clipToBounds()
                 .alpha(timerAlpha)
                 .layout { measurable, constraints ->
-                    // Measure the composable
                     val placeable = measurable.measure(constraints)
                     contentHeight = placeable.height
-                    val placeableResizedY = placeable.height + scrollOffset.toInt()
-                    val yOffset = 0
+                    val placeableResizedY =
+                        (placeable.height + scrollOffset.toInt()).coerceAtLeast(0)
                     layout(placeable.width, placeableResizedY) {
-                        // Where the composable gets placed
-                        placeable.placeRelative(0, yOffset)
+                        placeable.placeRelative(0, 0)
                     }
                 }
                 .pointerInput(Unit) {
                     detectVerticalDragGestures(
                         onVerticalDrag = { change, dragAmount ->
                             change.consume()
-                            scrollOffset = (scrollOffset - dragAmount).coerceAtMost(0f)
+                            val limit = -contentHeight.toFloat().coerceAtLeast(0f)
+                            scrollOffset = (scrollOffset - dragAmount).coerceIn(limit, 0f)
                             myViewModel.updateFabPadding(contentHeight.toFloat(), scrollOffset)
-                            timerAlpha = 1f + (scrollOffset / contentHeight.toFloat())
+                            timerAlpha = if (contentHeight > 0) {
+                                (1f + scrollOffset / contentHeight.toFloat()).coerceIn(0f, 1f)
+                            } else {
+                                1f
+                            }
                         },
                         onDragEnd = {
-                            if (scrollOffset < -contentHeight / 2) {
+                            if (contentHeight > 0 && scrollOffset < -contentHeight / 2f) {
                                 coroutineScope.launch {
                                     animate(
                                         initialValue = scrollOffset,
@@ -260,7 +288,6 @@ fun CollapsedTimer(
                                     }
                                 }
                                 TimerService.closeTimer()
-                                //scrollOffset = 0f
                             } else {
                                 coroutineScope.launch {
                                     animate(
@@ -279,7 +306,7 @@ fun CollapsedTimer(
             color = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface,
             tonalElevation = 3.0.dp, // Same as Bottom Navigation Bar
-            onClick = { navController.navigate("note_timer") }
+            onClick = { navController.navigate(Routes.NoteTimer) }
         ) {
             Column(
                 modifier = Modifier
@@ -382,10 +409,7 @@ fun CollapsedTimer(
                 }
             }
         }
-    } else if (
-        navBackStackEntry.destination.route == "settings" ||
-        navBackStackEntry.destination.route == "general_timer"
-    ) {
+    } else if (onSettings || onQuickTimer) {
         Surface(
             modifier = modifier
                 .height(2.dp)
@@ -438,6 +462,7 @@ fun DefaultSnackbar(
         hostState = snackbarHostState
     ) { snackBarData ->
         Snackbar(
+            modifier = Modifier.navigationBarsPadding(),
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             action = {
                 snackBarData.visuals.actionLabel?.let { actionLabel ->

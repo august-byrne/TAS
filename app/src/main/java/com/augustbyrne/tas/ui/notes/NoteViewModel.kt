@@ -8,6 +8,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
+import androidx.lifecycle.viewModelScope
 import com.augustbyrne.tas.data.PreferenceManager
 import com.augustbyrne.tas.data.db.entities.DataItem
 import com.augustbyrne.tas.data.db.entities.NoteItem
@@ -17,8 +18,6 @@ import com.augustbyrne.tas.util.DarkMode
 import com.augustbyrne.tas.util.SortType
 import com.augustbyrne.tas.util.TimerTheme
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -40,38 +39,29 @@ class NoteViewModel @Inject constructor(
 
     suspend fun upsertDataItem(item: DataItem) = repo.upsertDataItem(item)
 
-    fun upsertNoteAndData(noteItem: NoteItem, dataItems: MutableList<DataItem>) =
-        CoroutineScope(Dispatchers.Main).launch {
-            if (noteItem.id == 0) {
-                val noteDataId = repo.upsert(noteItem).toInt()
-                dataItems.replaceAll {
-                    it.copy(
-                        parent_id = noteDataId,
-                        order = dataItems.lastIndex - dataItems.indexOf(it)
-                    )
-                }
-            } else {
+    fun upsertNoteAndData(noteItem: NoteItem, dataItems: List<DataItem>) =
+        viewModelScope.launch {
+            val parentId = if (noteItem.id == 0) repo.upsert(noteItem).toInt() else {
                 repo.upsert(noteItem)
-                dataItems.replaceAll {
-                    it.copy(
-                        order = dataItems.lastIndex - dataItems.indexOf(it)
-                    )
-                }
+                noteItem.id
             }
-            repo.upsertData(dataItems)
+            val lastIndex = dataItems.lastIndex
+            val ordered = dataItems.mapIndexed { idx, item ->
+                item.copy(parent_id = parentId, order = lastIndex - idx)
+            }
+            repo.upsertData(ordered)
         }
 
-    fun updateAllNotes(items: MutableList<NoteItem>) =
-        CoroutineScope(Dispatchers.Main).launch {
-            items.replaceAll {
-                it.copy(
-                    order = items.lastIndex - items.indexOf(it)
-                )
+    fun updateAllNotes(items: List<NoteItem>) =
+        viewModelScope.launch {
+            val lastIndex = items.lastIndex
+            val ordered = items.mapIndexed { idx, item ->
+                item.copy(order = lastIndex - idx)
             }
-            repo.updateNotes(items)
+            repo.updateNotes(ordered)
         }
 
-    fun deleteNote(id: Int) = CoroutineScope(Dispatchers.Main).launch {
+    fun deleteNote(id: Int) = viewModelScope.launch {
         repo.cascadeDeleteNote(id)
     }
 
@@ -108,12 +98,12 @@ class NoteViewModel @Inject constructor(
         }.asLiveData()
 
     suspend fun getStaticNoteWithItemsById(id: Int): NoteWithItems =
-        repo.getNoteWithItemsByIdSynchronous(id).run {
+        repo.getNoteWithItemsByIdSynchronous(id)?.run {
             NoteWithItems(
                 note = note,
                 dataItems = dataItems.sortedByDescending { it.order }
             )
-        }
+        } ?: NoteWithItems(NoteItem(), listOf())
 
     suspend fun getNumberOfNotes(): Int = repo.getNumberOfNotes()
 
@@ -152,12 +142,21 @@ class NoteViewModel @Inject constructor(
     var openSortPopup by mutableStateOf(false)
     var openEditDialog by mutableStateOf(false)
 
-    private var listState: LazyListState = LazyListState()
-    fun saveListPosition(newListState: LazyListState) {
-        listState = newListState
+    private var savedListIndex: Int = 0
+    private var savedListOffset: Int = 0
+
+    fun saveListPosition(state: LazyListState) {
+        savedListIndex = state.firstVisibleItemIndex
+        savedListOffset = state.firstVisibleItemScrollOffset
     }
 
-    fun loadListPosition(): LazyListState = listState
+    fun resetListPosition() {
+        savedListIndex = 0
+        savedListOffset = 0
+    }
+
+    fun listPositionIndex(): Int = savedListIndex
+    fun listPositionOffset(): Int = savedListOffset
 
     var miniTimerPadding: MutableLiveData<Float> = MutableLiveData(0f)
     fun updateFabPadding(miniTimerHeight: Float, miniTimerOffset: Float) {

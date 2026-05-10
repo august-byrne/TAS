@@ -22,7 +22,7 @@ object AppModule {
             appContext,
             NotesDatabase::class.java,
             "notes_database.db"
-        ).fallbackToDestructiveMigration().build()
+        ).fallbackToDestructiveMigration(dropAllTables = true).build()
     }
 
     @Provides

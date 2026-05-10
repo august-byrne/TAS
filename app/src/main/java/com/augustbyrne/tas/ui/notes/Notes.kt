@@ -15,8 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
@@ -60,10 +60,8 @@ import com.augustbyrne.tas.util.SortType
 import com.augustbyrne.tas.util.TimerState
 import com.augustbyrne.tas.util.classicSystemBarScrollBehavior
 import kotlinx.coroutines.launch
-import org.burnoutcrew.reorderable.ReorderableItem
-import org.burnoutcrew.reorderable.detectReorderAfterLongPress
-import org.burnoutcrew.reorderable.rememberReorderableLazyListState
-import org.burnoutcrew.reorderable.reorderable
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 import java.time.LocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,25 +79,22 @@ fun NoteListUI(
     val timerState: TimerState by TimerService.timerState.observeAsState(TimerState.Stopped)
     val fabPadding: Float by myViewModel.miniTimerPadding.observeAsState(0f)
     val appBarScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(appBarScrollState)
-    val state = rememberReorderableLazyListState(
+    val lazyListState = rememberLazyListState()
+    val reorderableLazyListState = rememberReorderableLazyListState(
+        lazyListState = lazyListState,
         onMove = { from, to ->
             draggableNotes = draggableNotes?.toMutableList()?.apply {
                 add(to.index, removeAt(from.index))
-            }
-        }, onDragEnd = { from, to ->
-            if (from >= 0 && to >= 0 && !draggableNotes.isNullOrEmpty()) {
-                myViewModel.updateAllNotes(draggableNotes!!.toMutableList())
-            }
-            if (sortType != SortType.Order) {
-                coroutineScope.launch {
-                    myViewModel.setSortType(SortType.Order)
-                }
             }
         }
     )
 
     LaunchedEffect(Unit) {
         appBarScrollState.heightOffset = 0f
+        lazyListState.scrollToItem(
+            myViewModel.listPositionIndex(),
+            myViewModel.listPositionOffset()
+        )
     }
 
     LaunchedEffect(sortedNotes) {
@@ -123,6 +118,7 @@ fun NoteListUI(
                     .classicSystemBarScrollBehavior(appBarScrollState, BarType.Top),
                 actions = {
                     IconButton(onClick = {
+                        myViewModel.saveListPosition(lazyListState)
                         myViewModel.openSortPopup = true
                     }) {
                         Icon(
@@ -137,10 +133,8 @@ fun NoteListUI(
         LazyColumn(
             modifier = Modifier
                 .padding(top = statusBarPadding.calculateTopPadding())
-                .fillMaxSize()
-                .reorderable(state)
-                .detectReorderAfterLongPress(state),
-            state = state.listState,
+                .fillMaxSize(),
+            state = lazyListState,
             contentPadding = PaddingValues(
                 start = 8.dp,
                 end = 8.dp,
@@ -149,30 +143,38 @@ fun NoteListUI(
             ),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            coroutineScope.launch {
-                myViewModel.loadListPosition().run {
-                    state.listState.scrollToItem(
-                        firstVisibleItemIndex,
-                        firstVisibleItemScrollOffset
-                    )
-                }
-            }
             items(
                 items = draggableNotes ?: listOf(),
                 key = { it.id }
             ) { note ->
                 ReorderableItem(
-                    reorderableState = state,
+                    state = reorderableLazyListState,
                     key = note.id
                 ) {
+                    val interactionSource = remember { MutableInteractionSource() }
                     NoteItemUI(
+                        modifier = Modifier.longPressDraggableHandle(
+//                            onDragStarted = {},
+                            onDragStopped = {
+                                if (!draggableNotes.isNullOrEmpty()) {
+                                    myViewModel.updateAllNotes(draggableNotes!!.toMutableList())
+                                }
+                                if (sortType != SortType.Order) {
+                                    coroutineScope.launch {
+                                        myViewModel.setSortType(SortType.Order)
+                                    }
+                                }
+                            },
+                            interactionSource = interactionSource
+                        ),
                         note = note,
+                        interactionSource = interactionSource,
                         onClickItem = {
-                            myViewModel.saveListPosition(state.listState)
+                            myViewModel.saveListPosition(lazyListState)
                             onNavigateToItem(note.id)
                         },
                         onClickStart = {
-                            myViewModel.saveListPosition(state.listState)
+                            myViewModel.saveListPosition(lazyListState)
                             onNavigateTimerStart(note.id)
                         }
                     )
@@ -194,7 +196,6 @@ fun NoteListUI(
         Box(modifier = Modifier.fillMaxSize()) {
             myViewModel.apply {
                 if (openSortPopup) {
-                    saveListPosition(state.listState)
                     RadioItemsDialog(
                         title = "Sort by",
                         radioItemNames = listOf("Creation date", "Last edited", "Custom"),
@@ -244,7 +245,7 @@ fun NoteListUI(
             FloatingActionButton(
                 modifier = Modifier.align(Alignment.BottomEnd),
                 onClick = {
-                    myViewModel.saveListPosition(LazyListState())
+                    myViewModel.resetListPosition()
                     myViewModel.openEditDialog = true
                 }
             ) {
@@ -261,10 +262,10 @@ fun NoteListUI(
 fun NoteItemUI (
     modifier: Modifier = Modifier,
     note: NoteItem,
+    interactionSource: MutableInteractionSource,
     onClickItem: () -> Unit,
     onClickStart: () -> Unit
     ) {
-    val interactionSource = remember { MutableInteractionSource() }
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth()

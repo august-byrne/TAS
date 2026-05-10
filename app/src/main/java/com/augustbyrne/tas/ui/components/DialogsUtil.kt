@@ -426,14 +426,19 @@ fun EditDataItemDialog(
                         ),
                         keyboardActions = KeyboardActions(
                             onDone = {
-                                onAccepted(
-                                    initialDataItem.copy(
-                                        activity = activityFieldValue.text,
-                                        time = timeFieldValue.text.toInt(),
-                                        unit = timeUnitValue
+                                val parsedTime = timeFieldValue.text.toIntOrNull()
+                                if (parsedTime != null && parsedTime > 0 &&
+                                    activityFieldValue.text.isNotBlank()
+                                ) {
+                                    onAccepted(
+                                        initialDataItem.copy(
+                                            activity = activityFieldValue.text,
+                                            time = parsedTime,
+                                            unit = timeUnitValue
+                                        )
                                     )
-                                )
-                                focusManager.clearFocus()
+                                    focusManager.clearFocus()
+                                }
                             }
                         ),
                         colors = OutlinedTextFieldDefaults.colors(

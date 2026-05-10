@@ -55,8 +55,8 @@ interface NoteDao {
     fun getNoteWithItems(key: Int): Flow<NoteWithItems?>
 
     @Transaction
-    @Query("SELECT * FROM note_table WHERE id = :key ORDER BY `id` DESC")
-    suspend fun getNoteWithItemsSync(key: Int): NoteWithItems
+    @Query("SELECT * FROM note_table WHERE id = :key LIMIT 1")
+    suspend fun getNoteWithItemsSync(key: Int): NoteWithItems?
 
     @Query("SELECT COUNT(*) FROM note_table")
     suspend fun getNumberOfNotes(): Int

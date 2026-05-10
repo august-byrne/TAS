@@ -13,11 +13,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -56,7 +58,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.augustbyrne.tas.data.db.entities.DataItem
 import com.augustbyrne.tas.data.db.entities.NoteItem
@@ -64,16 +65,13 @@ import com.augustbyrne.tas.data.db.entities.NoteWithItems
 import com.augustbyrne.tas.ui.components.EditDataItemDialog
 import com.augustbyrne.tas.ui.components.EditExpandedNoteHeaderDialog
 import com.augustbyrne.tas.ui.timer.TimerService
-import com.augustbyrne.tas.ui.values.AppTheme
 import com.augustbyrne.tas.util.BarType
 import com.augustbyrne.tas.util.TimerState
 import com.augustbyrne.tas.util.classicSystemBarScrollBehavior
 import kotlinx.coroutines.launch
-import org.burnoutcrew.reorderable.ReorderableItem
-import org.burnoutcrew.reorderable.ReorderableLazyListState
-import org.burnoutcrew.reorderable.detectReorder
-import org.burnoutcrew.reorderable.rememberReorderableLazyListState
-import org.burnoutcrew.reorderable.reorderable
+import sh.calvin.reorderable.ReorderableCollectionItemScope
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -101,20 +99,17 @@ fun ExpandedNoteUI (
     var noteInfoToggle by rememberSaveable { mutableStateOf(true) }
     val fabPadding: Float by myViewModel.miniTimerPadding.observeAsState(0f)
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(topAppBarState)
-    val state = rememberReorderableLazyListState(
-        canDragOver = { to, _ ->
-            to.index in 2..noteWithItems.dataItems.lastIndex + 2
-        },
+    val lazyListState = rememberLazyListState()
+    val reorderableLazyColumnState = rememberReorderableLazyListState(
+        lazyListState = lazyListState,
         onMove = { from, to ->
-            draggableNotes = draggableNotes.toMutableList().apply {
-                add(to.index - 2, removeAt(from.index - 2))
-            }
-        }, onDragEnd = { from, to ->
-            if (from >= 0 && to >= 0) {
-                myViewModel.upsertNoteAndData(
-                    noteWithItems.note,
-                    draggableNotes.toMutableList()
-                )
+            val fromIndex = from.index - 2
+            val toIndex = to.index - 2
+            val list = draggableNotes
+            if (fromIndex in list.indices && toIndex in list.indices) {
+                draggableNotes = list.toMutableList().apply {
+                    add(toIndex, removeAt(fromIndex))
+                }
             }
         }
     )
@@ -198,9 +193,8 @@ fun ExpandedNoteUI (
         LazyColumn(
             modifier = Modifier
                 .padding(top = statusBarsPadding.calculateTopPadding())
-                .fillMaxSize()
-                .reorderable(state),
-            state = state.listState,
+                .fillMaxSize(),
+            state = lazyListState,
             contentPadding = PaddingValues(bottom = if (timerState != TimerState.Stopped) 170.dp else 88.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
@@ -307,10 +301,10 @@ fun ExpandedNoteUI (
                 items = draggableNotes,
                 key = { it.id }
             ) { item ->
-                ReorderableItem(reorderableState = state, key = item.id) {
+                ReorderableItem(state = reorderableLazyColumnState, key = item.id) {
                     DataItemUI(
+                        scope = this,
                         dataItem = item,
-                        state = state,
                         onClickToEdit = { myViewModel.initialDialogDataItem = item },
                         onClickCloneItem = {
                             coroutineScope.launch {
@@ -330,6 +324,12 @@ fun ExpandedNoteUI (
                                 myViewModel.deleteDataItem(item.id)
                                 myViewModel.updateNote(noteWithItems.note.copy(last_edited_on = LocalDateTime.now()))
                             }
+                        },
+                        onDragEnd = {
+                            myViewModel.upsertNoteAndData(
+                                noteWithItems.note,
+                                draggableNotes.toMutableList()
+                            )
                         }
                     )
                 }
@@ -405,6 +405,7 @@ fun ExpandedNoteUI (
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .navigationBarsPadding()
                 .padding(
                     end = 16.dp,
                     bottom = with(LocalDensity.current) {
@@ -429,13 +430,14 @@ fun ExpandedNoteUI (
 
 @Composable
 fun DataItemUI (
+    scope: ReorderableCollectionItemScope,
     modifier: Modifier = Modifier,
     dataItem: DataItem,
-    state: ReorderableLazyListState,
     onClickToEdit: () -> Unit,
     onClickCloneItem: () -> Unit,
     onClickStartFromHere: () -> Unit,
-    onClickDelete: () -> Unit
+    onClickDelete: () -> Unit,
+    onDragEnd: () -> Unit,
 ) {
     var itemExpanded by remember { mutableStateOf(false) }
     Row(
@@ -452,9 +454,9 @@ fun DataItemUI (
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            modifier = Modifier
-                .detectReorder(state)
-                .padding(8.dp),
+            modifier = with(scope) {Modifier
+                .draggableHandle(onDragStopped = onDragEnd)
+                .padding(8.dp)},
             imageVector = Icons.Rounded.DragHandle,
             contentDescription = "drag and drop icon"
         )
@@ -530,23 +532,5 @@ fun DataItemUI (
                 }
             )
         }
-    }
-}
-
-@Preview
-@Composable
-fun DataItemUITest() {
-    val dataItem = DataItem(
-        id = 1,
-        activity = "Activity",
-        parent_id = 1,
-        order = 1,
-        time = 12,
-        unit = 1
-    )
-    AppTheme {
-        DataItemUI(Modifier, dataItem, rememberReorderableLazyListState(onMove = { to, from ->
-
-        }), {}, {}, {}, {})
     }
 }

@@ -34,7 +34,6 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonElevation
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -67,12 +66,14 @@ import com.augustbyrne.tas.ui.components.AutoSizingText
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun QuickTimer(onNavigateTimerStart: (noteWithData: NoteWithItems) -> Unit, onNavBack: () -> Unit) {
     var timeValue by rememberSaveable { mutableIntStateOf(0) }
     val formattedTimerLength = String.format(
+        Locale.ROOT,
         "%02d:%02d:%02d",
         timeValue.div(3600),
         timeValue.div(60).mod(60),
@@ -426,7 +427,7 @@ fun Modifier.repeatingClickable(
     minDelayMillis: Long = 5,
     delayDecayFactor: Float = 0.2f,
     onClick: () -> Unit
-): Modifier = this.then(composed {
+): Modifier = composed {
 
     val currentClickListener by rememberUpdatedState(onClick)
 
@@ -449,4 +450,4 @@ fun Modifier.repeatingClickable(
             }
         }
     }
-})
+}

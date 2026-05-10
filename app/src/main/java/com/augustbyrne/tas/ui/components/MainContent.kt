@@ -25,6 +25,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hasRoute
+import com.augustbyrne.tas.ui.Routes
 
 @Composable
 fun MainBottomNavBar(
@@ -32,32 +34,23 @@ fun MainBottomNavBar(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    val navIndex = when (navBackStackEntry?.destination?.route) {
-        "home" -> {
-            0
-        }
-        "general_timer" -> {
-            1
-        }
-        "settings" -> {
-            2
-        }
-        else -> {
-            null
-        }
-    }
-    if (navIndex != null) {
+    val destination = navBackStackEntry?.destination
+    val onHome = destination?.hasRoute<Routes.Home>() == true
+    val onQuickTimer = destination?.hasRoute<Routes.QuickTimer>() == true
+    val onSettings = destination?.hasRoute<Routes.Settings>() == true
+    val showBar = onHome || onQuickTimer || onSettings
+    if (showBar) {
         NavigationBar(
             modifier = modifier
         ) {
             NavigationBarItem(
                 icon = { Icon(Icons.AutoMirrored.Rounded.PlaylistPlay, "Routines") },
                 label = { Text("Routines") },
-                selected = navIndex == 0,
+                selected = onHome,
                 onClick = {
-                    if (navBackStackEntry?.destination?.route != "home") {
-                        navController.navigate("home") {
-                            popUpTo("home")
+                    if (!onHome) {
+                        navController.navigate(Routes.Home) {
+                            popUpTo(Routes.Home)
                             launchSingleTop = true
                         }
                     }
@@ -67,11 +60,11 @@ fun MainBottomNavBar(
             NavigationBarItem(
                 icon = { Icon(Icons.Rounded.Timer, "Quick Timer") },
                 label = { Text("Quick Timer") },
-                selected = navIndex == 1,
+                selected = onQuickTimer,
                 onClick = {
-                    if (navBackStackEntry?.destination?.route != "general_timer") {
-                        navController.navigate("general_timer") {
-                            popUpTo("home")
+                    if (!onQuickTimer) {
+                        navController.navigate(Routes.QuickTimer) {
+                            popUpTo(Routes.Home)
                             launchSingleTop = true
                         }
                     }
@@ -81,11 +74,11 @@ fun MainBottomNavBar(
             NavigationBarItem(
                 icon = { Icon(Icons.Rounded.Settings, "Settings") },
                 label = { Text("Settings") },
-                selected = navIndex == 2,
+                selected = onSettings,
                 onClick = {
-                    if (navBackStackEntry?.destination?.route != "settings") {
-                        navController.navigate("settings") {
-                            popUpTo("home")
+                    if (!onSettings) {
+                        navController.navigate(Routes.Settings) {
+                            popUpTo(Routes.Home)
                             launchSingleTop = true
                         }
                     }

@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -90,6 +91,7 @@ import com.augustbyrne.tas.util.BatteryLevelReceiver
 import com.augustbyrne.tas.util.TimerState
 import com.augustbyrne.tas.util.TimerTheme
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 @Composable
 fun CircleProgressBar(
@@ -316,6 +318,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                 }
                 Row(
                     modifier = Modifier
+                        .navigationBarsPadding()
                         .padding(bottom = 32.dp, top = 8.dp)
                         .fillMaxWidth()
                         .wrapContentHeight(),
@@ -427,7 +430,7 @@ fun NoteTimer(myViewModel: NoteViewModel, onNavBack: () -> Unit, onNavTimerSetti
                     }
                 )
             },
-            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+            colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = if (BatteryLevelReceiver.lowBattery == true) {
                     orange500
                 } else {
@@ -472,7 +475,7 @@ fun TimerText(
     val hour = timerLengthAdjusted.div(3600).toInt()
     val min = timerLengthAdjusted.div(60).mod(60)
     val sec = timerLengthAdjusted.mod(60)
-    val formattedTimerLength: String = String.format("%02d:%02d:%02d", hour, min, sec)
+    val formattedTimerLength: String = String.format(Locale.ROOT, "%02d:%02d:%02d", hour, min, sec)
     Box(modifier = modifier) {
         if (timerState == TimerState.Running && timerLengthAdjusted <= 5) {
             // Flashing Timer Text

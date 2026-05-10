@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(java *)",
+      "PowerShell($env:JAVA_HOME)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(& 'C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr\\\\bin\\\\java.exe' -version)",
+      "PowerShell(java *)",
+      "Bash(JAVA_HOME='/c/Program Files/Android/Android Studio/jbr' ./gradlew --version)",
+      "Bash(JAVA_HOME='/c/Program Files/Android/Android Studio/jbr' ./gradlew :app:assembleDebug --no-daemon --console=plain)",
+      "WebFetch(domain:github.com)",
+      "Bash(JAVA_HOME='/c/Program Files/Android/Android Studio/jbr' ./gradlew :app:compileDebugKotlin --no-daemon --console=plain)",
+      "Bash(JAVA_HOME='/c/Program Files/Android/Android Studio/jbr' ./gradlew :app:lintDebug --no-daemon --console=plain)"
+    ]
+  }
+}

@@ -121,44 +121,45 @@ class TimerService : LifecycleService() {
         val vibratorService = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             (getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
         } else {
+            @Suppress("DEPRECATION")
             getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
         val vibration = PreferenceManager(applicationContext).vibrationFlow.asLiveData()
+        var vibrateOn = true
+        vibration.observe(this) { vibrateOn = it }
 
-        vibration.observe(this) { vibrateOn ->
-            completionType.observe(this) { done: CompletionType? ->
-                when (done) {
-                    CompletionType.Normal -> {
-                        beeper.startTone(ToneGenerator.TONE_PROP_BEEP, 200)
-                        if (vibrateOn) {
-                            vibratorService.vibrate(
-                                VibrationEffect.createOneShot(
-                                    500,
-                                    VibrationEffect.DEFAULT_AMPLITUDE
-                                )
+        completionType.observe(this) { done: CompletionType? ->
+            when (done) {
+                CompletionType.Normal -> {
+                    beeper.startTone(ToneGenerator.TONE_PROP_BEEP, 200)
+                    if (vibrateOn) {
+                        vibratorService.vibrate(
+                            VibrationEffect.createOneShot(
+                                500,
+                                VibrationEffect.DEFAULT_AMPLITUDE
                             )
-                        }
-                        completionType.value = null
+                        )
                     }
-                    CompletionType.Final -> {
-                        Toast.makeText(this, "Timed Activity Complete", Toast.LENGTH_SHORT).show()
-                        beeper.startTone(ToneGenerator.TONE_PROP_BEEP2, 400)
-                        if (vibrateOn) {
-                            vibratorService.vibrate(
-                                VibrationEffect.createWaveform(
-                                    longArrayOf(
-                                        0L,
-                                        200L,
-                                        300L,
-                                        500L
-                                    ), -1
-                                )
-                            )
-                        }
-                        completionType.value = null
-                    }
-                    else -> {}
+                    completionType.value = null
                 }
+                CompletionType.Final -> {
+                    Toast.makeText(this, "Timed Activity Complete", Toast.LENGTH_SHORT).show()
+                    beeper.startTone(ToneGenerator.TONE_PROP_BEEP2, 400)
+                    if (vibrateOn) {
+                        vibratorService.vibrate(
+                            VibrationEffect.createWaveform(
+                                longArrayOf(
+                                    0L,
+                                    200L,
+                                    300L,
+                                    500L
+                                ), -1
+                            )
+                        )
+                    }
+                    completionType.value = null
+                }
+                else -> {}
             }
         }
 
@@ -271,8 +272,10 @@ class TimerService : LifecycleService() {
 
         //takes care of all time unit (and some timer state) manipulation
         fun startTimer(itemIndex: Int = 0) {
+            timer?.cancel()
+            delayedTimer?.cancel()
+            val activeItem = currentNoteItems.getOrNull(itemIndex) ?: return
             setActiveItemIndex(itemIndex)
-            val activeItem = currentNoteItems[itemIndex]
             var activeTimeLengthMilli =
                 activeItem.time.times(1000L) * 60F.pow(activeItem.unit).toLong()
             setTotalTimerLengthMilli(activeTimeLengthMilli)
@@ -302,6 +305,7 @@ class TimerService : LifecycleService() {
             if (length <= 0) {
                 startTimer(itemIndex)
             } else {
+                delayedTimer?.cancel()
                 setTimerLength(length * 1000L)
                 setTimerState(TimerState.Delayed)
                 delayedTimer = object : CountDownTimer(length * 1000L, 1000L) {
@@ -310,8 +314,6 @@ class TimerService : LifecycleService() {
                     }
 
                     override fun onFinish() {
-                        CompletionType.Normal
-                        delayedTimer?.cancel()
                         startTimer(itemIndex)
                     }
                 }.start()
@@ -320,9 +322,10 @@ class TimerService : LifecycleService() {
 
         fun stopTimer(index: Int = 0) {
             timer?.cancel()
+            delayedTimer?.cancel()
             setTimerState(TimerState.Stopped)
             setActiveItemIndex(index)
-            val firstItem = currentNoteItems[index]
+            val firstItem = currentNoteItems.getOrNull(index) ?: return
             val firstTimeLengthMilli =
                 firstItem.time.times(1000L) * 60F.pow(firstItem.unit).toLong()
             setTotalTimerLengthMilli(firstTimeLengthMilli)
@@ -331,6 +334,7 @@ class TimerService : LifecycleService() {
 
         fun modifyTimer(index: Int) {
             timer?.cancel()
+            delayedTimer?.cancel()
             if (index in 0..currentNoteItems.lastIndex) {
                 if (internalTimerState == TimerState.Running) {
                     startTimer(index)

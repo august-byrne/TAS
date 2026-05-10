@@ -15,8 +15,8 @@ import javax.inject.Inject
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "com.augustbyrne.tas.preferences")
 
 class PreferenceManager @Inject constructor(
-    @ApplicationContext private val context: Context
-    ) {
+    @param:ApplicationContext private val context: Context
+) {
 
     companion object {
         private val PREF_DARK_MODE = intPreferencesKey("dark_mode_state")

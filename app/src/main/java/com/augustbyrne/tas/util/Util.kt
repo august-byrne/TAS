@@ -42,11 +42,8 @@ enum class DarkMode(val mode: Int) {
     Off(1),
     On(2);
     companion object {
-        fun getMode(modeValue: Int): DarkMode {
-            return entries.first { value ->
-                value.mode == modeValue
-            }
-        }
+        fun getMode(modeValue: Int): DarkMode =
+            entries.firstOrNull { it.mode == modeValue } ?: System
     }
 }
 
@@ -55,11 +52,8 @@ enum class TimerTheme(val theme: Int) {
     Vibrant(1),
     VaporWave(2);
     companion object {
-        fun getTheme(themeValue: Int): TimerTheme {
-            return entries.first { value ->
-                value.theme == themeValue
-            }
-        }
+        fun getTheme(themeValue: Int): TimerTheme =
+            entries.firstOrNull { it.theme == themeValue } ?: Vibrant
     }
 }
 
@@ -69,11 +63,8 @@ enum class SortType(val type: Int) {
     Order(2),
     Default(3);
     companion object {
-        fun getType(typeValue: Int): SortType {
-            return entries.first { value ->
-                value.type == typeValue
-            }
-        }
+        fun getType(typeValue: Int): SortType =
+            entries.firstOrNull { it.type == typeValue } ?: Creation
     }
 }
 

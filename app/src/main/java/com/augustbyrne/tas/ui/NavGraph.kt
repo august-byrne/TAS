@@ -12,10 +12,9 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
+import androidx.navigation.toRoute
 import com.augustbyrne.tas.ui.notes.ExpandedNoteUI
 import com.augustbyrne.tas.ui.notes.NoteListUI
 import com.augustbyrne.tas.ui.notes.NoteViewModel
@@ -24,7 +23,16 @@ import com.augustbyrne.tas.ui.timer.QuickTimer
 import com.augustbyrne.tas.ui.timer.TimerService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import java.time.LocalDateTime
+
+object Routes {
+    @Serializable data object Home
+    @Serializable data class NoteExpanded(val noteId: Int)
+    @Serializable data object NoteTimer
+    @Serializable data object QuickTimer
+    @Serializable data object Settings
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,20 +49,20 @@ fun NavGraph(
     NavHost(
         modifier = modifier,
         navController = navController,
-        startDestination = "home"
+        startDestination = Routes.Home
     ) {
-        composable("home") {
+        composable<Routes.Home> {
             NoteListUI(
                 viewModel,
                 { noteId: Int ->
-                    navController.navigate("note_expanded/$noteId")
+                    navController.navigate(Routes.NoteExpanded(noteId))
                 },
                 { noteId ->
                     coroutineScope.launch {
                         val noteWithItems = viewModel.getStaticNoteWithItemsById(noteId)
                         if (noteWithItems.dataItems.isNotEmpty()) {
                             TimerService.initTimerServiceValues(noteWithItems)
-                            navController.navigate("note_timer")
+                            navController.navigate(Routes.NoteTimer)
                             TimerService.delayedStart(length = delayedStartPrefState)
                             Intent(context, TimerService::class.java).also {
                                 it.action = "ACTION_START_OR_RESUME_SERVICE"
@@ -68,16 +76,8 @@ fun NavGraph(
                 barState
             )
         }
-        composable(
-            route = "note_expanded/{noteId}",
-            arguments = listOf(
-                navArgument("noteId") {
-                    // Make argument type safe
-                    type = NavType.IntType
-                }
-            )
-        ) {
-            val noteId = it.arguments?.getInt("noteId") ?: 0
+        composable<Routes.NoteExpanded> { entry ->
+            val noteId = entry.toRoute<Routes.NoteExpanded>().noteId
             ExpandedNoteUI(
                 noteId,
                 viewModel,
@@ -85,7 +85,7 @@ fun NavGraph(
                 { noteWithItems, index ->
                     if (noteWithItems.dataItems.isNotEmpty()) {
                         TimerService.initTimerServiceValues(noteWithItems)
-                        navController.navigate("note_timer")
+                        navController.navigate(Routes.NoteTimer)
                         TimerService.delayedStart(length = delayedStartPrefState, itemIndex = index)
                         Intent(context, TimerService::class.java).also { intent ->
                             intent.action = "ACTION_START_OR_RESUME_SERVICE"
@@ -119,9 +119,7 @@ fun NavGraph(
                                         creation_date = LocalDateTime.now()
                                     )
                                 },
-                                dataItems.mapTo(mutableListOf()) { dataItem ->
-                                    dataItem.copy(id = 0)
-                                }
+                                dataItems.map { dataItem -> dataItem.copy(id = 0) }
                             )
                             navController.popBackStack()
                         } else {
@@ -141,7 +139,7 @@ fun NavGraph(
                 }
             )
         }
-        composable("note_timer") {
+        composable<Routes.NoteTimer> {
             NoteTimer(viewModel, {
                 navController.popBackStack()
             }, {
@@ -149,11 +147,11 @@ fun NavGraph(
             }
             )
         }
-        composable("general_timer") {
+        composable<Routes.QuickTimer> {
             QuickTimer(
                 { noteWithItems ->
                     TimerService.initTimerServiceValues(noteWithItems)
-                    navController.navigate("note_timer")
+                    navController.navigate(Routes.NoteTimer)
                     TimerService.delayedStart(length = delayedStartPrefState)
                     Intent(context, TimerService::class.java).also {
                         it.action = "ACTION_START_OR_RESUME_SERVICE"
@@ -165,7 +163,7 @@ fun NavGraph(
                 }
             )
         }
-        composable("settings") {
+        composable<Routes.Settings> {
             SettingsUI(
                 viewModel,
                 { navController.popBackStack() },
